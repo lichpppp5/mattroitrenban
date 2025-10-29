@@ -1,7 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
+import { signOut } from "next-auth/react"
 import { 
   LayoutDashboard, 
   DollarSign, 
@@ -21,57 +22,63 @@ const sidebarItems = [
   {
     title: "Dashboard",
     icon: LayoutDashboard,
-    href: "/admin/dashboard"
+    href: "/root-admin/dashboard"
   },
   {
     title: "Donations",
     icon: DollarSign,
-    href: "/admin/donations"
+    href: "/root-admin/donations"
   },
   {
     title: "Expenses",
     icon: Receipt,
-    href: "/admin/expenses"
+    href: "/root-admin/expenses"
   },
   {
     title: "Phương thức TT",
     icon: CreditCard,
-    href: "/admin/payment-methods"
+    href: "/root-admin/payment-methods"
   },
   {
     title: "Activities",
     icon: ActivityIcon,
-    href: "/admin/activities"
+    href: "/root-admin/activities"
   },
   {
     title: "Team",
     icon: Users,
-    href: "/admin/team"
+    href: "/root-admin/team"
   },
   {
     title: "Content",
     icon: FileText,
-    href: "/admin/content"
+    href: "/root-admin/content"
   },
   {
     title: "Media",
     icon: ImageIcon,
-    href: "/admin/media"
+    href: "/root-admin/media"
   },
   {
     title: "Users",
     icon: Users,
-    href: "/admin/users"
+    href: "/root-admin/users"
   },
   {
     title: "Settings",
     icon: Settings,
-    href: "/admin/settings"
+    href: "/root-admin/settings"
   }
 ]
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: "/root-admin/login" })
+    router.push("/root-admin/login")
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -91,7 +98,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             <ul className="space-y-1">
               {sidebarItems.map((item) => {
                 const Icon = item.icon
-                const isActive = pathname === item.href
+                const isActive = pathname === item.href || pathname?.startsWith(item.href + "/")
                 return (
                   <li key={item.href}>
                     <Link
@@ -115,6 +122,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           <div className="border-t border-gray-800 p-4">
             <Button
               variant="ghost"
+              onClick={handleLogout}
               className="w-full justify-start text-gray-300 hover:bg-gray-800 hover:text-white"
             >
               <LogOut className="mr-3 h-5 w-5" />

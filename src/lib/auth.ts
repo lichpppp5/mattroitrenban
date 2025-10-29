@@ -42,7 +42,7 @@ export const authOptions: NextAuthOptions = {
     }
   },
   pages: {
-    signIn: "/admin/login",
+    signIn: "/root-admin/login",
   },
   secret: process.env.NEXTAUTH_SECRET || "development-secret",
 }
