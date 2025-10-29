@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
 import ConditionalLayout from "@/components/conditional-layout";
+import Providers from "@/components/providers";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -48,7 +49,9 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${poppins.variable} font-sans antialiased`}
       >
-        <ConditionalLayout>{children}</ConditionalLayout>
+        <Providers>
+          <ConditionalLayout>{children}</ConditionalLayout>
+        </Providers>
       </body>
     </html>
   );
