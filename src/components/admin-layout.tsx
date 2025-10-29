@@ -18,57 +18,69 @@ import {
   CreditCard
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { canEditContent, canManageUsers, canManageSettings } from "@/lib/permissions"
 
-const sidebarItems = [
+// Định nghĩa menu items với role requirements
+const allSidebarItems = [
   {
     title: "Dashboard",
     icon: LayoutDashboard,
-    href: "/root-admin/dashboard"
+    href: "/root-admin/dashboard",
+    requiredRole: "viewer" as const,
   },
   {
     title: "Donations",
     icon: DollarSign,
-    href: "/root-admin/donations"
+    href: "/root-admin/donations",
+    requiredRole: "viewer" as const,
   },
   {
     title: "Expenses",
     icon: Receipt,
-    href: "/root-admin/expenses"
+    href: "/root-admin/expenses",
+    requiredRole: "viewer" as const,
   },
   {
     title: "Phương thức TT",
     icon: CreditCard,
-    href: "/root-admin/payment-methods"
+    href: "/root-admin/payment-methods",
+    requiredRole: "editor" as const,
   },
   {
     title: "Activities",
     icon: ActivityIcon,
-    href: "/root-admin/activities"
+    href: "/root-admin/activities",
+    requiredRole: "editor" as const,
   },
   {
     title: "Team",
     icon: Users,
-    href: "/root-admin/team"
+    href: "/root-admin/team",
+    requiredRole: "editor" as const,
   },
   {
     title: "Content",
     icon: FileText,
-    href: "/root-admin/content"
+    href: "/root-admin/content",
+    requiredRole: "editor" as const,
   },
   {
     title: "Media",
     icon: ImageIcon,
-    href: "/root-admin/media"
+    href: "/root-admin/media",
+    requiredRole: "editor" as const,
   },
   {
     title: "Users",
     icon: Users,
-    href: "/root-admin/users"
+    href: "/root-admin/users",
+    requiredRole: "admin" as const,
   },
   {
     title: "Settings",
     icon: Settings,
-    href: "/root-admin/settings"
+    href: "/root-admin/settings",
+    requiredRole: "admin" as const,
   }
 ]
 
@@ -124,25 +136,35 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           {/* Navigation */}
           <nav className="flex-1 overflow-y-auto p-4">
             <ul className="space-y-1">
-              {sidebarItems.map((item) => {
-                const Icon = item.icon
-                const isActive = pathname === item.href || pathname?.startsWith(item.href + "/")
-                return (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      className={`flex items-center space-x-3 rounded-lg px-3 py-2 transition-colors ${
-                        isActive
-                          ? "bg-orange-500 text-white"
-                          : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                      }`}
-                    >
-                      <Icon className="h-5 w-5" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </li>
-                )
-              })}
+              {allSidebarItems
+                .filter((item) => {
+                  const userRole = session?.user?.role
+                  if (item.requiredRole === "admin") {
+                    return canManageUsers(userRole)
+                  } else if (item.requiredRole === "editor") {
+                    return canEditContent(userRole)
+                  }
+                  return true // viewer có thể xem tất cả menu items dành cho viewer
+                })
+                .map((item) => {
+                  const Icon = item.icon
+                  const isActive = pathname === item.href || pathname?.startsWith(item.href + "/")
+                  return (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        className={`flex items-center space-x-3 rounded-lg px-3 py-2 transition-colors ${
+                          isActive
+                            ? "bg-orange-500 text-white"
+                            : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                        }`}
+                      >
+                        <Icon className="h-5 w-5" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </li>
+                  )
+                })}
             </ul>
           </nav>
 

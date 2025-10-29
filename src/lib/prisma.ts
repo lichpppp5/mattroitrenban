@@ -1,38 +1,13 @@
-// Simple Prisma client for development
-// This will be replaced with actual database connection later
+import { PrismaClient } from "@prisma/client"
 
-export const prisma = {
-  user: {
-    findUnique: () => Promise.resolve(null),
-    create: () => Promise.resolve({}),
-    update: () => Promise.resolve({}),
-    delete: () => Promise.resolve({}),
-  },
-  activity: {
-    findMany: () => Promise.resolve([]),
-    findUnique: () => Promise.resolve(null),
-    create: () => Promise.resolve({}),
-    update: () => Promise.resolve({}),
-    delete: () => Promise.resolve({}),
-  },
-  donation: {
-    findMany: () => Promise.resolve([]),
-    create: () => Promise.resolve({}),
-  },
-  expense: {
-    findMany: () => Promise.resolve([]),
-    create: () => Promise.resolve({}),
-  },
-  siteContent: {
-    findUnique: () => Promise.resolve(null),
-    upsert: () => Promise.resolve({}),
-  },
-  media: {
-    findMany: () => Promise.resolve([]),
-    create: () => Promise.resolve({}),
-  },
-  contactMessage: {
-    create: () => Promise.resolve({}),
-  },
-  $disconnect: () => Promise.resolve(),
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined
 }
+
+export const prisma =
+  globalForPrisma.prisma ??
+  new PrismaClient({
+    log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
+  })
+
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma
