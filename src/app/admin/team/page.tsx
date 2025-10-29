@@ -58,7 +58,7 @@ export default function AdminTeam() {
       id: 4,
       name: "Đỗ Văn G",
       role: "expert",
-      position: "Chuyên gia Giáo dục",
+      position: "Hỗ trợ Giáo dục",
       bio: "Thạc sĩ Giáo dục, 10 năm kinh nghiệm giảng dạy",
       image: "",
       email: "dovang@example.com",
@@ -84,7 +84,7 @@ export default function AdminTeam() {
   const memberRoles = [
     { value: "executive", label: "Ban điều hành", icon: "👥" },
     { value: "volunteer", label: "Tình nguyện viên", icon: "❤️" },
-    { value: "expert", label: "Chuyên gia", icon: "🎓" },
+    { value: "expert", label: "Hỗ trợ", icon: "🤝" },
   ]
 
   const getRoleBadgeVariant = (role: string) => {
@@ -451,7 +451,7 @@ export default function AdminTeam() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Chuyên gia</p>
+                <p className="text-sm text-gray-600">Hỗ trợ</p>
                 <p className="text-2xl font-bold">{expertCount}</p>
               </div>
               <Award className="h-12 w-12 text-purple-500" />

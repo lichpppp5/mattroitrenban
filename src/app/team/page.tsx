@@ -56,11 +56,11 @@ export default function TeamPage() {
     },
   ]
 
-  const experts = [
+  const supporters = [
     {
       id: 1,
       name: "Đỗ Văn G",
-      position: "Chuyên gia Giáo dục",
+      position: "Hỗ trợ Giáo dục",
       bio: "Thạc sĩ Giáo dục, 10 năm kinh nghiệm giảng dạy",
       image: "",
       email: "dovang@example.com",
@@ -68,14 +68,14 @@ export default function TeamPage() {
     {
       id: 2,
       name: "Bùi Thị H",
-      position: "Chuyên gia Y tế",
+      position: "Hỗ trợ Y tế",
       bio: "Bác sĩ, chuyên về y tế cộng đồng vùng cao",
       image: "",
     },
     {
       id: 3,
       name: "Ngô Văn I",
-      position: "Chuyên gia Xây dựng",
+      position: "Hỗ trợ Xây dựng",
       bio: "Kỹ sư xây dựng, chuyên thiết kế cơ sở hạ tầng nông thôn",
       image: "",
     },
@@ -223,7 +223,7 @@ export default function TeamPage() {
         </div>
       </section>
 
-      {/* Experts */}
+      {/* Supporters */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
@@ -233,15 +233,15 @@ export default function TeamPage() {
               </div>
             </div>
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 font-poppins">
-              Chuyên gia
+              Hỗ trợ
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Các chuyên gia trong lĩnh vực giáo dục, y tế, xây dựng hỗ trợ tư vấn và triển khai dự án.
+              Các cá nhân và tổ chức hỗ trợ tư vấn và triển khai dự án trong lĩnh vực giáo dục, y tế, xây dựng.
             </p>
-            <p className="text-sm text-gray-500 mt-2">{experts.length}+ chuyên gia</p>
+            <p className="text-sm text-gray-500 mt-2">{supporters.length}+ người hỗ trợ</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {experts.map(member => renderMemberCard(
+            {supporters.map(member => renderMemberCard(
               member,
               <Award className="h-12 w-12 text-white" />,
               "bg-gradient-to-r from-purple-400 to-pink-500"

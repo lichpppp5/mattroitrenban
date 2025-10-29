@@ -133,7 +133,7 @@ model ContactMessage {
 model TeamMember {
   id           String   @id @default(cuid())
   name         String
-  role         String   // executive, volunteer, expert
+  role         String   // executive, volunteer, expert (Hỗ trợ)
   position     String?  // Chức vụ, ví dụ: "Chủ tịch", "Thành viên"
   bio          String?  @db.Text
   image        String?
