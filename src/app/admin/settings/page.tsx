@@ -14,7 +14,7 @@ export default function AdminSettings() {
   const [settings, setSettings] = useState({
     // General
     siteName: "Mặt Trời Trên Bản",
-    siteUrl: "https://mattroitrendb.org",
+    siteUrl: "https://mattroitrenban.vn",
     siteDescription: "Tổ chức thiện nguyện Mặt Trời Trên Bản",
     language: "vi",
     timezone: "Asia/Ho_Chi_Minh",
@@ -30,7 +30,7 @@ export default function AdminSettings() {
     smtpPort: "587",
     smtpUser: "",
     smtpPassword: "",
-    fromEmail: "noreply@mattroitrendb.org",
+    fromEmail: "noreply@mattroitrenban.vn",
     fromName: "Mặt Trời Trên Bản",
     
     // Security
