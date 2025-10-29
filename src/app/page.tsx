@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Heart, Users, DollarSign, MapPin, ArrowRight, Star } from "lucide-react"
+import { Heart, Users, DollarSign, MapPin, ArrowRight, Star, Calendar, Clock, Video, Image as ImageIcon, Play } from "lucide-react"
 
 export default function Home() {
   return (
@@ -120,60 +120,130 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Recent Activities */}
+      {/* Chuyến đi thiện nguyện gần đây */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 font-poppins">
-              Hoạt động gần đây
+              Chuyến đi thiện nguyện gần đây
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Cùng xem những hoạt động thiện nguyện ý nghĩa mà chúng tôi đã thực hiện
+              Cùng xem lại những khoảnh khắc đẹp và ý nghĩa từ các chuyến đi của chúng tôi
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Video Post */}
             <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-              <div className="h-48 bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center">
-                <Heart className="h-16 w-16 text-white" />
+              <div className="relative h-64 bg-gradient-to-br from-yellow-400 to-orange-500">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="bg-white rounded-full p-4 cursor-pointer hover:scale-110 transition-transform">
+                    <Play className="h-12 w-12 text-orange-500 ml-1" fill="currentColor" />
+                  </div>
+                </div>
+                <div className="absolute top-4 left-4">
+                  <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center">
+                    <Video className="h-4 w-4 mr-1" />
+                    VIDEO
+                  </span>
+                </div>
+                <div className="absolute bottom-4 left-4 right-4">
+                  <p className="text-white font-semibold">15/06/2024</p>
+                </div>
               </div>
               <CardContent className="p-6">
-                <h3 className="text-xl font-semibold mb-2">Xây dựng trường học</h3>
+                <h3 className="text-xl font-semibold mb-2">Chuyến đi Bản X - Xây dựng trường học</h3>
                 <p className="text-gray-600 mb-4">
-                  Hoàn thành xây dựng 2 phòng học mới tại bản X, tỉnh Y, 
-                  mang đến không gian học tập tốt hơn cho 50 em học sinh.
+                  Hành trình đầy cảm xúc khi chúng tôi cùng đồng bào xây dựng ngôi trường mới 
+                  cho các em nhỏ vùng cao. Video ghi lại toàn bộ quá trình và niềm vui của các em.
                 </p>
-                <Button variant="outline" size="sm" className="w-full">
-                  Xem chi tiết
+                <div className="flex items-center text-sm text-gray-500 mb-4">
+                  <MapPin className="h-4 w-4 mr-1" />
+                  Bản X, Tỉnh Y
+                </div>
+                <Button asChild variant="outline" size="sm" className="w-full">
+                  <Link href="/activities/chuyen-di-ban-x">
+                    Xem video đầy đủ
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
                 </Button>
               </CardContent>
             </Card>
+
+            {/* Image Gallery Post */}
             <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-              <div className="h-48 bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center">
-                <Users className="h-16 w-16 text-white" />
+              <div className="relative h-64 bg-gradient-to-br from-green-400 to-blue-500">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="grid grid-cols-2 gap-2 p-4 w-full h-full">
+                    <div className="bg-white/20 rounded"></div>
+                    <div className="bg-white/20 rounded"></div>
+                    <div className="bg-white/20 rounded"></div>
+                    <div className="bg-white/20 rounded flex items-center justify-center">
+                      <span className="text-white font-bold">+12</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="absolute top-4 left-4">
+                  <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center">
+                    <ImageIcon className="h-4 w-4 mr-1" />
+                    HÌNH ẢNH
+                  </span>
+                </div>
+                <div className="absolute bottom-4 left-4 right-4">
+                  <p className="text-white font-semibold">10/06/2024</p>
+                </div>
               </div>
               <CardContent className="p-6">
-                <h3 className="text-xl font-semibold mb-2">Khám bệnh miễn phí</h3>
+                <h3 className="text-xl font-semibold mb-2">Khám bệnh miễn phí tại 3 bản làng</h3>
                 <p className="text-gray-600 mb-4">
-                  Tổ chức khám bệnh miễn phí cho 200 người dân tại 3 bản làng, 
-                  cung cấp thuốc và tư vấn sức khỏe.
+                  Album ảnh ghi lại những khoảnh khắc đầy ấm áp khi chúng tôi tổ chức 
+                  khám bệnh và phát thuốc miễn phí cho đồng bào vùng cao.
                 </p>
-                <Button variant="outline" size="sm" className="w-full">
-                  Xem chi tiết
+                <div className="flex items-center text-sm text-gray-500 mb-4">
+                  <MapPin className="h-4 w-4 mr-1" />
+                  Bản A, B, C - Tỉnh Y
+                </div>
+                <Button asChild variant="outline" size="sm" className="w-full">
+                  <Link href="/activities/kham-benh-mien-phi">
+                    Xem album đầy đủ
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
                 </Button>
               </CardContent>
             </Card>
+
+            {/* Video Post 2 */}
             <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-              <div className="h-48 bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center">
-                <Star className="h-16 w-16 text-white" />
+              <div className="relative h-64 bg-gradient-to-br from-purple-400 to-pink-500">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="bg-white rounded-full p-4 cursor-pointer hover:scale-110 transition-transform">
+                    <Play className="h-12 w-12 text-purple-500 ml-1" fill="currentColor" />
+                  </div>
+                </div>
+                <div className="absolute top-4 left-4">
+                  <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center">
+                    <Video className="h-4 w-4 mr-1" />
+                    VIDEO
+                  </span>
+                </div>
+                <div className="absolute bottom-4 left-4 right-4">
+                  <p className="text-white font-semibold">05/06/2024</p>
+                </div>
               </div>
               <CardContent className="p-6">
-                <h3 className="text-xl font-semibold mb-2">Trao học bổng</h3>
+                <h3 className="text-xl font-semibold mb-2">Trao học bổng tại Bản Z</h3>
                 <p className="text-gray-600 mb-4">
-                  Trao 30 suất học bổng cho học sinh nghèo hiếu học, 
-                  mỗi suất trị giá 2 triệu đồng.
+                  Video cảm động về buổi lễ trao 30 suất học bổng cho các em học sinh nghèo hiếu học. 
+                  Những nụ cười rạng rỡ và lời cảm ơn chân thành.
                 </p>
-                <Button variant="outline" size="sm" className="w-full">
-                  Xem chi tiết
+                <div className="flex items-center text-sm text-gray-500 mb-4">
+                  <MapPin className="h-4 w-4 mr-1" />
+                  Bản Z, Tỉnh Y
+                </div>
+                <Button asChild variant="outline" size="sm" className="w-full">
+                  <Link href="/activities/trao-hoc-bong">
+                    Xem video đầy đủ
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
                 </Button>
               </CardContent>
             </Card>
@@ -181,8 +251,172 @@ export default function Home() {
           <div className="text-center mt-12">
             <Button asChild variant="outline" className="border-orange-500 text-orange-500 hover:bg-orange-50">
               <Link href="/activities">
-                Xem tất cả hoạt động
+                Xem tất cả chuyến đi
                 <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Lịch trình các chuyến tiếp theo */}
+      <section className="py-16 bg-gradient-to-br from-gray-50 to-orange-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 font-poppins">
+              Lịch trình các chuyến tiếp theo
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Tham gia cùng chúng tôi trong những chuyến đi thiện nguyện sắp tới
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Upcoming Trip 1 */}
+            <Card className="bg-white border-2 border-orange-200 hover:border-orange-400 transition-colors">
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center space-x-2">
+                    <div className="bg-orange-100 rounded-full p-2">
+                      <Calendar className="h-6 w-6 text-orange-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">15/07/2024</p>
+                      <p className="text-sm text-gray-500">Thứ Hai</p>
+                    </div>
+                  </div>
+                  <span className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                    Đang chuẩn bị
+                  </span>
+                </div>
+                <h3 className="text-xl font-bold mb-2 text-gray-900">
+                  Xây dựng cầu đi bộ tại Bản M
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  Dự án xây dựng cầu đi bộ để giúp các em học sinh và người dân 
+                  đi lại an toàn hơn, đặc biệt vào mùa mưa.
+                </p>
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center text-sm text-gray-600">
+                    <MapPin className="h-4 w-4 mr-2 text-orange-500" />
+                    Bản M, Huyện X, Tỉnh Y
+                  </div>
+                  <div className="flex items-center text-sm text-gray-600">
+                    <Clock className="h-4 w-4 mr-2 text-orange-500" />
+                    5 ngày
+                  </div>
+                  <div className="flex items-center text-sm text-gray-600">
+                    <Users className="h-4 w-4 mr-2 text-orange-500" />
+                    15 tình nguyện viên
+                  </div>
+                </div>
+                <Button asChild variant="outline" className="w-full border-orange-500 text-orange-500 hover:bg-orange-50">
+                  <Link href="/activities/chuyen-di-ban-m">
+                    Xem chi tiết
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Upcoming Trip 2 */}
+            <Card className="bg-white border-2 border-orange-200 hover:border-orange-400 transition-colors">
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center space-x-2">
+                    <div className="bg-orange-100 rounded-full p-2">
+                      <Calendar className="h-6 w-6 text-orange-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">05/08/2024</p>
+                      <p className="text-sm text-gray-500">Thứ Hai</p>
+                    </div>
+                  </div>
+                  <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                    Đăng ký mở
+                  </span>
+                </div>
+                <h3 className="text-xl font-bold mb-2 text-gray-900">
+                  Tặng sách và đồ dùng học tập
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  Chuyến đi đặc biệt mang sách, vở, bút và đồ dùng học tập 
+                  đến cho 200 em học sinh tại 5 điểm trường vùng cao.
+                </p>
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center text-sm text-gray-600">
+                    <MapPin className="h-4 w-4 mr-2 text-orange-500" />
+                    5 điểm trường - Tỉnh Y
+                  </div>
+                  <div className="flex items-center text-sm text-gray-600">
+                    <Clock className="h-4 w-4 mr-2 text-orange-500" />
+                    3 ngày
+                  </div>
+                  <div className="flex items-center text-sm text-gray-600">
+                    <Users className="h-4 w-4 mr-2 text-orange-500" />
+                    20 tình nguyện viên
+                  </div>
+                </div>
+                <Button asChild variant="outline" className="w-full border-orange-500 text-orange-500 hover:bg-orange-50">
+                  <Link href="/activities/tang-sach">
+                    Xem chi tiết
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Upcoming Trip 3 */}
+            <Card className="bg-white border-2 border-orange-200 hover:border-orange-400 transition-colors">
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center space-x-2">
+                    <div className="bg-orange-100 rounded-full p-2">
+                      <Calendar className="h-6 w-6 text-orange-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">20/08/2024</p>
+                      <p className="text-sm text-gray-500">Thứ Ba</p>
+                    </div>
+                  </div>
+                  <span className="bg-yellow-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                    Sắp mở đăng ký
+                  </span>
+                </div>
+                <h3 className="text-xl font-bold mb-2 text-gray-900">
+                  Hỗ trợ khẩn cấp mùa mưa lũ
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  Chương trình hỗ trợ khẩn cấp cho các hộ gia đình bị ảnh hưởng 
+                  bởi mưa lũ, cung cấp lương thực và nhu yếu phẩm.
+                </p>
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center text-sm text-gray-600">
+                    <MapPin className="h-4 w-4 mr-2 text-orange-500" />
+                    Vùng lũ - Tỉnh Y
+                  </div>
+                  <div className="flex items-center text-sm text-gray-600">
+                    <Clock className="h-4 w-4 mr-2 text-orange-500" />
+                    2 ngày
+                  </div>
+                  <div className="flex items-center text-sm text-gray-600">
+                    <Users className="h-4 w-4 mr-2 text-orange-500" />
+                    10 tình nguyện viên
+                  </div>
+                </div>
+                <Button asChild variant="outline" className="w-full border-orange-500 text-orange-500 hover:bg-orange-50">
+                  <Link href="/activities/ho-tro-khan-cap">
+                    Xem chi tiết
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+          <div className="text-center mt-12">
+            <Button asChild size="lg" className="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white">
+              <Link href="/activities">
+                Xem tất cả lịch trình
+                <Calendar className="ml-2 h-5 w-5" />
               </Link>
             </Button>
           </div>

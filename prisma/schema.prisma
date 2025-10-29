@@ -60,15 +60,22 @@ model VerificationToken {
 }
 
 model Activity {
-  id          String   @id @default(cuid())
-  title       String
-  slug        String   @unique
-  content     String   @db.Text
-  imageUrl    String?
-  category    String?
-  isPublished Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String    @id @default(cuid())
+  title         String
+  slug          String    @unique
+  content       String    @db.Text
+  imageUrl      String?
+  videoUrl      String?   // URL video từ YouTube, Vimeo, hoặc Cloudinary
+  category      String?
+  location      String?   // Địa điểm chuyến đi
+  tripDate      DateTime? // Ngày diễn ra chuyến đi
+  duration      Int?      // Số ngày (1, 2, 3...)
+  volunteerCount Int?      // Số lượng tình nguyện viên
+  status        String    @default("completed") // completed, upcoming, registration_open, preparing
+  isPublished   Boolean   @default(false)
+  isUpcoming    Boolean   @default(false) // Đánh dấu chuyến sắp tới
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 
 model Donation {
