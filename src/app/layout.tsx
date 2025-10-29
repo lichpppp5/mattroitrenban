@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
-import { Navigation } from "@/components/navigation";
-import { FloatingContactMenu } from "@/components/floating-contact-menu";
-// import { Footer } from "@/components/footer";
+import { ConditionalLayout } from "@/components/conditional-layout";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -50,12 +48,7 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${poppins.variable} font-sans antialiased`}
       >
-        <Navigation />
-        <main className="min-h-screen">
-          {children}
-        </main>
-        <FloatingContactMenu />
-        {/* <Footer /> */}
+        <ConditionalLayout>{children}</ConditionalLayout>
       </body>
     </html>
   );
