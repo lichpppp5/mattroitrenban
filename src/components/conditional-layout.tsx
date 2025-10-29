@@ -13,13 +13,10 @@ export default function ConditionalLayout({ children }: { children: React.ReactN
     setIsMounted(true)
   }, [])
   
-  if (!isMounted) {
-    return <>{children}</>
-  }
-  
+  // Always render the same structure on server and client to avoid hydration mismatch
   const isLoginPage = pathname?.startsWith("/root-admin/login")
   
-  if (isLoginPage) {
+  if (!isMounted || isLoginPage) {
     return <>{children}</>
   }
   

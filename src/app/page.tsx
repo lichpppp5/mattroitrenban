@@ -217,10 +217,19 @@ export default async function Home() {
                 }
                 const hasImage = activity.imageUrl || imageArray.length > 0
                 const hasVideo = !!activity.videoUrl
+                // Format date in a consistent way to avoid hydration mismatch
                 const dateStr = activity.tripDate 
-                  ? new Date(activity.tripDate).toLocaleDateString("vi-VN")
+                  ? new Date(activity.tripDate).toLocaleDateString("vi-VN", {
+                      year: "numeric",
+                      month: "2-digit",
+                      day: "2-digit"
+                    })
                   : activity.createdAt
-                  ? new Date(activity.createdAt).toLocaleDateString("vi-VN")
+                  ? new Date(activity.createdAt).toLocaleDateString("vi-VN", {
+                      year: "numeric",
+                      month: "2-digit",
+                      day: "2-digit"
+                    })
                   : ""
                 
                 return (
@@ -327,148 +336,81 @@ export default async function Home() {
               Tham gia cùng chúng tôi trong những chuyến đi thiện nguyện sắp tới
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Upcoming Trip 1 */}
-            <Card className="bg-white border-2 border-orange-200 hover:border-orange-400 transition-colors">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-2">
-                    <div className="bg-orange-100 rounded-full p-2">
-                      <Calendar className="h-6 w-6 text-orange-600" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-900">15/07/2024</p>
-                      <p className="text-sm text-gray-500">Thứ Hai</p>
-                    </div>
-                  </div>
-                  <span className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                    Đang chuẩn bị
-                  </span>
-                </div>
-                <h3 className="text-xl font-bold mb-2 text-gray-900">
-                  Xây dựng cầu đi bộ tại Bản M
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  Dự án xây dựng cầu đi bộ để giúp các em học sinh và người dân 
-                  đi lại an toàn hơn, đặc biệt vào mùa mưa.
-                </p>
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center text-sm text-gray-600">
-                    <MapPin className="h-4 w-4 mr-2 text-orange-500" />
-                    Bản M, Huyện X, Tỉnh Y
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Clock className="h-4 w-4 mr-2 text-orange-500" />
-                    5 ngày
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Users className="h-4 w-4 mr-2 text-orange-500" />
-                    15 tình nguyện viên
-                  </div>
-                </div>
-                <Button asChild variant="outline" className="w-full border-orange-500 text-orange-500 hover:bg-orange-50">
-                  <Link href="/activities/chuyen-di-ban-m">
-                    Xem chi tiết
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Upcoming Trip 2 */}
-            <Card className="bg-white border-2 border-orange-200 hover:border-orange-400 transition-colors">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-2">
-                    <div className="bg-orange-100 rounded-full p-2">
-                      <Calendar className="h-6 w-6 text-orange-600" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-900">05/08/2024</p>
-                      <p className="text-sm text-gray-500">Thứ Hai</p>
-                    </div>
-                  </div>
-                  <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                    Đăng ký mở
-                  </span>
-                </div>
-                <h3 className="text-xl font-bold mb-2 text-gray-900">
-                  Tặng sách và đồ dùng học tập
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  Chuyến đi đặc biệt mang sách, vở, bút và đồ dùng học tập 
-                  đến cho 200 em học sinh tại 5 điểm trường vùng cao.
-                </p>
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center text-sm text-gray-600">
-                    <MapPin className="h-4 w-4 mr-2 text-orange-500" />
-                    5 điểm trường - Tỉnh Y
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Clock className="h-4 w-4 mr-2 text-orange-500" />
-                    3 ngày
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Users className="h-4 w-4 mr-2 text-orange-500" />
-                    20 tình nguyện viên
-                  </div>
-                </div>
-                <Button asChild variant="outline" className="w-full border-orange-500 text-orange-500 hover:bg-orange-50">
-                  <Link href="/activities/tang-sach">
-                    Xem chi tiết
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Upcoming Trip 3 */}
-            <Card className="bg-white border-2 border-orange-200 hover:border-orange-400 transition-colors">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-2">
-                    <div className="bg-orange-100 rounded-full p-2">
-                      <Calendar className="h-6 w-6 text-orange-600" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-900">20/08/2024</p>
-                      <p className="text-sm text-gray-500">Thứ Ba</p>
-                    </div>
-                  </div>
-                  <span className="bg-yellow-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                    Sắp mở đăng ký
-                  </span>
-                </div>
-                <h3 className="text-xl font-bold mb-2 text-gray-900">
-                  Hỗ trợ khẩn cấp mùa mưa lũ
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  Chương trình hỗ trợ khẩn cấp cho các hộ gia đình bị ảnh hưởng 
-                  bởi mưa lũ, cung cấp lương thực và nhu yếu phẩm.
-                </p>
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center text-sm text-gray-600">
-                    <MapPin className="h-4 w-4 mr-2 text-orange-500" />
-                    Vùng lũ - Tỉnh Y
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Clock className="h-4 w-4 mr-2 text-orange-500" />
-                    2 ngày
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Users className="h-4 w-4 mr-2 text-orange-500" />
-                    10 tình nguyện viên
-                  </div>
-                </div>
-                <Button asChild variant="outline" className="w-full border-orange-500 text-orange-500 hover:bg-orange-50">
-                  <Link href="/activities/ho-tro-khan-cap">
-                    Xem chi tiết
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+          {upcomingTrips.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500">Chưa có chuyến đi sắp tới nào được lên lịch</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {upcomingTrips.map((trip) => {
+                const dateStr = trip.tripDate 
+                  ? new Date(trip.tripDate).toLocaleDateString("vi-VN", { 
+                      year: "numeric", 
+                      month: "2-digit", 
+                      day: "2-digit" 
+                    })
+                  : "Chưa xác định"
+                const weekdayStr = trip.tripDate
+                  ? new Date(trip.tripDate).toLocaleDateString("vi-VN", { weekday: 'long' })
+                  : ""
+                
+                return (
+                  <Card key={trip.id} className="bg-white border-2 border-orange-200 hover:border-orange-400 transition-colors">
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center space-x-2">
+                          <div className="bg-orange-100 rounded-full p-2">
+                            <Calendar className="h-6 w-6 text-orange-600" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900">{dateStr}</p>
+                            {weekdayStr && (
+                              <p className="text-sm text-gray-500">{weekdayStr}</p>
+                            )}
+                          </div>
+                        </div>
+                        <span className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                          Sắp diễn ra
+                        </span>
+                      </div>
+                      <h3 className="text-xl font-bold mb-2 text-gray-900">
+                        {trip.title}
+                      </h3>
+                      <p className="text-gray-600 mb-4">
+                        {trip.category} tại {trip.location || "chưa xác định"}.
+                      </p>
+                      <div className="space-y-2 mb-4">
+                        {trip.location && (
+                          <div className="flex items-center text-sm text-gray-600">
+                            <MapPin className="h-4 w-4 mr-2 text-orange-500" />
+                            {trip.location}
+                          </div>
+                        )}
+                        {trip.duration && (
+                          <div className="flex items-center text-sm text-gray-600">
+                            <Clock className="h-4 w-4 mr-2 text-orange-500" />
+                            {trip.duration} ngày
+                          </div>
+                        )}
+                        {trip.volunteerCount && (
+                          <div className="flex items-center text-sm text-gray-600">
+                            <Users className="h-4 w-4 mr-2 text-orange-500" />
+                            {trip.volunteerCount} tình nguyện viên
+                          </div>
+                        )}
+                      </div>
+                      <Button asChild variant="outline" className="w-full border-orange-500 text-orange-500 hover:bg-orange-50">
+                        <Link href={`/activities/${trip.slug}`}>
+                          Tìm hiểu thêm
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
+          )}
           <div className="text-center mt-12">
             <Button asChild size="lg" className="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white">
               <Link href="/activities">
