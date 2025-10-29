@@ -152,18 +152,24 @@ export default function AdminActivities() {
   }
 
   const handleSave = () => {
+    // Convert images array to JSON string for storage
+    const activityData = {
+      ...formData,
+      images: formData.images.length > 0 ? JSON.stringify(formData.images) : null,
+    }
+    
     if (editingActivity) {
       // Update existing
       setActivities(activities.map(a => 
         a.id === editingActivity.id 
-          ? { ...a, ...formData, updatedAt: new Date().toISOString().split('T')[0] }
+          ? { ...a, ...activityData, updatedAt: new Date().toISOString().split('T')[0] }
           : a
       ))
     } else {
       // Create new
       const newActivity = {
         id: activities.length + 1,
-        ...formData,
+        ...activityData,
         createdAt: new Date().toISOString().split('T')[0],
         updatedAt: new Date().toISOString().split('T')[0],
         views: 0,
@@ -171,6 +177,7 @@ export default function AdminActivities() {
       setActivities([...activities, newActivity])
     }
     setIsDialogOpen(false)
+    setEditingActivity(null)
   }
 
   return (
