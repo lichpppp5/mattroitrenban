@@ -49,6 +49,12 @@ export default function AdminSettings() {
     instagramUrl: "",
     youtubeUrl: "",
     twitterUrl: "",
+    
+    // Floating Contact Menu
+    floatingMenuEnabled: true,
+    floatingMenuPhone: "+84 123 456 789",
+    floatingMenuMessenger: "https://m.me/mattroitrenban",
+    floatingMenuEmail: "info@mattroitrenban.vn",
   })
 
   const handleSave = () => {
@@ -500,6 +506,57 @@ export default function AdminSettings() {
                 value={settings.twitterUrl}
                 onChange={(e) => setSettings({...settings, twitterUrl: e.target.value})}
                 placeholder="https://twitter.com/yourpage"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Floating Contact Menu Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Mail className="mr-2 h-5 w-5" />
+              Menu Liên hệ Nổi (Floating Menu)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="floatingMenuEnabled">Hiển thị menu liên hệ nổi</Label>
+                <p className="text-sm text-gray-500">Menu nổi ở góc dưới bên phải website</p>
+              </div>
+              <Switch
+                id="floatingMenuEnabled"
+                checked={settings.floatingMenuEnabled}
+                onCheckedChange={(checked) => setSettings({...settings, floatingMenuEnabled: checked})}
+              />
+            </div>
+            <div>
+              <Label htmlFor="floatingMenuPhone">Số điện thoại</Label>
+              <Input
+                id="floatingMenuPhone"
+                value={settings.floatingMenuPhone}
+                onChange={(e) => setSettings({...settings, floatingMenuPhone: e.target.value})}
+                placeholder="+84 123 456 789"
+              />
+            </div>
+            <div>
+              <Label htmlFor="floatingMenuMessenger">Facebook Messenger URL</Label>
+              <Input
+                id="floatingMenuMessenger"
+                value={settings.floatingMenuMessenger}
+                onChange={(e) => setSettings({...settings, floatingMenuMessenger: e.target.value})}
+                placeholder="https://m.me/yourpage"
+              />
+            </div>
+            <div>
+              <Label htmlFor="floatingMenuEmail">Email</Label>
+              <Input
+                id="floatingMenuEmail"
+                type="email"
+                value={settings.floatingMenuEmail}
+                onChange={(e) => setSettings({...settings, floatingMenuEmail: e.target.value})}
+                placeholder="info@example.com"
               />
             </div>
           </CardContent>

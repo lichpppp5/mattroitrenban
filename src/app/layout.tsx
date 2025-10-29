@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
 import { Navigation } from "@/components/navigation";
+import { FloatingContactMenu } from "@/components/floating-contact-menu";
 // import { Footer } from "@/components/footer";
 
 const inter = Inter({
@@ -53,6 +54,7 @@ export default function RootLayout({
         <main className="min-h-screen">
           {children}
         </main>
+        <FloatingContactMenu />
         {/* <Footer /> */}
       </body>
     </html>
