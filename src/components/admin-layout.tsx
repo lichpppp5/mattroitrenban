@@ -1,8 +1,9 @@
 "use client"
 
+import { useEffect } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { signOut } from "next-auth/react"
+import { signOut, useSession } from "next-auth/react"
 import { 
   LayoutDashboard, 
   DollarSign, 
@@ -74,10 +75,37 @@ const sidebarItems = [
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
+  const { data: session, status } = useSession()
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/root-admin/login")
+    } else if (status === "authenticated") {
+      const userRole = session?.user?.role
+      if (userRole !== "admin" && userRole !== "editor") {
+        router.push("/")
+      }
+    }
+  }, [status, session, router])
 
   const handleLogout = async () => {
     await signOut({ callbackUrl: "/root-admin/login" })
     router.push("/root-admin/login")
+  }
+
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Đang tải...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (status === "unauthenticated") {
+    return null
   }
 
   return (

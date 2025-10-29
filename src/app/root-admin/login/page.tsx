@@ -10,6 +10,11 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { LogIn, Loader2, Shield } from "lucide-react"
 
+// Temporary: Check if signIn is available
+if (typeof window !== "undefined" && !signIn) {
+  console.error("signIn is not available")
+}
+
 export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState("")
