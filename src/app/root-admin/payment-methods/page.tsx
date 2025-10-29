@@ -196,14 +196,6 @@ export default function AdminPaymentMethods() {
       alert(err.message || "Failed to update order")
     }
   }
-      const next = sorted[currentIndex + 1]
-      setPaymentMethods(paymentMethods.map(m => 
-        m.id === id ? { ...m, displayOrder: next.displayOrder } :
-        m.id === next.id ? { ...m, displayOrder: current.displayOrder } :
-        m
-      ))
-    }
-  }
 
   const handleSave = async () => {
     try {
