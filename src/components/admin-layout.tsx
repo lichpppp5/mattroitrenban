@@ -12,7 +12,8 @@ import {
   TrendingUp,
   Users,
   Activity as ActivityIcon,
-  LogOut
+  LogOut,
+  CreditCard
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -31,6 +32,11 @@ const sidebarItems = [
     title: "Expenses",
     icon: Receipt,
     href: "/admin/expenses"
+  },
+  {
+    title: "Phương thức TT",
+    icon: CreditCard,
+    href: "/admin/payment-methods"
   },
   {
     title: "Activities",
