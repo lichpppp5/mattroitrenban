@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
-import { ConditionalLayout } from "@/components/conditional-layout";
+import ConditionalLayout from "@/components/conditional-layout";
 
 const inter = Inter({
   variable: "--font-inter",
