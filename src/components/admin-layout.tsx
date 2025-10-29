@@ -44,6 +44,11 @@ const sidebarItems = [
     href: "/admin/activities"
   },
   {
+    title: "Team",
+    icon: Users,
+    href: "/admin/team"
+  },
+  {
     title: "Content",
     icon: FileText,
     href: "/admin/content"

@@ -12,6 +12,7 @@ export function Navigation() {
     { href: "/", label: "Trang chủ" },
     { href: "/about", label: "Giới thiệu" },
     { href: "/activities", label: "Hoạt động" },
+    { href: "/team", label: "Đội ngũ" },
     { href: "/donate", label: "Quyên góp" },
     { href: "/transparency", label: "Minh bạch" },
     { href: "/contact", label: "Liên hệ" },

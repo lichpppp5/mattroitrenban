@@ -129,3 +129,38 @@ model ContactMessage {
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
 }
+
+model TeamMember {
+  id           String   @id @default(cuid())
+  name         String
+  role         String   // executive, volunteer, expert
+  position     String?  // Chức vụ, ví dụ: "Chủ tịch", "Thành viên"
+  bio          String?  @db.Text
+  image        String?
+  email        String?
+  phone        String?
+  facebookUrl  String?
+  linkedinUrl  String?
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model PaymentMethod {
+  id            String   @id @default(cuid())
+  name          String
+  type          String   // bank, e-wallet, cash, card, crypto
+  icon          String?
+  accountNumber String?
+  accountName   String?
+  bankName      String?
+  branch        String?
+  qrCode        String?
+  description   String?  @db.Text
+  instructions  String?  @db.Text
+  displayOrder  Int      @default(0)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
