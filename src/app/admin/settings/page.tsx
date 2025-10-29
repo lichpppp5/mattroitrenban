@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Save, Settings, Palette, Globe, Mail, Shield } from "lucide-react"
+import { Save, Settings, Palette, Globe, Mail, Shield, Upload, Image as ImageIcon, X } from "lucide-react"
 
 export default function AdminSettings() {
   const [settings, setSettings] = useState({
@@ -23,6 +23,7 @@ export default function AdminSettings() {
     primaryColor: "#F4A261",
     secondaryColor: "#2A9D8F",
     logoUrl: "",
+    bannerUrl: "",
     faviconUrl: "",
     
     // Email
@@ -174,15 +175,128 @@ export default function AdminSettings() {
                 />
               </div>
             </div>
+            {/* Logo Upload */}
             <div>
-              <Label htmlFor="logoUrl">URL Logo</Label>
+              <Label>Logo</Label>
+              <div className="mt-2">
+                {settings.logoUrl ? (
+                  <div className="relative inline-block">
+                    <img 
+                      src={settings.logoUrl} 
+                      alt="Logo" 
+                      className="h-20 w-auto border rounded-lg"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute -top-2 -right-2 bg-red-500 text-white hover:bg-red-600"
+                      onClick={() => setSettings({...settings, logoUrl: ""})}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                    <ImageIcon className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500 mb-2">Chưa có logo</p>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      id="logo-upload"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) {
+                          // In production, upload to Cloudinary first
+                          const reader = new FileReader()
+                          reader.onloadend = () => {
+                            setSettings({...settings, logoUrl: reader.result as string})
+                          }
+                          reader.readAsDataURL(file)
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => document.getElementById('logo-upload')?.click()}
+                    >
+                      <Upload className="mr-2 h-4 w-4" />
+                      Upload Logo
+                    </Button>
+                  </div>
+                )}
+              </div>
               <Input
                 id="logoUrl"
                 value={settings.logoUrl}
                 onChange={(e) => setSettings({...settings, logoUrl: e.target.value})}
-                placeholder="https://example.com/logo.png"
+                placeholder="Hoặc nhập URL logo..."
+                className="mt-2"
               />
             </div>
+
+            {/* Banner Upload */}
+            <div>
+              <Label>Ảnh Banner (Hero)</Label>
+              <div className="mt-2">
+                {settings.bannerUrl ? (
+                  <div className="relative">
+                    <img 
+                      src={settings.bannerUrl} 
+                      alt="Banner" 
+                      className="w-full h-48 object-cover border rounded-lg"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute top-2 right-2 bg-red-500 text-white hover:bg-red-600"
+                      onClick={() => setSettings({...settings, bannerUrl: ""})}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                    <ImageIcon className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500 mb-2">Chưa có banner</p>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      id="banner-upload"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) {
+                          // In production, upload to Cloudinary first
+                          const reader = new FileReader()
+                          reader.onloadend = () => {
+                            setSettings({...settings, bannerUrl: reader.result as string})
+                          }
+                          reader.readAsDataURL(file)
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => document.getElementById('banner-upload')?.click()}
+                    >
+                      <Upload className="mr-2 h-4 w-4" />
+                      Upload Banner
+                    </Button>
+                  </div>
+                )}
+              </div>
+              <Input
+                id="bannerUrl"
+                value={settings.bannerUrl || ""}
+                onChange={(e) => setSettings({...settings, bannerUrl: e.target.value})}
+                placeholder="Hoặc nhập URL banner..."
+                className="mt-2"
+              />
+            </div>
+
             <div>
               <Label htmlFor="faviconUrl">URL Favicon</Label>
               <Input
