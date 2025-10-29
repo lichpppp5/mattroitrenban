@@ -153,7 +153,7 @@ export default function AdminUsers() {
         password: formData.password,
         role: formData.role,
         isActive: formData.isActive,
-        lastLogin: null,
+        lastLogin: "",
         createdAt: new Date().toISOString().split('T')[0],
       }
       setUsers([...users, newUser])

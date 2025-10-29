@@ -95,18 +95,28 @@ export default async function Home() {
   const upcomingTrips = await getUpcomingTrips()
   const { bannerUrl } = await getSiteSettings()
   
+  // Đảm bảo bannerUrl luôn là string hoặc null để tránh hydration mismatch
+  const safeBannerUrl = bannerUrl && typeof bannerUrl === 'string' && bannerUrl.trim() !== '' ? bannerUrl : null
+  
+  // Tính toán className một cách deterministic
+  const heroClassName = safeBannerUrl 
+    ? "relative py-20" 
+    : "relative py-20 bg-gradient-to-br from-yellow-50 via-orange-50 to-red-50"
+  
+  const heroStyle = safeBannerUrl ? {
+    backgroundImage: `url(${safeBannerUrl})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+  } as React.CSSProperties : undefined
+  
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
       <section 
-        className={`relative py-20 ${bannerUrl ? '' : 'bg-gradient-to-br from-yellow-50 via-orange-50 to-red-50'}`}
-        style={bannerUrl ? {
-          backgroundImage: `url(${bannerUrl})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        } : {}}
+        className={heroClassName}
+        style={heroStyle}
       >
-        {bannerUrl && <div className="absolute inset-0 bg-black/20"></div>}
+        {safeBannerUrl && <div className="absolute inset-0 bg-black/20"></div>}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center">
             <div className="flex justify-center mb-6">
@@ -123,8 +133,8 @@ export default async function Home() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild size="lg" className="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white font-semibold px-8 py-3">
-                <Link href="/donate">
-                  Quyên góp ngay
+                <Link href="/activities">
+                  Chiến Dịch
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
@@ -365,10 +375,10 @@ export default async function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 font-poppins">
-              Lịch trình các chuyến tiếp theo
+              Chiến Dịch tiếp theo
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Tham gia cùng chúng tôi trong những chuyến đi thiện nguyện sắp tới
+              Tham gia cùng chúng tôi trong những chiến dịch thiện nguyện sắp tới
             </p>
           </div>
           {upcomingTrips.length === 0 ? (

@@ -69,8 +69,8 @@ export function Navigation() {
                 {item.label}
               </Link>
             ))}
-            <Button className="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white font-semibold">
-              Quyên góp ngay
+            <Button asChild className="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white font-semibold">
+              <Link href="/activities">Chiến Dịch</Link>
             </Button>
           </div>
 
@@ -102,8 +102,8 @@ export function Navigation() {
                 </Link>
               ))}
               <div className="px-3 py-2">
-                <Button className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white font-semibold">
-                  Quyên góp ngay
+                <Button asChild className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white font-semibold">
+                  <Link href="/activities" onClick={() => setIsOpen(false)}>Chiến Dịch</Link>
                 </Button>
               </div>
             </div>

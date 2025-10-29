@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Calendar, MapPin, Clock, Users, Video, Image as ImageIcon, Share2 } from "lucide-react"
 import { ShareButtons } from "@/components/share-buttons"
+import { SafeImage } from "@/components/safe-image"
 
 import { prisma } from "@/lib/prisma"
 
@@ -181,15 +182,12 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
                       key={index}
                       className="relative aspect-square rounded-lg overflow-hidden border cursor-pointer hover:opacity-90 transition-opacity group"
                     >
-                      <img 
+                      <SafeImage 
                         src={img} 
                         alt={`Hình ảnh ${index + 1}`}
                         className="w-full h-full object-cover"
-                        onError={(e) => {
-                          // Fallback nếu ảnh lỗi
-                          const target = e.target as HTMLImageElement
-                          target.src = '/api/placeholder/400/400'
-                        }}
+                        placeholder="/api/placeholder/400/400"
+                        unoptimized
                       />
                     </div>
                   ))}
@@ -200,24 +198,25 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
         })()}
 
         {/* Main Image - Only show if no video and no gallery */}
-        {(() => {
-          const hasGallery = activity.images && (
-            typeof activity.images === 'string' 
-              ? activity.images.trim() !== '' 
-              : Array.isArray(activity.images) && activity.images.length > 0
-          )
-          return activity.imageUrl && !activity.videoUrl && !hasGallery ? (
+            {(() => {
+              let hasGallery = false
+              if (activity.images) {
+                if (typeof activity.images === 'string') {
+                  hasGallery = activity.images.trim() !== ''
+                } else if (Array.isArray(activity.images)) {
+                  hasGallery = (activity.images as string[]).length > 0
+                }
+              }
+              return activity.imageUrl && !activity.videoUrl && !hasGallery ? (
             <Card className="mb-8">
               <CardContent className="p-0">
                 <div className="relative w-full aspect-video rounded-lg overflow-hidden">
-                  <img 
+                  <SafeImage 
                     src={activity.imageUrl} 
                     alt={activity.title}
                     className="w-full h-full object-cover"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement
-                      target.src = '/api/placeholder/800/450'
-                    }}
+                    placeholder="/api/placeholder/800/450"
+                    unoptimized
                   />
                 </div>
               </CardContent>

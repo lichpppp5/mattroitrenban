@@ -39,7 +39,19 @@ export default function AdminActivities() {
       }
       const data = await response.json()
       console.log("Fetched activities:", data.length, "items") // Debug log
-      setActivities(Array.isArray(data) ? data : [])
+      // Normalize data - ensure duration and volunteerCount are numbers (not strings)
+      const normalizedData: any[] = Array.isArray(data) ? data.map((activity: any) => {
+        return {
+          ...activity,
+          duration: activity.duration !== null && activity.duration !== undefined 
+            ? (typeof activity.duration === 'string' ? parseInt(activity.duration) || null : Number(activity.duration) || null)
+            : null,
+          volunteerCount: activity.volunteerCount !== null && activity.volunteerCount !== undefined
+            ? (typeof activity.volunteerCount === 'string' ? parseInt(activity.volunteerCount) || null : Number(activity.volunteerCount) || null)
+            : null,
+        }
+      }) : []
+      setActivities(normalizedData)
       setError("")
     } catch (err: any) {
       console.error("Error fetching activities:", err)

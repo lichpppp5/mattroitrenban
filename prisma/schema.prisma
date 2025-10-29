@@ -62,43 +62,52 @@ model VerificationToken {
 }
 
 model Activity {
-  id            String    @id @default(cuid())
+  id            String      @id @default(cuid())
   title         String
-  slug          String    @unique
-  content       String    @db.Text
-  imageUrl      String?   // Ảnh chính (deprecated - dùng images array)
-  images        String?   @db.Text // JSON array of image URLs: ["url1", "url2", ...]
-  videoUrl      String?   // URL video từ YouTube, Vimeo, hoặc Cloudinary
+  slug          String      @unique
+  content       String      @db.Text
+  imageUrl      String?     // Ảnh chính (deprecated - dùng images array)
+  images        String?     @db.Text // JSON array of image URLs: ["url1", "url2", ...]
+  videoUrl      String?     // URL video từ YouTube, Vimeo, hoặc Cloudinary
   category      String?
-  location      String?   // Địa điểm chuyến đi
-  tripDate      DateTime? // Ngày diễn ra chuyến đi
-  duration      Int?      // Số ngày (1, 2, 3...)
-  volunteerCount Int?      // Số lượng tình nguyện viên
-  status        String    @default("completed") // completed, upcoming, registration_open, preparing
-  isPublished   Boolean   @default(false)
-  isUpcoming    Boolean   @default(false) // Đánh dấu chuyến sắp tới
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  location      String?     // Địa điểm chuyến đi
+  tripDate      DateTime?   // Ngày diễn ra chuyến đi
+  duration      Int?        // Số ngày (1, 2, 3...)
+  volunteerCount Int?       // Số lượng tình nguyện viên
+  status        String      @default("completed") // completed, upcoming, registration_open, preparing
+  isPublished   Boolean     @default(false)
+  isUpcoming    Boolean     @default(false) // Đánh dấu chuyến sắp tới
+  donations     Donation[]  // Danh sách quyên góp cho chiến dịch này
+  expenses      Expense[]   // Danh sách chi tiêu cho chiến dịch này
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 }
 
 model Donation {
-  id        String   @id @default(cuid())
-  name      String?
-  amount    Float
-  message   String?  @db.Text
-  isPublic  Boolean  @default(true)
-  isAnonymous Boolean @default(false)
-  createdAt DateTime @default(now())
+  id          String    @id @default(cuid())
+  name        String?
+  amount      Float
+  message     String?   @db.Text
+  isPublic    Boolean   @default(true)
+  isAnonymous Boolean   @default(false)
+  isConfirmed Boolean   @default(false) // Xác nhận đã nhận tiền
+  confirmedAt DateTime? // Ngày giờ xác nhận
+  confirmedBy String?   // ID của user xác nhận
+  activityId  String?   // Link với Activity (chiến dịch) nếu quyên góp cho chiến dịch cụ thể
+  activity    Activity? @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now())
 }
 
 model Expense {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   title       String
   amount      Float
-  description String?  @db.Text
+  description String?   @db.Text
   category    String?
   event       String?
-  createdAt   DateTime @default(now())
+  activityId  String?   // Link với Activity (chiến dịch) nếu chi tiêu cho chiến dịch cụ thể
+  activity    Activity? @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now())
 }
 
 model SiteContent {

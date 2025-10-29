@@ -1,13 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Save, Eye, FileText, Image as ImageIcon, Settings, Upload, X, TrendingUp, Heart, Users, Share2, Search } from "lucide-react"
+import { Save, Eye, FileText, Image as ImageIcon, Settings, Upload, X, TrendingUp, Heart, Users, Share2, Search, Loader2 } from "lucide-react"
 
 export default function AdminContent() {
   const [siteContent, setSiteContent] = useState({
@@ -80,10 +80,57 @@ export default function AdminContent() {
     ogDescription: "Tổ chức thiện nguyện Mặt Trời Trên Bản - Chung tay hỗ trợ vùng cao",
   })
 
-  const handleSave = () => {
-    console.log("Saving content:", siteContent)
-    // In production, save to database
-    alert("Nội dung đã được lưu thành công!")
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveError, setSaveError] = useState("")
+
+  useEffect(() => {
+    fetchContent()
+  }, [])
+
+  const fetchContent = async () => {
+    try {
+      const response = await fetch("/api/content")
+      if (!response.ok) throw new Error("Failed to fetch content")
+      const data = await response.json()
+      
+      // Merge with defaults
+      setSiteContent((prev) => ({ ...prev, ...data }))
+    } catch (err: any) {
+      console.error("Error fetching content:", err)
+      // Use defaults if fetch fails
+    }
+  }
+
+  const handleSave = async () => {
+    setIsSaving(true)
+    setSaveError("")
+    
+    try {
+      // Save all content fields to database
+      const updates = Object.entries(siteContent).map(async ([key, value]) => {
+        const response = await fetch("/api/content", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            key,
+            value,
+            type: typeof value === "object" ? "json" : "text",
+          }),
+        })
+        
+        if (!response.ok) {
+          throw new Error(`Failed to save ${key}`)
+        }
+      })
+      
+      await Promise.all(updates)
+      alert("Nội dung đã được lưu thành công!")
+    } catch (err: any) {
+      console.error("Error saving content:", err)
+      setSaveError(err.message || "Không thể lưu nội dung. Vui lòng thử lại.")
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const handleImageUpload = (field: string, file: File | null) => {
@@ -111,12 +158,31 @@ export default function AdminContent() {
               Xem trước
             </a>
           </Button>
-          <Button onClick={handleSave} className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600">
-            <Save className="mr-2 h-4 w-4" />
-            Lưu tất cả
+          <Button 
+            onClick={handleSave} 
+            disabled={isSaving}
+            className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600"
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Đang lưu...
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                Lưu tất cả
+              </>
+            )}
           </Button>
         </div>
       </div>
+
+      {saveError && (
+        <div className="p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+          {saveError}
+        </div>
+      )}
 
       <Tabs defaultValue="general" className="space-y-4">
         <div className="overflow-x-auto">

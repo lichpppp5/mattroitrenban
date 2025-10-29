@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,45 +18,33 @@ export default function AdminUsers() {
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false)
   const [passwordChangeUser, setPasswordChangeUser] = useState<any>(null)
   const [editingUser, setEditingUser] = useState<any>(null)
-  
-  const [users, setUsers] = useState([
-    {
-      id: 1,
-      name: "Nguyễn Văn Admin",
-      email: "admin@mattroitrenban.vn",
-      role: "admin",
-      isActive: true,
-      lastLogin: "2024-06-20 10:30",
-      createdAt: "2024-01-15",
-    },
-    {
-      id: 2,
-      name: "Trần Thị Editor",
-      email: "editor@mattroitrenban.vn",
-      role: "editor",
-      isActive: true,
-      lastLogin: "2024-06-20 09:15",
-      createdAt: "2024-03-20",
-    },
-    {
-      id: 3,
-      name: "Lê Văn Viewer",
-      email: "viewer@mattroitrenban.vn",
-      role: "viewer",
-      isActive: true,
-      lastLogin: "2024-06-19 14:20",
-      createdAt: "2024-05-10",
-    },
-    {
-      id: 4,
-      name: "Phạm Thị Writer",
-      email: "writer@mattroitrenban.vn",
-      role: "editor",
-      isActive: false,
-      lastLogin: "2024-06-15 11:00",
-      createdAt: "2024-04-05",
-    },
-  ])
+  const [users, setUsers] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string>("")
+  const [searchQuery, setSearchQuery] = useState("")
+  const [roleFilter, setRoleFilter] = useState("all")
+  const [statusFilter, setStatusFilter] = useState("all")
+
+  // Fetch users from API
+  useEffect(() => {
+    fetchUsers()
+  }, [])
+
+  const fetchUsers = async () => {
+    try {
+      setIsLoading(true)
+      const response = await fetch("/api/users")
+      if (!response.ok) throw new Error("Failed to fetch users")
+      const data = await response.json()
+      setUsers(data)
+      setError("")
+    } catch (err: any) {
+      console.error("Error fetching users:", err)
+      setError(err.message || "Failed to load users")
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const [formData, setFormData] = useState({
     name: "",
@@ -118,50 +106,106 @@ export default function AdminUsers() {
     setIsDialogOpen(true)
   }
 
-  const handleToggleActive = (userId: number) => {
-    setUsers(users.map(u => 
-      u.id === userId ? { ...u, isActive: !u.isActive } : u
-    ))
-  }
-
-  const handleDelete = (userId: number) => {
-    setUsers(users.filter(u => u.id !== userId))
-  }
-
-  const handleSave = () => {
-    if (editingUser) {
-      // Update existing user
-      setUsers(users.map(u => 
-        u.id === editingUser.id 
-          ? { 
-              ...u, 
-              name: formData.name,
-              email: formData.email,
-              role: formData.role,
-              isActive: formData.isActive,
-              // Only update password if provided
-              ...(formData.password && { password: formData.password })
-            }
-          : u
-      ))
-    } else {
-      // Create new user
-      const newUser = {
-        id: users.length + 1,
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-        role: formData.role,
-        isActive: formData.isActive,
-        lastLogin: null,
-        createdAt: new Date().toISOString().split('T')[0],
+  const handleToggleActive = async (userId: string) => {
+    try {
+      const user = users.find(u => u.id === userId)
+      if (!user) return
+      
+      const response = await fetch(`/api/users/${userId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...user,
+          isActive: !user.isActive,
+        }),
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Failed to update user")
       }
-      setUsers([...users, newUser])
+      
+      await fetchUsers()
+    } catch (err: any) {
+      console.error("Error toggling active:", err)
+      alert(err.message || "Failed to update user")
     }
-    setIsDialogOpen(false)
   }
 
-  const handleChangePassword = (userId: number) => {
+  const handleDelete = async (userId: string) => {
+    if (!confirm("Bạn có chắc chắn muốn xóa người dùng này?")) return
+    
+    try {
+      const response = await fetch(`/api/users/${userId}`, {
+        method: "DELETE",
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Failed to delete user")
+      }
+      
+      await fetchUsers()
+    } catch (err: any) {
+      console.error("Error deleting user:", err)
+      alert(err.message || "Failed to delete user")
+    }
+  }
+
+  const handleSave = async () => {
+    try {
+      // Validate
+      if (!formData.name || !formData.email) {
+        alert("Vui lòng nhập đầy đủ thông tin")
+        return
+      }
+      if (!editingUser && !formData.password) {
+        alert("Vui lòng nhập mật khẩu")
+        return
+      }
+      if (formData.password && formData.password.length < 6) {
+        alert("Mật khẩu phải có ít nhất 6 ký tự")
+        return
+      }
+
+      let response
+      if (editingUser) {
+        // Update existing
+        response = await fetch(`/api/users/${editingUser.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: formData.name,
+            role: formData.role,
+            isActive: formData.isActive,
+            ...(formData.password && { password: formData.password }),
+          }),
+        })
+      } else {
+        // Create new
+        response = await fetch("/api/users", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        })
+      }
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Failed to save user")
+      }
+      
+      // Refresh users list
+      await fetchUsers()
+      setIsDialogOpen(false)
+      setEditingUser(null)
+    } catch (err: any) {
+      console.error("Error saving user:", err)
+      alert(err.message || "Failed to save user")
+    }
+  }
+
+  const handleChangePassword = async (userId: string) => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       alert("Mật khẩu xác nhận không khớp!")
       return
@@ -171,12 +215,41 @@ export default function AdminUsers() {
       return
     }
     
-    setUsers(users.map(u => 
-      u.id === userId ? { ...u, password: passwordData.newPassword } : u
-    ))
-    setPasswordData({ newPassword: "", confirmPassword: "" })
-    setIsPasswordDialogOpen(false)
+    try {
+      const response = await fetch(`/api/users/${userId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          password: passwordData.newPassword,
+        }),
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Failed to change password")
+      }
+      
+      setPasswordData({ newPassword: "", confirmPassword: "" })
+      setIsPasswordDialogOpen(false)
+      setPasswordChangeUser(null)
+      alert("Đổi mật khẩu thành công!")
+    } catch (err: any) {
+      console.error("Error changing password:", err)
+      alert(err.message || "Failed to change password")
+    }
   }
+  
+  // Filter users
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch = searchQuery === "" || 
+      user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesRole = roleFilter === "all" || user.role === roleFilter
+    const matchesStatus = statusFilter === "all" || 
+      (statusFilter === "active" && user.isActive) ||
+      (statusFilter === "inactive" && !user.isActive)
+    return matchesSearch && matchesRole && matchesStatus
+  })
 
   const activeUsers = users.filter(u => u.isActive).length
   const inactiveUsers = users.filter(u => !u.isActive).length
@@ -350,10 +423,12 @@ export default function AdminUsers() {
                 <Input
                   placeholder="Tìm kiếm theo tên, email..."
                   className="pl-10"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
             </div>
-            <Select>
+            <Select value={roleFilter} onValueChange={setRoleFilter}>
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="Phân quyền" />
               </SelectTrigger>
@@ -364,7 +439,7 @@ export default function AdminUsers() {
                 <SelectItem value="viewer">Viewer</SelectItem>
               </SelectContent>
             </Select>
-            <Select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="Trạng thái" />
               </SelectTrigger>
@@ -378,26 +453,51 @@ export default function AdminUsers() {
         </CardContent>
       </Card>
 
+      {/* Error Message */}
+      {error && (
+        <div className="p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+          {error}
+        </div>
+      )}
+
       {/* Users Table */}
       <Card>
         <CardHeader>
           <CardTitle>Danh sách người dùng</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Người dùng</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Phân quyền</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead>Đăng nhập cuối</TableHead>
-                <TableHead>Ngày tạo</TableHead>
-                <TableHead className="text-right">Thao tác</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((user) => (
+          {isLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto"></div>
+              <p className="text-gray-500 mt-3">Đang tải người dùng...</p>
+            </div>
+          ) : filteredUsers.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500">Không tìm thấy người dùng nào</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Người dùng</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Phân quyền</TableHead>
+                  <TableHead>Trạng thái</TableHead>
+                  <TableHead>Đăng nhập cuối</TableHead>
+                  <TableHead>Ngày tạo</TableHead>
+                  <TableHead className="text-right">Thao tác</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredUsers.map((user) => {
+                  const lastLoginStr = user.lastLogin 
+                    ? new Date(user.lastLogin).toLocaleString("vi-VN")
+                    : null
+                  const createdAtStr = user.createdAt
+                    ? new Date(user.createdAt).toLocaleDateString("vi-VN")
+                    : ""
+                  
+                  return (
                 <TableRow key={user.id}>
                   <TableCell>
                     <div className="flex items-center space-x-2">
@@ -432,17 +532,17 @@ export default function AdminUsers() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    {user.lastLogin ? (
+                    {lastLoginStr ? (
                       <div className="flex items-center space-x-1 text-sm text-gray-600">
                         <Calendar className="h-4 w-4" />
-                        <span>{user.lastLogin}</span>
+                        <span>{lastLoginStr}</span>
                       </div>
                     ) : (
                       <span className="text-gray-400 text-sm">Chưa đăng nhập</span>
                     )}
                   </TableCell>
                   <TableCell className="text-sm text-gray-600">
-                    {user.createdAt}
+                    {createdAtStr}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end space-x-2">
@@ -486,9 +586,11 @@ export default function AdminUsers() {
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                )
+                })}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 

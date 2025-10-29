@@ -7,9 +7,9 @@ import { authOptions } from "@/lib/auth"
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
-    const isPublished = searchParams.get("published") === "true"
+    const publishedParam = searchParams.get("published")
     const category = searchParams.get("category")
-    const isUpcoming = searchParams.get("upcoming") === "true"
+    const upcomingParam = searchParams.get("upcoming")
     
     // Public users chỉ xem published activities
     const where: any = {}
@@ -23,19 +23,19 @@ export async function GET(request: NextRequest) {
       // Public hoặc viewer chỉ xem published
       where.isPublished = true
     }
-    // Nếu có session và role là admin/editor, không filter - xem tất cả
     
-    // Chỉ apply published filter nếu có query param và user không phải admin/editor
-    if (isPublished !== null && (!session || session.user.role === "viewer")) {
-      where.isPublished = isPublished === "true"
+    // Apply published filter từ query param (nếu có và user không phải admin/editor)
+    if (publishedParam !== null && (!session || session.user.role === "viewer")) {
+      where.isPublished = publishedParam === "true"
+    }
+    
+    // Apply upcoming filter from query param
+    if (upcomingParam !== null) {
+      where.isUpcoming = upcomingParam === "true"
     }
     
     if (category) {
       where.category = category
-    }
-    
-    if (isUpcoming !== null) {
-      where.isUpcoming = isUpcoming === "true"
     }
     
     const activities = await prisma.activity.findMany({

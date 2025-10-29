@@ -1,46 +1,90 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { DollarSign, Receipt, Wallet, Users, Activity as ActivityIcon, TrendingUp } from "lucide-react"
+import { DollarSign, Receipt, Wallet, Users, Activity as ActivityIcon, TrendingUp, Loader2, Target, Gift, ArrowRight, ExternalLink } from "lucide-react"
+import Link from "next/link"
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 
 export default function AdminDashboard() {
-  // Sample data
-  const monthlyData = [
-    { month: "T1", income: 50, expense: 30 },
-    { month: "T2", income: 75, expense: 45 },
-    { month: "T3", income: 60, expense: 40 },
-    { month: "T4", income: 80, expense: 50 },
-  ]
+  const [kpiData, setKpiData] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState("")
 
-  const categoryData = [
-    { name: "Giáo dục", value: 200, color: "#F4A261" },
-    { name: "Y tế", value: 150, color: "#2A9D8F" },
-    { name: "Cơ sở hạ tầng", value: 100, color: "#E76F51" },
-    { name: "Khác", value: 50, color: "#264653" },
-  ]
+  useEffect(() => {
+    fetchKPIData()
+  }, [])
 
-  const trendData = [
-    { date: "01/01", amount: 50000 },
-    { date: "08/01", amount: 120000 },
-    { date: "15/01", amount: 180000 },
-    { date: "22/01", amount: 250000 },
-  ]
+  const fetchKPIData = async () => {
+    try {
+      setIsLoading(true)
+      const response = await fetch("/api/admin/kpi")
+      if (!response.ok) throw new Error("Failed to fetch KPI data")
+      const data = await response.json()
+      setKpiData(data)
+      setError("")
+    } catch (err: any) {
+      console.error("Error fetching KPI data:", err)
+      setError(err.message || "Failed to load dashboard data")
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
-  const kpiData = [
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-orange-500 mx-auto" />
+          <p className="mt-4 text-gray-600">Đang tải dữ liệu...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !kpiData) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <p className="text-red-600">{error || "Không thể tải dữ liệu"}</p>
+          <Button onClick={fetchKPIData} className="mt-4">
+            Thử lại
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  const kpiCards = [
     {
       title: "Tổng thu",
-      value: "500,000,000",
+      value: kpiData.totalDonations?.toLocaleString("vi-VN") || "0",
       unit: "VND",
       icon: DollarSign,
       color: "bg-green-500",
       trend: "+12.5%",
     },
     {
+      title: "Quyên góp dự án",
+      value: (kpiData.totalCampaignDonations || 0).toLocaleString("vi-VN"),
+      unit: "VND",
+      icon: Target,
+      color: "bg-blue-500",
+      trend: `Chiếm ${kpiData.totalDonations > 0 ? Math.round((kpiData.totalCampaignDonations / kpiData.totalDonations) * 100) : 0}%`,
+    },
+    {
+      title: "Quyên góp chung",
+      value: (kpiData.totalGeneralDonations || 0).toLocaleString("vi-VN"),
+      unit: "VND",
+      icon: Gift,
+      color: "bg-purple-500",
+      trend: `Chiếm ${kpiData.totalDonations > 0 ? Math.round((kpiData.totalGeneralDonations / kpiData.totalDonations) * 100) : 0}%`,
+    },
+    {
       title: "Tổng chi",
-      value: "400,000,000",
+      value: kpiData.totalExpenses?.toLocaleString("vi-VN") || "0",
       unit: "VND",
       icon: Receipt,
       color: "bg-red-500",
@@ -48,29 +92,34 @@ export default function AdminDashboard() {
     },
     {
       title: "Số dư",
-      value: "100,000,000",
+      value: kpiData.balance?.toLocaleString("vi-VN") || "0",
       unit: "VND",
       icon: Wallet,
-      color: "bg-blue-500",
+      color: "bg-orange-500",
       trend: "Stable",
     },
     {
       title: "Người quyên góp",
-      value: "2,500",
+      value: kpiData.uniqueDonors?.toLocaleString("vi-VN") || "0",
       unit: "người",
       icon: Users,
-      color: "bg-purple-500",
+      color: "bg-teal-500",
       trend: "+15%",
     },
     {
       title: "Hoạt động",
-      value: "50",
+      value: kpiData.totalActivities?.toLocaleString("vi-VN") || "0",
       unit: "sự kiện",
       icon: ActivityIcon,
-      color: "bg-orange-500",
+      color: "bg-yellow-500",
       trend: "+5",
     },
   ]
+
+  const trendData = kpiData.monthlyData?.map((month: any) => ({
+    date: month.month,
+    amount: month.income * 1000000, // Convert back from millions
+  })) || []
 
   return (
     <div className="space-y-6">
@@ -97,8 +146,8 @@ export default function AdminDashboard() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        {kpiData.map((kpi) => {
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {kpiCards.map((kpi) => {
           const Icon = kpi.icon
           return (
             <Card key={kpi.title} className="hover:shadow-lg transition-shadow">
@@ -130,7 +179,7 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={monthlyData}>
+              <BarChart data={kpiData.monthlyData || []}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />
@@ -148,25 +197,34 @@ export default function AdminDashboard() {
             <CardTitle>Phân bổ chi tiêu</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={categoryData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {categoryData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value) => `${value}M VND`} />
-              </PieChart>
-            </ResponsiveContainer>
+            {kpiData.categoryData && kpiData.categoryData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={kpiData.categoryData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={(entry: any) => {
+                      const percent = entry.percent as number
+                      return `${entry.name} ${(percent * 100).toFixed(0)}%`
+                    }}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {kpiData.categoryData.map((entry: any, index: number) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => `${value}M VND`} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-gray-500">
+                Chưa có dữ liệu chi tiêu
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -177,23 +235,83 @@ export default function AdminDashboard() {
           <CardTitle>Xu hướng quyên góp</CardTitle>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={trendData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <Tooltip formatter={(value) => `${value.toLocaleString()} VND`} />
-              <Line 
-                type="monotone" 
-                dataKey="amount" 
-                stroke="#3B82F6" 
-                strokeWidth={2}
-                dot={{ fill: "#3B82F6", r: 4 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          {trendData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={trendData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip formatter={(value) => `${Number(value).toLocaleString("vi-VN")} VND`} />
+                <Line 
+                  type="monotone" 
+                  dataKey="amount" 
+                  stroke="#3B82F6" 
+                  strokeWidth={2}
+                  dot={{ fill: "#3B82F6", r: 4 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-[300px] text-gray-500">
+              Chưa có dữ liệu quyên góp
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      {/* Activity Stats */}
+      {kpiData.activityStats && kpiData.activityStats.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Thống kê theo dự án</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {kpiData.activityStats.map((stat: any) => (
+                <div
+                  key={stat.activityId}
+                  className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="font-semibold text-lg">{stat.activityTitle}</h3>
+                        <Link
+                          href={`/root-admin/activities/${stat.activityId}/stats`}
+                          className="text-blue-600 hover:text-blue-700 text-sm flex items-center gap-1"
+                        >
+                          Chi tiết
+                          <ExternalLink className="h-3 w-3" />
+                        </Link>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4 mt-3">
+                        <div>
+                          <p className="text-xs text-gray-500">Tổng quyên góp</p>
+                          <p className="text-lg font-bold text-green-600">
+                            {stat.totalAmount.toLocaleString("vi-VN")}₫
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">Số lượt quyên góp</p>
+                          <p className="text-lg font-bold">
+                            {stat.donationCount}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">Người quyên góp</p>
+                          <p className="text-lg font-bold">
+                            {stat.donorCount}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Recent Activity */}
       <Card>
@@ -201,22 +319,37 @@ export default function AdminDashboard() {
           <CardTitle>Hoạt động gần đây</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-              <div>
-                <p className="font-semibold">Nhận quyên góp từ Nguyễn Văn A</p>
-                <p className="text-sm text-gray-600">500,000 VND • 2 giờ trước</p>
-              </div>
-              <span className="text-green-600 font-bold">+500,000₫</span>
+          {kpiData.recentActivity && kpiData.recentActivity.length > 0 ? (
+            <div className="space-y-3">
+              {kpiData.recentActivity.map((activity: any, index: number) => (
+                <div
+                  key={index}
+                  className={`flex items-center justify-between p-3 rounded-lg ${
+                    activity.type === 'donation' ? 'bg-green-50' : 'bg-red-50'
+                  }`}
+                >
+                  <div>
+                    <p className="font-semibold">{activity.description}</p>
+                    <p className="text-sm text-gray-600">
+                      {new Date(activity.timestamp).toLocaleString("vi-VN")}
+                    </p>
+                  </div>
+                  <span
+                    className={`font-bold ${
+                      activity.amount > 0 ? 'text-green-600' : 'text-red-600'
+                    }`}
+                  >
+                    {activity.amount > 0 ? '+' : ''}
+                    {activity.amount.toLocaleString("vi-VN")}₫
+                  </span>
+                </div>
+              ))}
             </div>
-            <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
-              <div>
-                <p className="font-semibold">Chi phí xây dựng trường học</p>
-                <p className="text-sm text-gray-600">20,000,000 VND • 5 giờ trước</p>
-              </div>
-              <span className="text-red-600 font-bold">-20,000,000₫</span>
+          ) : (
+            <div className="text-center text-gray-500 py-8">
+              Chưa có hoạt động nào
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
     </div>

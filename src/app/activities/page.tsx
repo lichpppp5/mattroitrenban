@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Heart, Calendar, MapPin, Users, ArrowRight, Search, Filter, Play, Video, Image as ImageIcon } from "lucide-react"
 import { Input } from "@/components/ui/input"
+import { SafeImage } from "@/components/safe-image"
 
 // Import utility function (sẽ sử dụng khi tích hợp database)
 // Hiện tại activities đã có slug sẵn trong data
@@ -134,14 +135,11 @@ export default function Activities() {
                   <Link href={`/activities/${activity.slug}`}>
                     <div className="relative h-48 bg-gradient-to-br from-yellow-400 to-orange-500 overflow-hidden">
                       {hasImage ? (
-                        <img 
+                        <SafeImage 
                           src={activity.imageUrl || imageArray[0]} 
                           alt={activity.title}
                           className="w-full h-full object-cover"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement
-                            target.style.display = 'none'
-                          }}
+                          placeholder=""
                         />
                       ) : hasVideo ? (
                         <div className="absolute inset-0 flex items-center justify-center">

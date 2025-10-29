@@ -15,7 +15,8 @@ import {
   Users,
   Activity as ActivityIcon,
   LogOut,
-  CreditCard
+  CreditCard,
+  BarChart3
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { canEditContent, canManageUsers, canManageSettings } from "@/lib/permissions"
@@ -51,6 +52,12 @@ const allSidebarItems = [
     icon: ActivityIcon,
     href: "/root-admin/activities",
     requiredRole: "editor" as const,
+  },
+  {
+    title: "Thống kê Chiến dịch",
+    icon: BarChart3,
+    href: "/root-admin/campaigns-stats",
+    requiredRole: "viewer" as const,
   },
   {
     title: "Team",

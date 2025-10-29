@@ -145,23 +145,30 @@ export default function AdminActivities() {
   }
 
   const handleSave = () => {
+    // Normalize formData before merging (convert strings to numbers where needed)
+    const normalizedFormData: any = {
+      ...formData,
+      duration: formData.duration ? (typeof formData.duration === 'string' ? parseInt(formData.duration) || null : formData.duration) : null,
+      volunteerCount: formData.volunteerCount ? (typeof formData.volunteerCount === 'string' ? parseInt(formData.volunteerCount) || null : formData.volunteerCount) : null,
+    }
+
     if (editingActivity) {
       // Update existing
-      setActivities(activities.map(a => 
+      setActivities(activities.map((a: any) => 
         a.id === editingActivity.id 
-          ? { ...a, ...formData, updatedAt: new Date().toISOString().split('T')[0] }
+          ? { ...a, ...normalizedFormData, updatedAt: new Date().toISOString().split('T')[0] }
           : a
-      ))
+      ) as any)
     } else {
       // Create new
-      const newActivity = {
+      const newActivity: any = {
         id: activities.length + 1,
-        ...formData,
+        ...normalizedFormData,
         createdAt: new Date().toISOString().split('T')[0],
         updatedAt: new Date().toISOString().split('T')[0],
         views: 0,
       }
-      setActivities([...activities, newActivity])
+      setActivities([...activities, newActivity] as any)
     }
     setIsDialogOpen(false)
   }
