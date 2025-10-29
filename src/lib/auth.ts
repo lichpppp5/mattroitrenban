@@ -16,6 +16,15 @@ export const authOptions: NextAuthOptions = {
           return null
         }
 
+        // Kiểm tra xem có DATABASE_URL không
+        const hasDatabase = !!process.env.DATABASE_URL
+
+        if (!hasDatabase) {
+          // Fallback về mock auth nếu chưa có database
+          console.warn("DATABASE_URL not found, using fallback authentication")
+          return null
+        }
+
         try {
           // Tìm user trong database
           const user = await prisma.user.findUnique({
@@ -35,29 +44,6 @@ export const authOptions: NextAuthOptions = {
 
           // Kiểm tra password
           if (!user.password) {
-            // Nếu chưa có password, fallback về mock auth cho demo
-            if (credentials.email === "admin@mattroitrendb.org" && credentials.password === "admin123") {
-              // Tạo hoặc cập nhật user với password đã hash
-              const hashedPassword = await bcrypt.hash("admin123", 10)
-              const updatedUser = await prisma.user.upsert({
-                where: { email: credentials.email },
-                update: { password: hashedPassword },
-                create: {
-                  email: credentials.email,
-                  password: hashedPassword,
-                  name: "Administrator",
-                  role: "admin",
-                  isActive: true,
-                },
-              })
-
-              return {
-                id: updatedUser.id,
-                email: updatedUser.email,
-                name: updatedUser.name || "User",
-                role: updatedUser.role,
-              }
-            }
             return null
           }
 
@@ -69,10 +55,15 @@ export const authOptions: NextAuthOptions = {
           }
 
           // Cập nhật lastLogin
-          await prisma.user.update({
-            where: { id: user.id },
-            data: { lastLogin: new Date() },
-          })
+          try {
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { lastLogin: new Date() },
+            })
+          } catch (updateError) {
+            // Nếu không update được lastLogin, vẫn cho phép đăng nhập
+            console.warn("Failed to update lastLogin:", updateError)
+          }
 
           return {
             id: user.id,
@@ -80,7 +71,12 @@ export const authOptions: NextAuthOptions = {
             name: user.name || "User",
             role: user.role,
           }
-        } catch (error) {
+        } catch (error: any) {
+          // Kiểm tra nếu lỗi là do DATABASE_URL hoặc Prisma connection
+          if (error?.code === "P1001" || error?.message?.includes("DATABASE_URL") || error?.message?.includes("Environment variable not found")) {
+            console.error("Database connection error:", error.message)
+            return null
+          }
           console.error("Auth error:", error)
           return null
         }
