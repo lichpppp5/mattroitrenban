@@ -70,6 +70,7 @@ export default function AdminActivities() {
     slug: "",
     content: "",
     imageUrl: "",
+    images: [] as string[], // Array of image URLs for gallery
     videoUrl: "",
     category: "",
     location: "",
@@ -107,6 +108,7 @@ export default function AdminActivities() {
       slug: "",
       content: "",
       imageUrl: "",
+      images: [],
       videoUrl: "",
       category: "",
       location: "",
@@ -127,6 +129,11 @@ export default function AdminActivities() {
       slug: activity.slug,
       content: activity.content || "",
       imageUrl: activity.imageUrl || "",
+      images: (activity.images && typeof activity.images === 'string' 
+        ? JSON.parse(activity.images) 
+        : Array.isArray(activity.images) 
+        ? activity.images 
+        : []) as string[],
       videoUrl: activity.videoUrl || "",
       category: activity.category || "",
       location: activity.location || "",
@@ -295,55 +302,96 @@ export default function AdminActivities() {
                 </div>
               </div>
 
-              {/* Image Upload */}
+              {/* Image Gallery Upload */}
               <div>
-                <Label>Hình ảnh</Label>
-                {formData.imageUrl ? (
-                  <div className="relative mt-2">
-                    <img src={formData.imageUrl} alt="Preview" className="w-full h-48 object-cover rounded-lg border" />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute top-2 right-2 bg-red-500 text-white hover:bg-red-600"
-                      onClick={() => setFormData({...formData, imageUrl: ""})}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 mt-2 text-center">
+                <Label>Album ảnh (có thể upload nhiều ảnh)</Label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-2 mb-2">
+                  {formData.images.map((img, index) => (
+                    <div key={index} className="relative aspect-square rounded-lg overflow-hidden border group">
+                      <img src={img} alt={`Image ${index + 1}`} className="w-full h-full object-cover" />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-2 right-2 bg-red-500 text-white hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => {
+                          const newImages = formData.images.filter((_, i) => i !== index)
+                          setFormData({...formData, images: newImages})
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg aspect-square flex items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors">
                     <Input
                       type="file"
                       accept="image/*"
                       className="hidden"
-                      id="image-upload"
+                      id="gallery-upload"
+                      multiple
                       onChange={(e) => {
-                        const file = e.target.files?.[0]
-                        if (file) {
+                        const files = Array.from(e.target.files || [])
+                        files.forEach((file) => {
                           const reader = new FileReader()
                           reader.onloadend = () => {
-                            setFormData({...formData, imageUrl: reader.result as string})
+                            setFormData({
+                              ...formData,
+                              images: [...formData.images, reader.result as string],
+                            })
                           }
                           reader.readAsDataURL(file)
+                        })
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => document.getElementById('gallery-upload')?.click()}
+                      className="flex flex-col items-center justify-center w-full h-full"
+                    >
+                      <Upload className="h-8 w-8 text-gray-400 mb-2" />
+                      <span className="text-sm text-gray-500">Thêm ảnh</span>
+                    </Button>
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <Label className="text-sm text-gray-600 mb-2 block">Hoặc thêm URL ảnh:</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="https://example.com/image.jpg"
+                      className="flex-1"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          const input = e.target as HTMLInputElement
+                          if (input.value.trim()) {
+                            setFormData({
+                              ...formData,
+                              images: [...formData.images, input.value.trim()],
+                            })
+                            input.value = ''
+                          }
                         }
                       }}
                     />
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => document.getElementById('image-upload')?.click()}
+                      onClick={() => {
+                        const input = document.querySelector('input[placeholder="https://example.com/image.jpg"]') as HTMLInputElement
+                        if (input?.value.trim()) {
+                          setFormData({
+                            ...formData,
+                            images: [...formData.images, input.value.trim()],
+                          })
+                          input.value = ''
+                        }
+                      }}
                     >
-                      <Upload className="mr-2 h-4 w-4" />
-                      Upload hình ảnh
+                      <Plus className="h-4 w-4" />
                     </Button>
                   </div>
-                )}
-                <Input
-                  value={formData.imageUrl}
-                  onChange={(e) => setFormData({...formData, imageUrl: e.target.value})}
-                  placeholder="Hoặc nhập URL hình ảnh..."
-                  className="mt-2"
-                />
+                </div>
               </div>
 
               {/* Video URL */}

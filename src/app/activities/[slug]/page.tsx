@@ -491,41 +491,83 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
         )}
 
         {/* Image Gallery */}
-        {activity.images && activity.images.length > 0 && (
-          <Card className="mb-8">
-            <CardContent className="p-6">
-              <h2 className="text-2xl font-bold mb-4 flex items-center">
-                <ImageIcon className="mr-2 h-6 w-6 text-orange-500" />
-                Album ảnh
-              </h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {activity.images.map((img: string, index: number) => (
-                  <div 
-                    key={index}
-                    className="relative aspect-square bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
-                  >
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <ImageIcon className="h-12 w-12 text-gray-400" />
+        {(() => {
+          // Parse images from JSON string or use array directly
+          let imageArray: string[] = []
+          if (activity.images) {
+            if (typeof activity.images === 'string') {
+              try {
+                imageArray = JSON.parse(activity.images)
+              } catch (e) {
+                // If parsing fails, try splitting by comma
+                imageArray = activity.images.split(',').map((s: string) => s.trim()).filter((s: string) => s)
+              }
+            } else if (Array.isArray(activity.images)) {
+              imageArray = activity.images
+            }
+          }
+          
+          // Fallback to imageUrl if no images array
+          if (imageArray.length === 0 && activity.imageUrl) {
+            imageArray = [activity.imageUrl]
+          }
+          
+          return imageArray.length > 0 ? (
+            <Card className="mb-8">
+              <CardContent className="p-6">
+                <h2 className="text-2xl font-bold mb-4 flex items-center">
+                  <ImageIcon className="mr-2 h-6 w-6 text-orange-500" />
+                  Album ảnh
+                </h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {imageArray.map((img: string, index: number) => (
+                    <div 
+                      key={index}
+                      className="relative aspect-square rounded-lg overflow-hidden border cursor-pointer hover:opacity-90 transition-opacity group"
+                    >
+                      <img 
+                        src={img} 
+                        alt={`Hình ảnh ${index + 1}`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          // Fallback nếu ảnh lỗi
+                          const target = e.target as HTMLImageElement
+                          target.src = '/api/placeholder/400/400'
+                        }}
+                      />
                     </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Main Image */}
-        {activity.imageUrl && !activity.videoUrl && (
-          <Card className="mb-8">
-            <CardContent className="p-0">
-              <div className="relative w-full aspect-video bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg overflow-hidden">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <ImageIcon className="h-24 w-24 text-gray-400" />
+                  ))}
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+              </CardContent>
+            </Card>
+          ) : null
+        })()}
+
+        {/* Main Image - Only show if no video and no gallery */}
+        {(() => {
+          const hasGallery = activity.images && (
+            typeof activity.images === 'string' 
+              ? activity.images.trim() !== '' 
+              : Array.isArray(activity.images) && activity.images.length > 0
+          )
+          return activity.imageUrl && !activity.videoUrl && !hasGallery ? (
+            <Card className="mb-8">
+              <CardContent className="p-0">
+                <div className="relative w-full aspect-video rounded-lg overflow-hidden">
+                  <img 
+                    src={activity.imageUrl} 
+                    alt={activity.title}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement
+                      target.src = '/api/placeholder/800/450'
+                    }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          ) : null
+        })()}
 
         {/* Content */}
         <Card className="mb-8">

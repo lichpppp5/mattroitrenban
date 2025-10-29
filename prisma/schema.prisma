@@ -66,7 +66,8 @@ model Activity {
   title         String
   slug          String    @unique
   content       String    @db.Text
-  imageUrl      String?
+  imageUrl      String?   // Ảnh chính (deprecated - dùng images array)
+  images        String?   @db.Text // JSON array of image URLs: ["url1", "url2", ...]
   videoUrl      String?   // URL video từ YouTube, Vimeo, hoặc Cloudinary
   category      String?
   location      String?   // Địa điểm chuyến đi
