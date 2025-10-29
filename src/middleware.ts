@@ -1,22 +1,25 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { getToken } from "next-auth/jwt"
 
 export async function middleware(request: NextRequest) {
-  const session = await getServerSession(authOptions)
+  const token = await getToken({ 
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET || "development-secret"
+  })
   const { pathname } = request.nextUrl
 
   // Protect admin routes (but allow login page)
   if (pathname.startsWith("/root-admin") && !pathname.startsWith("/root-admin/login")) {
-    if (!session) {
+    if (!token) {
       const loginUrl = new URL("/root-admin/login", request.url)
       loginUrl.searchParams.set("callbackUrl", pathname)
       return NextResponse.redirect(loginUrl)
     }
 
     // Check if user has admin role
-    if (session.user.role !== "admin" && session.user.role !== "editor") {
+    const userRole = token.role as string
+    if (userRole !== "admin" && userRole !== "editor") {
       return NextResponse.redirect(new URL("/", request.url))
     }
   }
