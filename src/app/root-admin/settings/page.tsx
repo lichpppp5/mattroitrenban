@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -56,10 +56,166 @@ export default function AdminSettings() {
     floatingMenuMessenger: "https://m.me/mattroitrenban",
     floatingMenuEmail: "info@mattroitrenban.vn",
   })
+  
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<"success" | "error" | null>(null)
 
-  const handleSave = () => {
-    console.log("Saving settings:", settings)
-    // Save logic here
+  // Fetch settings from API on mount
+  useEffect(() => {
+    fetchSettings()
+  }, [])
+
+  const fetchSettings = async () => {
+    try {
+      setIsLoading(true)
+      const response = await fetch("/api/content")
+      if (!response.ok) throw new Error("Failed to fetch settings")
+      const data = await response.json()
+      
+      // Update settings from database
+      setSettings(prev => ({
+        ...prev,
+        siteName: data["site.name"] || prev.siteName,
+        siteUrl: data["site.url"] || prev.siteUrl,
+        siteDescription: data["site.description"] || prev.siteDescription,
+        primaryColor: data["site.primaryColor"] || prev.primaryColor,
+        secondaryColor: data["site.secondaryColor"] || prev.secondaryColor,
+        logoUrl: data["site.logo"] || prev.logoUrl,
+        bannerUrl: data["site.banner"] || prev.bannerUrl,
+        faviconUrl: data["site.favicon"] || prev.faviconUrl,
+        facebookUrl: data["site.social.facebook"] || prev.facebookUrl,
+        instagramUrl: data["site.social.instagram"] || prev.instagramUrl,
+        youtubeUrl: data["site.social.youtube"] || prev.youtubeUrl,
+        twitterUrl: data["site.social.twitter"] || prev.twitterUrl,
+        floatingMenuEnabled: data["site.floatingMenu.enabled"] !== undefined 
+          ? data["site.floatingMenu.enabled"] 
+          : prev.floatingMenuEnabled,
+        floatingMenuPhone: data["site.floatingMenu.phone"] || prev.floatingMenuPhone,
+        floatingMenuMessenger: data["site.floatingMenu.messenger"] || prev.floatingMenuMessenger,
+        floatingMenuEmail: data["site.floatingMenu.email"] || prev.floatingMenuEmail,
+      }))
+    } catch (err: any) {
+      console.error("Error fetching settings:", err)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleSave = async () => {
+    try {
+      setIsSaving(true)
+      setSaveStatus(null)
+      
+      // Save all settings to API
+      const savePromises = [
+        // General
+        fetch("/api/content", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: "site.name", value: settings.siteName, type: "text" }),
+        }),
+        fetch("/api/content", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: "site.url", value: settings.siteUrl, type: "text" }),
+        }),
+        fetch("/api/content", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: "site.description", value: settings.siteDescription, type: "text" }),
+        }),
+        
+        // Appearance
+        fetch("/api/content", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: "site.primaryColor", value: settings.primaryColor, type: "text" }),
+        }),
+        fetch("/api/content", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: "site.secondaryColor", value: settings.secondaryColor, type: "text" }),
+        }),
+        fetch("/api/content", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: "site.logo", value: settings.logoUrl, type: "image" }),
+        }),
+        fetch("/api/content", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: "site.banner", value: settings.bannerUrl, type: "image" }),
+        }),
+        fetch("/api/content", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: "site.favicon", value: settings.faviconUrl, type: "text" }),
+        }),
+        
+        // Social Media
+        fetch("/api/content", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: "site.social.facebook", value: settings.facebookUrl, type: "text" }),
+        }),
+        fetch("/api/content", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: "site.social.instagram", value: settings.instagramUrl, type: "text" }),
+        }),
+        fetch("/api/content", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: "site.social.youtube", value: settings.youtubeUrl, type: "text" }),
+        }),
+        fetch("/api/content", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: "site.social.twitter", value: settings.twitterUrl, type: "text" }),
+        }),
+        
+        // Floating Menu
+        fetch("/api/content", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            key: "site.floatingMenu.enabled", 
+            value: String(settings.floatingMenuEnabled), 
+            type: "text" 
+          }),
+        }),
+        fetch("/api/content", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: "site.floatingMenu.phone", value: settings.floatingMenuPhone, type: "text" }),
+        }),
+        fetch("/api/content", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: "site.floatingMenu.messenger", value: settings.floatingMenuMessenger, type: "text" }),
+        }),
+        fetch("/api/content", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: "site.floatingMenu.email", value: settings.floatingMenuEmail, type: "text" }),
+        }),
+      ]
+      
+      await Promise.all(savePromises)
+      
+      setSaveStatus("success")
+      setTimeout(() => setSaveStatus(null), 3000)
+      
+      // Refresh settings to confirm save
+      await fetchSettings()
+    } catch (err: any) {
+      console.error("Error saving settings:", err)
+      setSaveStatus("error")
+      setTimeout(() => setSaveStatus(null), 3000)
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   return (
@@ -70,13 +226,35 @@ export default function AdminSettings() {
           <h2 className="text-3xl font-bold text-gray-900">Cài đặt Website</h2>
           <p className="text-gray-600">Cấu hình các thông số của website</p>
         </div>
-        <Button onClick={handleSave} className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600">
+        <Button 
+          onClick={handleSave} 
+          disabled={isSaving || isLoading}
+          className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 disabled:opacity-50"
+        >
           <Save className="mr-2 h-4 w-4" />
-          Lưu cài đặt
+          {isSaving ? "Đang lưu..." : "Lưu cài đặt"}
         </Button>
       </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      
+      {/* Save Status */}
+      {saveStatus === "success" && (
+        <div className="p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
+          ✅ Đã lưu cài đặt thành công!
+        </div>
+      )}
+      {saveStatus === "error" && (
+        <div className="p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+          ❌ Lỗi khi lưu cài đặt. Vui lòng thử lại.
+        </div>
+      )}
+      
+      {isLoading ? (
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto"></div>
+          <p className="text-gray-500 mt-4">Đang tải cài đặt...</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* General Settings */}
         <Card>
           <CardHeader>
@@ -196,7 +374,23 @@ export default function AdminSettings() {
                       variant="ghost"
                       size="icon"
                       className="absolute -top-2 -right-2 bg-red-500 text-white hover:bg-red-600"
-                      onClick={() => setSettings({...settings, logoUrl: ""})}
+                      onClick={async () => {
+                        setSettings({...settings, logoUrl: ""})
+                        // Also delete from database
+                        try {
+                          await fetch("/api/content", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ 
+                              key: "site.logo", 
+                              value: "", 
+                              type: "image" 
+                            }),
+                          })
+                        } catch (err) {
+                          console.error("Error deleting logo:", err)
+                        }
+                      }}
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -210,15 +404,48 @@ export default function AdminSettings() {
                       accept="image/*"
                       className="hidden"
                       id="logo-upload"
-                      onChange={(e) => {
+                      onChange={async (e) => {
                         const file = e.target.files?.[0]
                         if (file) {
-                          // In production, upload to Cloudinary first
-                          const reader = new FileReader()
-                          reader.onloadend = () => {
-                            setSettings({...settings, logoUrl: reader.result as string})
+                          try {
+                            // Check file size (max 5MB)
+                            if (file.size > 5 * 1024 * 1024) {
+                              alert("File quá lớn! Vui lòng chọn file nhỏ hơn 5MB")
+                              return
+                            }
+                            
+                            // For now, convert to base64 for storage
+                            // In production, upload to Cloudinary first
+                            const reader = new FileReader()
+                            reader.onloadend = async () => {
+                              const base64Url = reader.result as string
+                              setSettings({...settings, logoUrl: base64Url})
+                              
+                              // Auto-save to database
+                              try {
+                                await fetch("/api/content", {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ 
+                                    key: "site.logo", 
+                                    value: base64Url, 
+                                    type: "image" 
+                                  }),
+                                })
+                                setSaveStatus("success")
+                                setTimeout(() => setSaveStatus(null), 2000)
+                              } catch (err) {
+                                console.error("Error auto-saving logo:", err)
+                              }
+                            }
+                            reader.onerror = () => {
+                              alert("Lỗi khi đọc file. Vui lòng thử lại.")
+                            }
+                            reader.readAsDataURL(file)
+                          } catch (err) {
+                            alert("Lỗi khi upload logo. Vui lòng thử lại.")
+                            console.error("Upload error:", err)
                           }
-                          reader.readAsDataURL(file)
                         }
                       }}
                     />
@@ -257,7 +484,23 @@ export default function AdminSettings() {
                       variant="ghost"
                       size="icon"
                       className="absolute top-2 right-2 bg-red-500 text-white hover:bg-red-600"
-                      onClick={() => setSettings({...settings, bannerUrl: ""})}
+                      onClick={async () => {
+                        setSettings({...settings, bannerUrl: ""})
+                        // Also delete from database
+                        try {
+                          await fetch("/api/content", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ 
+                              key: "site.banner", 
+                              value: "", 
+                              type: "image" 
+                            }),
+                          })
+                        } catch (err) {
+                          console.error("Error deleting banner:", err)
+                        }
+                      }}
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -271,15 +514,48 @@ export default function AdminSettings() {
                       accept="image/*"
                       className="hidden"
                       id="banner-upload"
-                      onChange={(e) => {
+                      onChange={async (e) => {
                         const file = e.target.files?.[0]
                         if (file) {
-                          // In production, upload to Cloudinary first
-                          const reader = new FileReader()
-                          reader.onloadend = () => {
-                            setSettings({...settings, bannerUrl: reader.result as string})
+                          try {
+                            // Check file size (max 10MB for banner)
+                            if (file.size > 10 * 1024 * 1024) {
+                              alert("File quá lớn! Vui lòng chọn file nhỏ hơn 10MB")
+                              return
+                            }
+                            
+                            // For now, convert to base64 for storage
+                            // In production, upload to Cloudinary first
+                            const reader = new FileReader()
+                            reader.onloadend = async () => {
+                              const base64Url = reader.result as string
+                              setSettings({...settings, bannerUrl: base64Url})
+                              
+                              // Auto-save to database
+                              try {
+                                await fetch("/api/content", {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ 
+                                    key: "site.banner", 
+                                    value: base64Url, 
+                                    type: "image" 
+                                  }),
+                                })
+                                setSaveStatus("success")
+                                setTimeout(() => setSaveStatus(null), 2000)
+                              } catch (err) {
+                                console.error("Error auto-saving banner:", err)
+                              }
+                            }
+                            reader.onerror = () => {
+                              alert("Lỗi khi đọc file. Vui lòng thử lại.")
+                            }
+                            reader.readAsDataURL(file)
+                          } catch (err) {
+                            alert("Lỗi khi upload banner. Vui lòng thử lại.")
+                            console.error("Upload error:", err)
                           }
-                          reader.readAsDataURL(file)
                         }
                       }}
                     />
@@ -561,7 +837,8 @@ export default function AdminSettings() {
             </div>
           </CardContent>
         </Card>
-      </div>
+        </div>
+      )}
     </div>
   )
 }
