@@ -1,269 +1,609 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { TrendingUp, TrendingDown, DollarSign, Calendar, Filter, Download } from "lucide-react"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from "recharts"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { TrendingUp, TrendingDown, DollarSign, Calendar, Filter, Download, Loader2, Target, Gift, Receipt, Wallet, MapPin, Users, Heart, AlertCircle } from "lucide-react"
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, Legend } from "recharts"
+
+interface TransparencyData {
+  summary: {
+    totalDonations: number
+    totalCampaignDonations: number
+    totalGeneralDonations: number
+    totalExpenses: number
+    balance: number
+    donationCount: number
+    expenseCount: number
+  }
+  monthlyData: Array<{
+    month: string
+    income: number
+    expense: number
+    balance: number
+  }>
+  categoryData: Array<{
+    name: string
+    value: number
+    color: string
+  }>
+  donations: Array<{
+    id: string
+    name: string
+    amount: number
+    message: string | null
+    isAnonymous: boolean
+    createdAt: string
+    activity: {
+      id: string
+      title: string
+      slug: string
+      location: string | null
+    } | null
+  }>
+  expenses: Array<{
+    id: string
+    title: string
+    amount: number
+    description: string | null
+    category: string | null
+    createdAt: string
+    activity: {
+      id: string
+      title: string
+      slug: string
+      location: string | null
+    } | null
+  }>
+  transactions: Array<{
+    id: string
+    type: "income" | "expense"
+    date: string
+    description: string
+    amount: number
+    detail: any
+  }>
+}
 
 export default function Transparency() {
-  const [selectedPeriod, setSelectedPeriod] = useState("2024")
-  const [selectedCategory, setSelectedCategory] = useState("all")
+  const [data, setData] = useState<TransparencyData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+  const [selectedFilter, setSelectedFilter] = useState<"all" | "campaign" | "general">("all")
 
-  // Sample data
-  const monthlyData = [
-    { month: "T1", income: 50000000, expense: 30000000, balance: 20000000 },
-    { month: "T2", income: 75000000, expense: 45000000, balance: 30000000 },
-    { month: "T3", income: 60000000, expense: 40000000, balance: 20000000 },
-    { month: "T4", income: 80000000, expense: 50000000, balance: 30000000 },
-    { month: "T5", income: 70000000, expense: 35000000, balance: 35000000 },
-    { month: "T6", income: 90000000, expense: 60000000, balance: 30000000 },
-  ]
+  useEffect(() => {
+    fetchData()
+  }, [])
 
-  const expenseData = [
-    { name: "Giáo dục", value: 200000000, color: "#F4A261" },
-    { name: "Y tế", value: 150000000, color: "#2A9D8F" },
-    { name: "Cơ sở hạ tầng", value: 100000000, color: "#E76F51" },
-    { name: "Hỗ trợ khẩn cấp", value: 50000000, color: "#264653" },
-  ]
+  const fetchData = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch("/api/transparency")
+      if (!response.ok) throw new Error("Failed to fetch transparency data")
+      const transparencyData = await response.json()
+      setData(transparencyData)
+      setError("")
+    } catch (err: any) {
+      console.error("Error fetching transparency data:", err)
+      setError(err.message || "Không thể tải dữ liệu minh bạch")
+    } finally {
+      setLoading(false)
+    }
+  }
 
-  const recentTransactions = [
-    { id: 1, date: "2024-06-15", description: "Quyên góp từ Nguyễn Văn A", amount: 500000, type: "income" },
-    { id: 2, date: "2024-06-14", description: "Xây dựng trường học tại bản X", amount: -20000000, type: "expense" },
-    { id: 3, date: "2024-06-13", description: "Quyên góp từ Trần Thị B", amount: 1000000, type: "income" },
-    { id: 4, date: "2024-06-12", description: "Khám bệnh miễn phí", amount: -5000000, type: "expense" },
-    { id: 5, date: "2024-06-11", description: "Quyên góp từ người ẩn danh", amount: 200000, type: "income" },
-  ]
+  const filteredDonations = data?.donations.filter(d => {
+    if (selectedFilter === "campaign") return d.activity !== null
+    if (selectedFilter === "general") return d.activity === null
+    return true
+  }) || []
 
-  const totalIncome = 500000000
-  const totalExpense = 400000000
-  const currentBalance = totalIncome - totalExpense
+  const filteredTransactions = data?.transactions.filter(t => {
+    if (selectedFilter === "campaign") {
+      if (t.type === "income") return t.detail.activity !== null
+      if (t.type === "expense") return t.detail.activity !== null
+    }
+    if (selectedFilter === "general") {
+      if (t.type === "income") return t.detail.activity === null
+      if (t.type === "expense") return t.detail.activity === null
+    }
+    return true
+  }) || []
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-orange-500 mx-auto mb-3" />
+          <p className="text-gray-600">Đang tải dữ liệu minh bạch...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !data) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <p className="text-red-600 mb-4">{error || "Không thể tải dữ liệu"}</p>
+          <Button onClick={fetchData}>Thử lại</Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-yellow-50 via-orange-50 to-red-50 py-20">
+      <section className="bg-gradient-to-br from-yellow-50 via-orange-50 to-red-50 py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
+            <div className="flex justify-center mb-6">
+              <div className="bg-gradient-to-r from-green-400 to-blue-500 rounded-full p-4 shadow-lg transform hover:scale-105 transition-transform">
+                <DollarSign className="h-12 w-12 text-white" />
+              </div>
+            </div>
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 font-poppins">
               Minh bạch tài chính
             </h1>
-            <p className="text-xl text-gray-700 max-w-3xl mx-auto">
+            <p className="text-xl text-gray-700 max-w-3xl mx-auto leading-relaxed">
               Chúng tôi cam kết minh bạch hoàn toàn trong việc sử dụng mọi đồng quyên góp. 
-              Tất cả các khoản thu chi đều được công khai và báo cáo định kỳ.
+              Tất cả các khoản thu chi đều được công khai và cập nhật theo thời gian thực.
             </p>
           </div>
         </div>
       </section>
 
       {/* Summary Cards */}
-      <section className="py-16 bg-white">
+      <section className="py-12 md:py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-            <Card className="border-green-200 bg-green-50">
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="bg-green-500 rounded-full p-3 mr-4">
-                    <TrendingUp className="h-6 w-6 text-white" />
-                  </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <Card className="border-l-4 border-l-green-500 shadow-lg">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-green-600">Tổng thu</p>
-                    <p className="text-2xl font-bold text-green-700">
-                      {totalIncome.toLocaleString()}đ
+                    <p className="text-sm text-gray-600">Tổng quyên góp</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {data.summary.totalDonations.toLocaleString("vi-VN")}₫
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {data.summary.donationCount} lượt quyên góp
                     </p>
                   </div>
+                  <TrendingUp className="h-12 w-12 text-green-500" />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-red-200 bg-red-50">
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="bg-red-500 rounded-full p-3 mr-4">
-                    <TrendingDown className="h-6 w-6 text-white" />
-                  </div>
+            <Card className="border-l-4 border-l-blue-500 shadow-lg">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-red-600">Tổng chi</p>
-                    <p className="text-2xl font-bold text-red-700">
-                      {totalExpense.toLocaleString()}đ
+                    <p className="text-sm text-gray-600">Quyên góp dự án</p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {data.summary.totalCampaignDonations.toLocaleString("vi-VN")}₫
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {data.summary.totalDonations > 0 
+                        ? Math.round((data.summary.totalCampaignDonations / data.summary.totalDonations) * 100) 
+                        : 0}% tổng quyên góp
                     </p>
                   </div>
+                  <Target className="h-12 w-12 text-blue-500" />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-blue-200 bg-blue-50">
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="bg-blue-500 rounded-full p-3 mr-4">
-                    <DollarSign className="h-6 w-6 text-white" />
-                  </div>
+            <Card className="border-l-4 border-l-purple-500 shadow-lg">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-blue-600">Số dư hiện tại</p>
-                    <p className="text-2xl font-bold text-blue-700">
-                      {currentBalance.toLocaleString()}đ
+                    <p className="text-sm text-gray-600">Quyên góp chung</p>
+                    <p className="text-2xl font-bold text-purple-600">
+                      {data.summary.totalGeneralDonations.toLocaleString("vi-VN")}₫
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {data.summary.totalDonations > 0 
+                        ? Math.round((data.summary.totalGeneralDonations / data.summary.totalDonations) * 100) 
+                        : 0}% tổng quyên góp
                     </p>
                   </div>
+                  <Gift className="h-12 w-12 text-purple-500" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className={`border-l-4 shadow-lg ${data.summary.balance >= 0 ? 'border-l-red-500' : 'border-l-orange-500'}`}>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Tổng chi tiêu</p>
+                    <p className="text-2xl font-bold text-red-600">
+                      {data.summary.totalExpenses.toLocaleString("vi-VN")}₫
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {data.summary.expenseCount} khoản chi
+                    </p>
+                  </div>
+                  <Receipt className="h-12 w-12 text-red-500" />
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Filters */}
-          <div className="flex flex-col md:flex-row gap-4 mb-8">
-            <div className="flex items-center space-x-2">
-              <Filter className="h-5 w-5 text-gray-500" />
-              <span className="text-sm font-medium">Lọc theo:</span>
-            </div>
-            <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Chọn năm" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="2024">2024</SelectItem>
-                <SelectItem value="2023">2023</SelectItem>
-                <SelectItem value="2022">2022</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Chọn danh mục" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả</SelectItem>
-                <SelectItem value="education">Giáo dục</SelectItem>
-                <SelectItem value="healthcare">Y tế</SelectItem>
-                <SelectItem value="infrastructure">Cơ sở hạ tầng</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button variant="outline" className="ml-auto">
-              <Download className="h-4 w-4 mr-2" />
-              Xuất báo cáo
-            </Button>
-          </div>
+          {/* Balance Card */}
+          <Card className={`border-2 shadow-lg mb-8 ${data.summary.balance >= 0 ? 'border-blue-300 bg-blue-50' : 'border-orange-300 bg-orange-50'}`}>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 font-medium">Số dư quỹ hiện tại</p>
+                  <p className={`text-3xl font-bold ${data.summary.balance >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
+                    {data.summary.balance.toLocaleString("vi-VN")}₫
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Tỷ lệ sử dụng: {data.summary.totalDonations > 0 
+                      ? Math.round((data.summary.totalExpenses / data.summary.totalDonations) * 100) 
+                      : 0}%
+                  </p>
+                </div>
+                <Wallet className={`h-16 w-16 ${data.summary.balance >= 0 ? 'text-blue-500' : 'text-orange-500'}`} />
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </section>
 
-      {/* Charts */}
-      <section className="py-16 bg-gray-50">
+      {/* Charts Section */}
+      <section className="py-12 md:py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             {/* Income vs Expense Chart */}
-            <Card>
+            <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle>Biểu đồ thu chi theo tháng</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={monthlyData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip formatter={(value) => `${value.toLocaleString()}đ`} />
-                    <Line type="monotone" dataKey="income" stroke="#10B981" strokeWidth={2} name="Thu" />
-                    <Line type="monotone" dataKey="expense" stroke="#EF4444" strokeWidth={2} name="Chi" />
-                  </LineChart>
-                </ResponsiveContainer>
+                {data.monthlyData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={data.monthlyData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" />
+                      <YAxis />
+                      <Tooltip 
+                        formatter={(value: any) => `${Number(value).toLocaleString("vi-VN")}₫`}
+                      />
+                      <Legend />
+                      <Line 
+                        type="monotone" 
+                        dataKey="income" 
+                        stroke="#10B981" 
+                        strokeWidth={2} 
+                        name="Quyên góp" 
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="expense" 
+                        stroke="#EF4444" 
+                        strokeWidth={2} 
+                        name="Chi tiêu" 
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-[300px] text-gray-500">
+                    Chưa có dữ liệu theo tháng
+                  </div>
+                )}
               </CardContent>
             </Card>
 
             {/* Expense Distribution */}
-            <Card>
+            <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle>Phân bổ chi tiêu theo danh mục</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={expenseData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={(entry: any) => {
-                        const percent = entry.percent as number
-                        return `${entry.name} ${(percent * 100).toFixed(0)}%`
-                      }}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {expenseData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value) => `${value.toLocaleString()}đ`} />
-                  </PieChart>
-                </ResponsiveContainer>
+                {data.categoryData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={data.categoryData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={(entry: any) => {
+                          const percent = entry.percent as number
+                          return `${entry.name} ${(percent * 100).toFixed(0)}%`
+                        }}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {data.categoryData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value: any) => `${Number(value).toLocaleString("vi-VN")}₫`} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-[300px] text-gray-500">
+                    Chưa có chi tiêu nào
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
 
           {/* Monthly Balance Chart */}
-          <Card>
+          <Card className="shadow-lg">
             <CardHeader>
               <CardTitle>Số dư quỹ theo tháng</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={monthlyData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => `${value.toLocaleString()}đ`} />
-                  <Bar dataKey="balance" fill="#3B82F6" name="Số dư" />
-                </BarChart>
-              </ResponsiveContainer>
+              {data.monthlyData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={data.monthlyData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip formatter={(value: any) => `${Number(value).toLocaleString("vi-VN")}₫`} />
+                    <Bar dataKey="balance" fill="#3B82F6" name="Số dư" />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-[300px] text-gray-500">
+                  Chưa có dữ liệu theo tháng
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
       </section>
 
-      {/* Recent Transactions */}
-      <section className="py-16 bg-white">
+      {/* Detailed Transactions */}
+      <section className="py-12 md:py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-bold text-gray-900">Giao dịch gần đây</h2>
-            <Button variant="outline">
-              <Calendar className="h-4 w-4 mr-2" />
-              Xem tất cả
-            </Button>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Chi tiết giao dịch</h2>
+            <div className="flex items-center gap-4">
+              <Select value={selectedFilter} onValueChange={(value: any) => setSelectedFilter(value)}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Lọc giao dịch" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả</SelectItem>
+                  <SelectItem value="campaign">Quyên góp dự án</SelectItem>
+                  <SelectItem value="general">Quyên góp chung</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <Card>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Ngày</TableHead>
-                    <TableHead>Mô tả</TableHead>
-                    <TableHead className="text-right">Số tiền</TableHead>
-                    <TableHead>Loại</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {recentTransactions.map((transaction) => (
-                    <TableRow key={transaction.id}>
-                      <TableCell>{transaction.date}</TableCell>
-                      <TableCell>{transaction.description}</TableCell>
-                      <TableCell className="text-right">
-                        <span className={transaction.type === "income" ? "text-green-600" : "text-red-600"}>
-                          {transaction.amount > 0 ? "+" : ""}{transaction.amount.toLocaleString()}đ
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={transaction.type === "income" ? "default" : "destructive"}>
-                          {transaction.type === "income" ? "Thu" : "Chi"}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+
+          <Tabs defaultValue="all" className="space-y-6">
+            <TabsList className="grid w-full max-w-md grid-cols-3">
+              <TabsTrigger value="all">Tất cả</TabsTrigger>
+              <TabsTrigger value="donations">Quyên góp</TabsTrigger>
+              <TabsTrigger value="expenses">Chi tiêu</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="all" className="space-y-6">
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle>Giao dịch gần đây</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {filteredTransactions.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Ngày</TableHead>
+                            <TableHead>Mô tả</TableHead>
+                            <TableHead>Chiến dịch</TableHead>
+                            <TableHead className="text-right">Số tiền</TableHead>
+                            <TableHead>Loại</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredTransactions.map((transaction) => (
+                            <TableRow key={transaction.id}>
+                              <TableCell>
+                                {new Date(transaction.date).toLocaleDateString("vi-VN")}
+                              </TableCell>
+                              <TableCell className="max-w-xs">
+                                <div className="space-y-1">
+                                  <p className="font-medium">{transaction.description}</p>
+                                  {transaction.type === "income" && transaction.detail.message && (
+                                    <p className="text-xs text-gray-500 truncate">
+                                      {transaction.detail.message}
+                                    </p>
+                                  )}
+                                  {transaction.type === "expense" && transaction.detail.description && (
+                                    <p className="text-xs text-gray-500 truncate">
+                                      {transaction.detail.description}
+                                    </p>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                {transaction.detail.activity ? (
+                                  <Link 
+                                    href={`/activities/${transaction.detail.activity.slug}`}
+                                    className="text-blue-600 hover:text-blue-700 text-sm flex items-center gap-1"
+                                  >
+                                    <Target className="h-3 w-3" />
+                                    {transaction.detail.activity.title}
+                                  </Link>
+                                ) : (
+                                  <Badge variant="outline">Chung</Badge>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <span className={`font-bold ${transaction.type === "income" ? "text-green-600" : "text-red-600"}`}>
+                                  {transaction.amount > 0 ? "+" : ""}{transaction.amount.toLocaleString("vi-VN")}₫
+                                </span>
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant={transaction.type === "income" ? "default" : "destructive"}>
+                                  {transaction.type === "income" ? "Thu" : "Chi"}
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 text-gray-500">
+                      <Heart className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                      <p>Chưa có giao dịch nào</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="donations" className="space-y-6">
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle>Danh sách quyên góp ({filteredDonations.length})</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {filteredDonations.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Ngày</TableHead>
+                            <TableHead>Người quyên góp</TableHead>
+                            <TableHead>Chiến dịch</TableHead>
+                            <TableHead className="text-right">Số tiền</TableHead>
+                            <TableHead>Lời nhắn</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredDonations.map((donation) => (
+                            <TableRow key={donation.id}>
+                              <TableCell>
+                                {new Date(donation.createdAt).toLocaleDateString("vi-VN")}
+                              </TableCell>
+                              <TableCell className="font-medium">
+                                {donation.isAnonymous ? (
+                                  <span className="flex items-center gap-1 text-gray-500">
+                                    <Users className="h-4 w-4" />
+                                    Người ủng hộ ẩn danh
+                                  </span>
+                                ) : (
+                                  donation.name
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {donation.activity ? (
+                                  <Link 
+                                    href={`/activities/${donation.activity.slug}`}
+                                    className="text-blue-600 hover:text-blue-700 text-sm flex items-center gap-1"
+                                  >
+                                    <Target className="h-3 w-3" />
+                                    {donation.activity.title}
+                                  </Link>
+                                ) : (
+                                  <Badge variant="outline">Quyên góp chung</Badge>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-right font-bold text-green-600">
+                                {donation.amount.toLocaleString("vi-VN")}₫
+                              </TableCell>
+                              <TableCell className="max-w-xs">
+                                <p className="text-sm text-gray-600 truncate">
+                                  {donation.message || "-"}
+                                </p>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 text-gray-500">
+                      <Heart className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                      <p>Chưa có quyên góp nào</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="expenses" className="space-y-6">
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle>Danh sách chi tiêu ({data.expenses.length})</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {data.expenses.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Ngày</TableHead>
+                            <TableHead>Khoản mục</TableHead>
+                            <TableHead>Chiến dịch</TableHead>
+                            <TableHead>Danh mục</TableHead>
+                            <TableHead className="text-right">Số tiền</TableHead>
+                            <TableHead>Mô tả</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {data.expenses.map((expense) => (
+                            <TableRow key={expense.id}>
+                              <TableCell>
+                                {new Date(expense.createdAt).toLocaleDateString("vi-VN")}
+                              </TableCell>
+                              <TableCell className="font-medium">{expense.title}</TableCell>
+                              <TableCell>
+                                {expense.activity ? (
+                                  <Link 
+                                    href={`/activities/${expense.activity.slug}`}
+                                    className="text-blue-600 hover:text-blue-700 text-sm flex items-center gap-1"
+                                  >
+                                    <Target className="h-3 w-3" />
+                                    {expense.activity.title}
+                                  </Link>
+                                ) : (
+                                  <Badge variant="outline">Chi tiêu chung</Badge>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="outline">{expense.category || "Khác"}</Badge>
+                              </TableCell>
+                              <TableCell className="text-right font-bold text-red-600">
+                                {expense.amount.toLocaleString("vi-VN")}₫
+                              </TableCell>
+                              <TableCell className="max-w-xs">
+                                <p className="text-sm text-gray-600 truncate">
+                                  {expense.description || "-"}
+                                </p>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 text-gray-500">
+                      <Receipt className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                      <p>Chưa có chi tiêu nào</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </section>
 
@@ -280,7 +620,7 @@ export default function Transparency() {
               </div>
               <h3 className="text-xl font-semibold mb-2">Công khai tài chính</h3>
               <p className="text-sm">
-                Mọi khoản thu chi đều được công khai và báo cáo định kỳ
+                Mọi khoản thu chi đều được công khai và cập nhật theo thời gian thực
               </p>
             </div>
             <div>
@@ -289,7 +629,7 @@ export default function Transparency() {
               </div>
               <h3 className="text-xl font-semibold mb-2">Báo cáo định kỳ</h3>
               <p className="text-sm">
-                Báo cáo tài chính hàng tháng và hàng quý
+                Báo cáo tài chính chi tiết theo từng chiến dịch và theo tháng
               </p>
             </div>
             <div>
@@ -298,7 +638,7 @@ export default function Transparency() {
               </div>
               <h3 className="text-xl font-semibold mb-2">Hiệu quả sử dụng</h3>
               <p className="text-sm">
-                Đảm bảo mọi đồng quyên góp được sử dụng hiệu quả nhất
+                Đảm bảo mọi đồng quyên góp được sử dụng hiệu quả và minh bạch nhất
               </p>
             </div>
           </div>
