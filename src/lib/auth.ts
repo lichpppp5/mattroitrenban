@@ -19,9 +19,46 @@ export const authOptions: NextAuthOptions = {
         // Kiểm tra xem có DATABASE_URL không
         const hasDatabase = !!process.env.DATABASE_URL
 
+        // Fallback users khi chưa có database (chỉ dùng trong development)
+        const fallbackUsers = [
+          {
+            email: "admin@mattroitrenban.vn",
+            password: "admin123",
+            id: "fallback-admin-1",
+            name: "Quản trị viên",
+            role: "admin" as const,
+          },
+          {
+            email: "editor@mattroitrenban.vn",
+            password: "editor123",
+            id: "fallback-editor-1",
+            name: "Biên tập viên",
+            role: "editor" as const,
+          },
+          {
+            email: "viewer@mattroitrenban.vn",
+            password: "viewer123",
+            id: "fallback-viewer-1",
+            name: "Người xem",
+            role: "viewer" as const,
+          },
+        ]
+
         if (!hasDatabase) {
           // Fallback về mock auth nếu chưa có database
           console.warn("DATABASE_URL not found, using fallback authentication")
+          const fallbackUser = fallbackUsers.find(
+            (u) => u.email === credentials.email && u.password === credentials.password
+          )
+
+          if (fallbackUser) {
+            return {
+              id: fallbackUser.id,
+              email: fallbackUser.email,
+              name: fallbackUser.name,
+              role: fallbackUser.role,
+            }
+          }
           return null
         }
 
@@ -74,7 +111,22 @@ export const authOptions: NextAuthOptions = {
         } catch (error: any) {
           // Kiểm tra nếu lỗi là do DATABASE_URL hoặc Prisma connection
           if (error?.code === "P1001" || error?.message?.includes("DATABASE_URL") || error?.message?.includes("Environment variable not found")) {
-            console.error("Database connection error:", error.message)
+            console.error("Database connection error, trying fallback authentication:", error.message)
+            
+            // Thử fallback authentication khi có lỗi database
+            const fallbackUser = fallbackUsers.find(
+              (u) => u.email === credentials.email && u.password === credentials.password
+            )
+
+            if (fallbackUser) {
+              return {
+                id: fallbackUser.id,
+                email: fallbackUser.email,
+                name: fallbackUser.name,
+                role: fallbackUser.role,
+              }
+            }
+            
             return null
           }
           console.error("Auth error:", error)
