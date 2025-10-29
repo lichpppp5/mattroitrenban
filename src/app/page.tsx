@@ -2,8 +2,72 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Heart, Users, DollarSign, MapPin, ArrowRight, Star, Calendar, Clock, Video, Image as ImageIcon, Play } from "lucide-react"
+import { prisma } from "@/lib/prisma"
 
-export default function Home() {
+async function getRecentActivities() {
+  try {
+    const activities = await prisma.activity.findMany({
+      where: {
+        isPublished: true,
+        isUpcoming: false,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: 6,
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        imageUrl: true,
+        images: true,
+        videoUrl: true,
+        content: true,
+        category: true,
+        location: true,
+        tripDate: true,
+        createdAt: true,
+      },
+    })
+    return activities
+  } catch (error) {
+    console.error("Error fetching recent activities:", error)
+    return []
+  }
+}
+
+async function getUpcomingTrips() {
+  try {
+    const trips = await prisma.activity.findMany({
+      where: {
+        isPublished: true,
+        isUpcoming: true,
+      },
+      orderBy: {
+        tripDate: "asc",
+      },
+      take: 6,
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        location: true,
+        tripDate: true,
+        duration: true,
+        volunteerCount: true,
+        category: true,
+      },
+    })
+    return trips
+  } catch (error) {
+    console.error("Error fetching upcoming trips:", error)
+    return []
+  }
+}
+
+export default async function Home() {
+  const recentActivities = await getRecentActivities()
+  const upcomingTrips = await getUpcomingTrips()
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -131,123 +195,116 @@ export default function Home() {
               Cùng xem lại những khoảnh khắc đẹp và ý nghĩa từ các chuyến đi của chúng tôi
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {/* Video Post */}
-            <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-              <div className="relative h-64 bg-gradient-to-br from-yellow-400 to-orange-500">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="bg-white rounded-full p-4 cursor-pointer hover:scale-110 transition-transform">
-                    <Play className="h-12 w-12 text-orange-500 ml-1" fill="currentColor" />
-                  </div>
-                </div>
-                <div className="absolute top-4 left-4">
-                  <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center">
-                    <Video className="h-4 w-4 mr-1" />
-                    VIDEO
-                  </span>
-                </div>
-                <div className="absolute bottom-4 left-4 right-4">
-                  <p className="text-white font-semibold">15/06/2024</p>
-                </div>
-              </div>
-              <CardContent className="p-6">
-                <h3 className="text-xl font-semibold mb-2">Chuyến đi Bản X - Xây dựng trường học</h3>
-                <p className="text-gray-600 mb-4">
-                  Hành trình đầy cảm xúc khi chúng tôi cùng đồng bào xây dựng ngôi trường mới 
-                  cho các em nhỏ vùng cao. Video ghi lại toàn bộ quá trình và niềm vui của các em.
-                </p>
-                <div className="flex items-center text-sm text-gray-500 mb-4">
-                  <MapPin className="h-4 w-4 mr-1" />
-                  Bản X, Tỉnh Y
-                </div>
-                <Button asChild variant="outline" size="sm" className="w-full">
-                  <Link href="/activities/chuyen-di-ban-x">
-                    Xem video đầy đủ
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Image Gallery Post */}
-            <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-              <div className="relative h-64 bg-gradient-to-br from-green-400 to-blue-500">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="grid grid-cols-2 gap-2 p-4 w-full h-full">
-                    <div className="bg-white/20 rounded"></div>
-                    <div className="bg-white/20 rounded"></div>
-                    <div className="bg-white/20 rounded"></div>
-                    <div className="bg-white/20 rounded flex items-center justify-center">
-                      <span className="text-white font-bold">+12</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="absolute top-4 left-4">
-                  <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center">
-                    <ImageIcon className="h-4 w-4 mr-1" />
-                    HÌNH ẢNH
-                  </span>
-                </div>
-                <div className="absolute bottom-4 left-4 right-4">
-                  <p className="text-white font-semibold">10/06/2024</p>
-                </div>
-              </div>
-              <CardContent className="p-6">
-                <h3 className="text-xl font-semibold mb-2">Khám bệnh miễn phí tại 3 bản làng</h3>
-                <p className="text-gray-600 mb-4">
-                  Album ảnh ghi lại những khoảnh khắc đầy ấm áp khi chúng tôi tổ chức 
-                  khám bệnh và phát thuốc miễn phí cho đồng bào vùng cao.
-                </p>
-                <div className="flex items-center text-sm text-gray-500 mb-4">
-                  <MapPin className="h-4 w-4 mr-1" />
-                  Bản A, B, C - Tỉnh Y
-                </div>
-                <Button asChild variant="outline" size="sm" className="w-full">
-                  <Link href="/activities/kham-benh-mien-phi">
-                    Xem album đầy đủ
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Video Post 2 */}
-            <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-              <div className="relative h-64 bg-gradient-to-br from-purple-400 to-pink-500">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="bg-white rounded-full p-4 cursor-pointer hover:scale-110 transition-transform">
-                    <Play className="h-12 w-12 text-purple-500 ml-1" fill="currentColor" />
-                  </div>
-                </div>
-                <div className="absolute top-4 left-4">
-                  <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center">
-                    <Video className="h-4 w-4 mr-1" />
-                    VIDEO
-                  </span>
-                </div>
-                <div className="absolute bottom-4 left-4 right-4">
-                  <p className="text-white font-semibold">05/06/2024</p>
-                </div>
-              </div>
-              <CardContent className="p-6">
-                <h3 className="text-xl font-semibold mb-2">Trao học bổng tại Bản Z</h3>
-                <p className="text-gray-600 mb-4">
-                  Video cảm động về buổi lễ trao 30 suất học bổng cho các em học sinh nghèo hiếu học. 
-                  Những nụ cười rạng rỡ và lời cảm ơn chân thành.
-                </p>
-                <div className="flex items-center text-sm text-gray-500 mb-4">
-                  <MapPin className="h-4 w-4 mr-1" />
-                  Bản Z, Tỉnh Y
-                </div>
-                <Button asChild variant="outline" size="sm" className="w-full">
-                  <Link href="/activities/trao-hoc-bong">
-                    Xem video đầy đủ
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+          {recentActivities.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500">Chưa có hoạt động nào được đăng tải</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {recentActivities.map((activity) => {
+                // Parse images if exists
+                let imageArray: string[] = []
+                if (activity.images) {
+                  try {
+                    imageArray = typeof activity.images === 'string' 
+                      ? JSON.parse(activity.images) 
+                      : Array.isArray(activity.images) 
+                      ? activity.images 
+                      : []
+                  } catch {
+                    imageArray = []
+                  }
+                }
+                const hasImage = activity.imageUrl || imageArray.length > 0
+                const hasVideo = !!activity.videoUrl
+                const dateStr = activity.tripDate 
+                  ? new Date(activity.tripDate).toLocaleDateString("vi-VN")
+                  : activity.createdAt
+                  ? new Date(activity.createdAt).toLocaleDateString("vi-VN")
+                  : ""
+                
+                return (
+                  <Card key={activity.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                    <Link href={`/activities/${activity.slug}`}>
+                      <div className="relative h-64 bg-gradient-to-br from-yellow-400 to-orange-500">
+                        {hasImage ? (
+                          <img 
+                            src={activity.imageUrl || imageArray[0]} 
+                            alt={activity.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : hasVideo ? (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="bg-white rounded-full p-4 cursor-pointer hover:scale-110 transition-transform">
+                              <Play className="h-12 w-12 text-orange-500 ml-1" fill="currentColor" />
+                            </div>
+                          </div>
+                        ) : imageArray.length > 0 ? (
+                          <div className="grid grid-cols-2 gap-2 p-4 w-full h-full">
+                            {imageArray.slice(0, 3).map((img, idx) => (
+                              <div key={idx} className="bg-white/20 rounded overflow-hidden">
+                                <img src={img} alt={`${activity.title} ${idx + 1}`} className="w-full h-full object-cover" />
+                              </div>
+                            ))}
+                            {imageArray.length > 3 && (
+                              <div className="bg-white/20 rounded flex items-center justify-center">
+                                <span className="text-white font-bold">+{imageArray.length - 3}</span>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <ImageIcon className="h-16 w-16 text-white" />
+                          </div>
+                        )}
+                        {hasVideo && (
+                          <div className="absolute top-4 left-4">
+                            <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center">
+                              <Video className="h-4 w-4 mr-1" />
+                              VIDEO
+                            </span>
+                          </div>
+                        )}
+                        {!hasImage && !hasVideo && imageArray.length === 0 && (
+                          <div className="absolute top-4 left-4">
+                            <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center">
+                              <ImageIcon className="h-4 w-4 mr-1" />
+                              HÌNH ẢNH
+                            </span>
+                          </div>
+                        )}
+                        {dateStr && (
+                          <div className="absolute bottom-4 left-4 right-4">
+                            <p className="text-white font-semibold">{dateStr}</p>
+                          </div>
+                        )}
+                      </div>
+                    </Link>
+                    <CardContent className="p-6">
+                      <h3 className="text-xl font-semibold mb-2">{activity.title}</h3>
+                      <p className="text-gray-600 mb-4 line-clamp-3">
+                        {activity.content 
+                          ? activity.content.replace(/<[^>]*>/g, "").substring(0, 150) + "..."
+                          : "Không có mô tả"}
+                      </p>
+                      {activity.location && (
+                        <div className="flex items-center text-sm text-gray-500 mb-4">
+                          <MapPin className="h-4 w-4 mr-1" />
+                          {activity.location}
+                        </div>
+                      )}
+                      <Link href={`/activities/${activity.slug}`}>
+                        <Button variant="outline" size="sm" className="w-full">
+                          {hasVideo ? "Xem video đầy đủ" : imageArray.length > 0 ? "Xem album đầy đủ" : "Xem chi tiết"}
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
+          )}
           <div className="text-center mt-12">
             <Button asChild variant="outline" className="border-orange-500 text-orange-500 hover:bg-orange-50">
               <Link href="/activities">

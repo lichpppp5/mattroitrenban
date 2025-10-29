@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -14,80 +14,34 @@ import { Input } from "@/components/ui/input"
 export default function Activities() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("Tất cả")
+  const [activities, setActivities] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-  const activities = [
-    {
-      id: 1,
-      title: "Xây dựng trường học tại bản X, tỉnh Y",
-      slug: "xay-dung-truong-hoc-tai-ban-x-tinh-y",
-      content: "Hoàn thành xây dựng 2 phòng học mới với đầy đủ trang thiết bị, mang đến không gian học tập tốt hơn cho 50 em học sinh tại bản X, tỉnh Y. Dự án được thực hiện trong 3 tháng với tổng kinh phí 200 triệu đồng.",
-      category: "Giáo dục",
-      date: "2024-01-15",
-      location: "Bản X, Tỉnh Y",
-      participants: 50,
-      imageUrl: "/api/placeholder/400/250"
-    },
-    {
-      id: 2,
-      title: "Khám bệnh miễn phí cho đồng bào vùng cao",
-      slug: "kham-benh-mien-phi-cho-dong-bao-vung-cao",
-      content: "Tổ chức khám bệnh miễn phí cho 200 người dân tại 3 bản làng, cung cấp thuốc và tư vấn sức khỏe. Hoạt động có sự tham gia của 10 bác sĩ và 20 y tá tình nguyện.",
-      category: "Y tế",
-      date: "2024-02-20",
-      location: "3 bản làng, Tỉnh Z",
-      participants: 200,
-      imageUrl: "/api/placeholder/400/250"
-    },
-    {
-      id: 3,
-      title: "Trao học bổng cho học sinh nghèo hiếu học",
-      slug: "trao-hoc-bong-cho-hoc-sinh-ngheo-hieu-hoc",
-      content: "Trao 30 suất học bổng cho học sinh nghèo hiếu học, mỗi suất trị giá 2 triệu đồng. Chương trình nhằm khuyến khích các em tiếp tục học tập và phát triển tài năng.",
-      category: "Giáo dục",
-      date: "2024-03-10",
-      location: "5 tỉnh miền núi",
-      participants: 30,
-      imageUrl: "/api/placeholder/400/250"
-    },
-    {
-      id: 4,
-      title: "Xây dựng hệ thống nước sạch",
-      slug: "xay-dung-he-thong-nuoc-sach",
-      content: "Lắp đặt hệ thống nước sạch cho 100 hộ gia đình tại bản A, tỉnh B. Dự án giúp cải thiện chất lượng cuộc sống và giảm thiểu các bệnh liên quan đến nước không sạch.",
-      category: "Cơ sở hạ tầng",
-      date: "2024-04-05",
-      location: "Bản A, Tỉnh B",
-      participants: 100,
-      imageUrl: "/api/placeholder/400/250"
-    },
-    {
-      id: 5,
-      title: "Hỗ trợ phát triển kinh tế hộ gia đình",
-      slug: "ho-tro-phat-trien-kinh-te-ho-gia-dinh",
-      content: "Cung cấp giống cây trồng và đào tạo kỹ thuật canh tác cho 50 hộ gia đình. Chương trình giúp các hộ gia đình có thu nhập ổn định và phát triển kinh tế bền vững.",
-      category: "Phát triển kinh tế",
-      date: "2024-05-12",
-      location: "Bản C, Tỉnh D",
-      participants: 50,
-      imageUrl: "/api/placeholder/400/250"
-    },
-    {
-      id: 6,
-      title: "Tổ chức lớp học tiếng Việt cho trẻ em",
-      slug: "to-chuc-lop-hoc-tieng-viet-cho-tre-em",
-      content: "Mở lớp học tiếng Việt cho 80 trẻ em dân tộc thiểu số, giúp các em có thể giao tiếp tốt hơn và tiếp cận với giáo dục chính quy. Lớp học được tổ chức vào cuối tuần.",
-      category: "Giáo dục",
-      date: "2024-06-01",
-      location: "Bản E, Tỉnh F",
-      participants: 80,
-      imageUrl: "/api/placeholder/400/250"
+  // Fetch activities from API (only published)
+  useEffect(() => {
+    fetchActivities()
+  }, [])
+
+  const fetchActivities = async () => {
+    try {
+      setIsLoading(true)
+      const response = await fetch("/api/activities?published=true")
+      if (!response.ok) throw new Error("Failed to fetch activities")
+      const data = await response.json()
+      setActivities(data)
+    } catch (err) {
+      console.error("Error fetching activities:", err)
+      // Fallback to empty array if API fails
+      setActivities([])
+    } finally {
+      setIsLoading(false)
     }
-  ]
+  }
 
   // Filter activities
   const filteredActivities = activities.filter((activity) => {
-    const matchesSearch = activity.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         activity.content.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesSearch = activity.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         activity.content?.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesCategory = selectedCategory === "Tất cả" || activity.category === selectedCategory
     return matchesSearch && matchesCategory
   })
@@ -145,7 +99,14 @@ export default function Activities() {
       {/* Activities Grid */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {filteredActivities.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-12">
+              <div className="flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+                <span className="ml-3 text-gray-500">Đang tải...</span>
+              </div>
+            </div>
+          ) : filteredActivities.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-gray-500 text-lg">Không tìm thấy hoạt động nào</p>
             </div>
@@ -159,30 +120,44 @@ export default function Activities() {
                     </div>
                   </Link>
                   <CardHeader>
-                    <div className="flex items-center justify-between mb-2">
-                      <Badge variant="secondary" className="bg-orange-100 text-orange-600">
-                        {activity.category}
-                      </Badge>
-                      <span className="text-sm text-gray-500">{activity.date}</span>
-                    </div>
-                    <Link href={`/activities/${activity.slug}`}>
-                      <CardTitle className="text-lg line-clamp-2 hover:text-orange-500 transition-colors cursor-pointer">
-                        {activity.title}
-                      </CardTitle>
-                    </Link>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-600 mb-4 line-clamp-3">{activity.content}</p>
-                    <div className="space-y-2 text-sm text-gray-500 mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <Badge variant="secondary" className="bg-orange-100 text-orange-600">
+                      {activity.category || "Khác"}
+                    </Badge>
+                    <span className="text-sm text-gray-500">
+                      {activity.tripDate 
+                        ? new Date(activity.tripDate).toLocaleDateString("vi-VN")
+                        : activity.createdAt 
+                        ? new Date(activity.createdAt).toLocaleDateString("vi-VN")
+                        : ""}
+                    </span>
+                  </div>
+                  <Link href={`/activities/${activity.slug}`}>
+                    <CardTitle className="text-lg line-clamp-2 hover:text-orange-500 transition-colors cursor-pointer">
+                      {activity.title}
+                    </CardTitle>
+                  </Link>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600 mb-4 line-clamp-3">
+                    {activity.content 
+                      ? activity.content.replace(/<[^>]*>/g, "").substring(0, 150) + "..."
+                      : "Không có mô tả"}
+                  </p>
+                  <div className="space-y-2 text-sm text-gray-500 mb-4">
+                    {activity.location && (
                       <div className="flex items-center">
                         <MapPin className="h-4 w-4 mr-2" />
                         <span>{activity.location}</span>
                       </div>
+                    )}
+                    {activity.volunteerCount && (
                       <div className="flex items-center">
                         <Users className="h-4 w-4 mr-2" />
-                        <span>{activity.participants} người tham gia</span>
+                        <span>{activity.volunteerCount} tình nguyện viên</span>
                       </div>
-                    </div>
+                    )}
+                  </div>
                     <Button asChild variant="outline" size="sm" className="w-full">
                       <Link href={`/activities/${activity.slug}`}>
                         Xem chi tiết

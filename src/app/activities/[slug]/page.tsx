@@ -6,9 +6,30 @@ import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Calendar, MapPin, Clock, Users, Video, Image as ImageIcon, Share2 } from "lucide-react"
 import { ShareButtons } from "@/components/share-buttons"
 
-// Mock data - sẽ lấy từ database sau
-const getActivityBySlug = (slug: string) => {
-  const activities: Record<string, any> = {
+import { prisma } from "@/lib/prisma"
+
+// Fetch activity from database
+async function getActivityBySlug(slug: string) {
+  try {
+    const activity = await prisma.activity.findUnique({
+      where: { slug },
+    })
+    
+    // Public users chỉ xem published activities
+    // (Đã check ở API route, nhưng cũng check ở đây để an toàn)
+    if (!activity || !activity.isPublished) {
+      return null
+    }
+    
+    return activity
+  } catch (error) {
+    console.error("Error fetching activity:", error)
+    return null
+  }
+}
+
+// Fallback mock data (chỉ dùng khi API fail)
+const mockActivities: Record<string, any> = {
     "chuyen-di-ban-x": {
       id: 1,
       title: "Chuyến đi Bản X - Xây dựng trường học",
@@ -372,12 +393,13 @@ const getActivityBySlug = (slug: string) => {
     },
   }
   
-  return activities[slug] || null
+  // Try to fetch from API first, fallback to mock
+  return mockActivities[slug] || null
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const activity = getActivityBySlug(slug)
+  const activity = await getActivityBySlug(slug)
   
   if (!activity) {
     return {
@@ -385,15 +407,18 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     }
   }
   
+  // Strip HTML tags for description
+  const description = activity.content?.replace(/<[^>]*>/g, "").substring(0, 160) || ""
+  
   return {
     title: `${activity.title} - Mặt Trời Trên Bản`,
-    description: activity.content.substring(0, 160),
+    description: description,
   }
 }
 
 export default async function ActivityDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const activity = getActivityBySlug(slug)
+  const activity = await getActivityBySlug(slug)
   
   if (!activity) {
     notFound()

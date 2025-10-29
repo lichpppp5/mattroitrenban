@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,59 +11,37 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Switch } from "@/components/ui/switch"
+import Link from "next/link"
 import { Download, Search, Plus, FileText, Eye, Edit, Trash2, Upload, Image as ImageIcon, Video, X, Calendar } from "lucide-react"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 
 export default function AdminActivities() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingActivity, setEditingActivity] = useState<any>(null)
-  const [activities, setActivities] = useState([
-    {
-      id: 1,
-      title: "Xây dựng trường học tại bản X, tỉnh Y",
-      slug: "xay-dung-truong-hoc-ban-x-tinh-y",
-      category: "Giáo dục",
-      status: "published",
-      createdAt: "2024-06-15",
-      updatedAt: "2024-06-15",
-      views: 1250,
-      location: "Bản X, Tỉnh Y",
-      tripDate: "2024-06-15",
-      duration: 5,
-      volunteerCount: 15,
-      isUpcoming: false,
-    },
-    {
-      id: 2,
-      title: "Khám bệnh miễn phí cho đồng bào vùng cao",
-      slug: "kham-benh-mien-phi-dong-bao-vung-cao",
-      category: "Y tế",
-      status: "published",
-      createdAt: "2024-06-14",
-      updatedAt: "2024-06-14",
-      views: 890,
-      location: "Bản A, B, C - Tỉnh Y",
-      tripDate: "2024-06-14",
-      duration: 3,
-      volunteerCount: 20,
-      isUpcoming: false,
-    },
-    {
-      id: 3,
-      title: "Xây dựng cầu đi bộ tại Bản M",
-      slug: "xay-dung-cau-di-bo-ban-m",
-      category: "Cơ sở hạ tầng",
-      status: "preparing",
-      createdAt: "2024-06-13",
-      updatedAt: "2024-06-13",
-      views: 0,
-      location: "Bản M, Huyện X, Tỉnh Y",
-      tripDate: "2024-07-15",
-      duration: 5,
-      volunteerCount: 15,
-      isUpcoming: true,
-    },
-  ])
+  const [activities, setActivities] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string>("")
+
+  // Fetch activities from API
+  useEffect(() => {
+    fetchActivities()
+  }, [])
+
+  const fetchActivities = async () => {
+    try {
+      setIsLoading(true)
+      const response = await fetch("/api/activities")
+      if (!response.ok) throw new Error("Failed to fetch activities")
+      const data = await response.json()
+      setActivities(data)
+      setError("")
+    } catch (err: any) {
+      console.error("Error fetching activities:", err)
+      setError(err.message || "Failed to load activities")
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const [formData, setFormData] = useState({
     title: "",
@@ -129,11 +107,17 @@ export default function AdminActivities() {
       slug: activity.slug,
       content: activity.content || "",
       imageUrl: activity.imageUrl || "",
-      images: (activity.images && typeof activity.images === 'string' 
-        ? JSON.parse(activity.images) 
-        : Array.isArray(activity.images) 
-        ? activity.images 
-        : []) as string[],
+      images: (() => {
+        if (!activity.images) return []
+        if (typeof activity.images === 'string') {
+          try {
+            return JSON.parse(activity.images)
+          } catch {
+            return []
+          }
+        }
+        return Array.isArray(activity.images) ? activity.images : []
+      })(),
       videoUrl: activity.videoUrl || "",
       category: activity.category || "",
       location: activity.location || "",
@@ -147,43 +131,83 @@ export default function AdminActivities() {
     setIsDialogOpen(true)
   }
 
-  const handleDelete = (id: number) => {
-    setActivities(activities.filter(a => a.id !== id))
+  const handleDelete = async (id: string) => {
+    if (!confirm("Bạn có chắc chắn muốn xóa hoạt động này?")) return
+    
+    try {
+      const response = await fetch(`/api/activities/${id}`, {
+        method: "DELETE",
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Failed to delete activity")
+      }
+      
+      // Refresh activities list
+      await fetchActivities()
+    } catch (err: any) {
+      console.error("Error deleting activity:", err)
+      alert(err.message || "Failed to delete activity")
+    }
   }
 
-  const handleSave = () => {
-    // Convert images array to JSON string for storage
-    const activityData = {
-      ...formData,
-      images: formData.images.length > 0 ? JSON.stringify(formData.images) : null,
-    }
-    
-    if (editingActivity) {
-      // Update existing
-      setActivities(activities.map(a => 
-        a.id === editingActivity.id 
-          ? { ...a, ...activityData, updatedAt: new Date().toISOString().split('T')[0] }
-          : a
-      ))
-    } else {
-      // Create new
-      const newActivity = {
-        id: activities.length + 1,
-        ...activityData,
-        createdAt: new Date().toISOString().split('T')[0],
-        updatedAt: new Date().toISOString().split('T')[0],
-        views: 0,
+  const handleSave = async () => {
+    try {
+      // Convert images array to JSON string for storage
+      const activityData = {
+        ...formData,
+        images: formData.images.length > 0 ? formData.images : undefined,
+        duration: formData.duration ? parseInt(formData.duration) : null,
+        volunteerCount: formData.volunteerCount ? parseInt(formData.volunteerCount) : null,
+        tripDate: formData.tripDate || null,
+        status: formData.status || "draft",
+        isPublished: formData.isPublished || false,
+        isUpcoming: formData.isUpcoming || false,
       }
-      setActivities([...activities, newActivity])
+      
+      let response
+      if (editingActivity) {
+        // Update existing
+        response = await fetch(`/api/activities/${editingActivity.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(activityData),
+        })
+      } else {
+        // Create new
+        response = await fetch("/api/activities", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(activityData),
+        })
+      }
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Failed to save activity")
+      }
+      
+      // Refresh activities list
+      await fetchActivities()
+      setIsDialogOpen(false)
+      setEditingActivity(null)
+    } catch (err: any) {
+      console.error("Error saving activity:", err)
+      setError(err.message || "Failed to save activity")
+      alert(err.message || "Failed to save activity")
     }
-    setIsDialogOpen(false)
-    setEditingActivity(null)
   }
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
+        {error && (
+          <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+            {error}
+          </div>
+        )}
         <div>
           <h2 className="text-3xl font-bold text-gray-900">Quản lý Hoạt động</h2>
           <p className="text-gray-600">Tạo và quản lý các hoạt động thiện nguyện</p>
@@ -574,12 +598,28 @@ export default function AdminActivities() {
                 <TableHead>Danh mục</TableHead>
                 <TableHead>Trạng thái</TableHead>
                 <TableHead>Ngày tạo</TableHead>
-                <TableHead>Lượt xem</TableHead>
+                <TableHead>Xem</TableHead>
                 <TableHead className="text-right">Thao tác</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {activities.map((activity) => (
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8">
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+                      <span className="ml-3">Đang tải...</span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : activities.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                    Chưa có hoạt động nào. Hãy tạo hoạt động mới!
+                  </TableCell>
+                </TableRow>
+              ) : (
+                activities.map((activity) => (
                 <TableRow key={activity.id}>
                   <TableCell className="font-medium">{activity.title}</TableCell>
                   <TableCell>
@@ -604,13 +644,18 @@ export default function AdminActivities() {
                       <Badge variant="outline" className="ml-2">Sắp tới</Badge>
                     )}
                   </TableCell>
-                  <TableCell>{activity.createdAt}</TableCell>
-                  <TableCell>{activity.views.toLocaleString()}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end space-x-2">
-                      <Button variant="ghost" size="sm">
+                  <TableCell>
+                    {activity.createdAt ? new Date(activity.createdAt).toLocaleDateString("vi-VN") : "-"}
+                  </TableCell>
+                  <TableCell>
+                    <Link href={`/activities/${activity.slug}`} target="_blank">
+                      <Button variant="ghost" size="sm" title="Xem trên website">
                         <Eye className="h-4 w-4" />
                       </Button>
+                    </Link>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end space-x-2">
                       <Button variant="ghost" size="sm" onClick={() => handleEdit(activity)}>
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -638,7 +683,7 @@ export default function AdminActivities() {
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+              )))}
             </TableBody>
           </Table>
         </CardContent>

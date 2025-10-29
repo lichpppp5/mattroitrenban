@@ -2,51 +2,34 @@ import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Users, UsersRound, Award, Mail, Phone, Facebook, Linkedin } from "lucide-react"
+import { prisma } from "@/lib/prisma"
 
-export default function TeamPage() {
-  // Sample data - sẽ lấy từ database sau
-  const executiveTeam = [
-    {
-      id: 1,
-      name: "Nguyễn Văn A",
-      position: "Chủ tịch",
-      bio: "Hơn 15 năm kinh nghiệm trong lĩnh vực phát triển cộng đồng và xã hội",
-      image: "",
-      email: "nguyenvana@example.com",
-      phone: "+84 123 456 789",
-    },
-    {
-      id: 2,
-      name: "Trần Thị B",
-      position: "Phó Chủ tịch",
-      bio: "Chuyên gia về giáo dục và phát triển trẻ em vùng cao",
-      image: "",
-      email: "tranthib@example.com",
-    },
-    {
-      id: 3,
-      name: "Lê Văn C",
-      position: "Thành viên Ban điều hành",
-      bio: "Nhiệt huyết với các hoạt động thiện nguyện và hỗ trợ cộng đồng",
-      image: "",
-    },
-  ]
+async function getTeamMembers() {
+  try {
+    const members = await prisma.teamMember.findMany({
+      where: {
+        isActive: true,
+      },
+      orderBy: [
+        { role: "asc" },
+        { displayOrder: "asc" },
+        { createdAt: "asc" },
+      ],
+    })
+    return members
+  } catch (error) {
+    console.error("Error fetching team members:", error)
+    return []
+  }
+}
 
-  const volunteers = [
+export default async function TeamPage() {
+  const allMembers = await getTeamMembers()
+  
+  const executiveTeam = allMembers.filter(m => m.role === "executive")
+  const volunteers = allMembers.filter(m => m.role === "volunteer")
+  const supporters = allMembers.filter(m => m.role === "expert") // expert = hỗ trợ
     {
-      id: 1,
-      name: "Phạm Thị D",
-      position: "Tình nguyện viên",
-      bio: "Sinh viên năm 3, tham gia từ 2023",
-      image: "",
-    },
-    {
-      id: 2,
-      name: "Hoàng Văn E",
-      position: "Tình nguyện viên",
-      bio: "Cựu sinh viên, tham gia từ 2022",
-      image: "",
-    },
     {
       id: 3,
       name: "Vũ Thị F",
