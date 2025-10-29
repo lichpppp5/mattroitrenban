@@ -1,14 +1,25 @@
+"use client"
+
+import { useState } from "react"
+import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Heart, Calendar, MapPin, Users, ArrowRight, Search, Filter } from "lucide-react"
 import { Input } from "@/components/ui/input"
 
+// Import utility function (sẽ sử dụng khi tích hợp database)
+// Hiện tại activities đã có slug sẵn trong data
+
 export default function Activities() {
+  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState("Tất cả")
+
   const activities = [
     {
       id: 1,
       title: "Xây dựng trường học tại bản X, tỉnh Y",
+      slug: "xay-dung-truong-hoc-tai-ban-x-tinh-y",
       content: "Hoàn thành xây dựng 2 phòng học mới với đầy đủ trang thiết bị, mang đến không gian học tập tốt hơn cho 50 em học sinh tại bản X, tỉnh Y. Dự án được thực hiện trong 3 tháng với tổng kinh phí 200 triệu đồng.",
       category: "Giáo dục",
       date: "2024-01-15",
@@ -19,6 +30,7 @@ export default function Activities() {
     {
       id: 2,
       title: "Khám bệnh miễn phí cho đồng bào vùng cao",
+      slug: "kham-benh-mien-phi-cho-dong-bao-vung-cao",
       content: "Tổ chức khám bệnh miễn phí cho 200 người dân tại 3 bản làng, cung cấp thuốc và tư vấn sức khỏe. Hoạt động có sự tham gia của 10 bác sĩ và 20 y tá tình nguyện.",
       category: "Y tế",
       date: "2024-02-20",
@@ -29,6 +41,7 @@ export default function Activities() {
     {
       id: 3,
       title: "Trao học bổng cho học sinh nghèo hiếu học",
+      slug: "trao-hoc-bong-cho-hoc-sinh-ngheo-hieu-hoc",
       content: "Trao 30 suất học bổng cho học sinh nghèo hiếu học, mỗi suất trị giá 2 triệu đồng. Chương trình nhằm khuyến khích các em tiếp tục học tập và phát triển tài năng.",
       category: "Giáo dục",
       date: "2024-03-10",
@@ -39,6 +52,7 @@ export default function Activities() {
     {
       id: 4,
       title: "Xây dựng hệ thống nước sạch",
+      slug: "xay-dung-he-thong-nuoc-sach",
       content: "Lắp đặt hệ thống nước sạch cho 100 hộ gia đình tại bản A, tỉnh B. Dự án giúp cải thiện chất lượng cuộc sống và giảm thiểu các bệnh liên quan đến nước không sạch.",
       category: "Cơ sở hạ tầng",
       date: "2024-04-05",
@@ -49,6 +63,7 @@ export default function Activities() {
     {
       id: 5,
       title: "Hỗ trợ phát triển kinh tế hộ gia đình",
+      slug: "ho-tro-phat-trien-kinh-te-ho-gia-dinh",
       content: "Cung cấp giống cây trồng và đào tạo kỹ thuật canh tác cho 50 hộ gia đình. Chương trình giúp các hộ gia đình có thu nhập ổn định và phát triển kinh tế bền vững.",
       category: "Phát triển kinh tế",
       date: "2024-05-12",
@@ -59,6 +74,7 @@ export default function Activities() {
     {
       id: 6,
       title: "Tổ chức lớp học tiếng Việt cho trẻ em",
+      slug: "to-chuc-lop-hoc-tieng-viet-cho-tre-em",
       content: "Mở lớp học tiếng Việt cho 80 trẻ em dân tộc thiểu số, giúp các em có thể giao tiếp tốt hơn và tiếp cận với giáo dục chính quy. Lớp học được tổ chức vào cuối tuần.",
       category: "Giáo dục",
       date: "2024-06-01",
@@ -67,6 +83,14 @@ export default function Activities() {
       imageUrl: "/api/placeholder/400/250"
     }
   ]
+
+  // Filter activities
+  const filteredActivities = activities.filter((activity) => {
+    const matchesSearch = activity.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         activity.content.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesCategory = selectedCategory === "Tất cả" || activity.category === selectedCategory
+    return matchesSearch && matchesCategory
+  })
 
   const categories = ["Tất cả", "Giáo dục", "Y tế", "Cơ sở hạ tầng", "Phát triển kinh tế"]
 
@@ -97,6 +121,8 @@ export default function Activities() {
                 <Input
                   placeholder="Tìm kiếm hoạt động..."
                   className="pl-10"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
             </div>
@@ -104,8 +130,9 @@ export default function Activities() {
               {categories.map((category) => (
                 <Badge
                   key={category}
-                  variant={category === "Tất cả" ? "default" : "outline"}
+                  variant={selectedCategory === category ? "default" : "outline"}
                   className="cursor-pointer hover:bg-orange-50 hover:text-orange-600"
+                  onClick={() => setSelectedCategory(category)}
                 >
                   {category}
                 </Badge>
@@ -118,40 +145,55 @@ export default function Activities() {
       {/* Activities Grid */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {activities.map((activity) => (
-              <Card key={activity.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                <div className="h-48 bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center">
-                  <Heart className="h-16 w-16 text-white" />
-                </div>
-                <CardHeader>
-                  <div className="flex items-center justify-between mb-2">
-                    <Badge variant="secondary" className="bg-orange-100 text-orange-600">
-                      {activity.category}
-                    </Badge>
-                    <span className="text-sm text-gray-500">{activity.date}</span>
-                  </div>
-                  <CardTitle className="text-lg line-clamp-2">{activity.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600 mb-4 line-clamp-3">{activity.content}</p>
-                  <div className="space-y-2 text-sm text-gray-500">
-                    <div className="flex items-center">
-                      <MapPin className="h-4 w-4 mr-2" />
-                      <span>{activity.location}</span>
+          {filteredActivities.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500 text-lg">Không tìm thấy hoạt động nào</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredActivities.map((activity) => (
+                <Card key={activity.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                  <Link href={`/activities/${activity.slug}`}>
+                    <div className="h-48 bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center cursor-pointer">
+                      <Heart className="h-16 w-16 text-white" />
                     </div>
-                    <div className="flex items-center">
-                      <Users className="h-4 w-4 mr-2" />
-                      <span>{activity.participants} người tham gia</span>
+                  </Link>
+                  <CardHeader>
+                    <div className="flex items-center justify-between mb-2">
+                      <Badge variant="secondary" className="bg-orange-100 text-orange-600">
+                        {activity.category}
+                      </Badge>
+                      <span className="text-sm text-gray-500">{activity.date}</span>
                     </div>
-                  </div>
-                  <Button variant="outline" size="sm" className="w-full mt-4">
-                    Xem chi tiết
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                    <Link href={`/activities/${activity.slug}`}>
+                      <CardTitle className="text-lg line-clamp-2 hover:text-orange-500 transition-colors cursor-pointer">
+                        {activity.title}
+                      </CardTitle>
+                    </Link>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-600 mb-4 line-clamp-3">{activity.content}</p>
+                    <div className="space-y-2 text-sm text-gray-500 mb-4">
+                      <div className="flex items-center">
+                        <MapPin className="h-4 w-4 mr-2" />
+                        <span>{activity.location}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Users className="h-4 w-4 mr-2" />
+                        <span>{activity.participants} người tham gia</span>
+                      </div>
+                    </div>
+                    <Button asChild variant="outline" size="sm" className="w-full">
+                      <Link href={`/activities/${activity.slug}`}>
+                        Xem chi tiết
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
 
           {/* Load More */}
           <div className="text-center mt-12">

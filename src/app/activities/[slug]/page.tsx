@@ -203,6 +203,173 @@ const getActivityBySlug = (slug: string) => {
       isUpcoming: true,
       createdAt: "2024-06-05",
     },
+    // Thêm các activities từ trang listing
+    "xay-dung-truong-hoc-tai-ban-x-tinh-y": {
+      id: 7,
+      title: "Xây dựng trường học tại bản X, tỉnh Y",
+      slug: "xay-dung-truong-hoc-tai-ban-x-tinh-y",
+      content: `
+        <h2>Hoàn thành xây dựng trường học</h2>
+        <p>Hoàn thành xây dựng 2 phòng học mới với đầy đủ trang thiết bị, mang đến không gian học tập tốt hơn cho 50 em học sinh tại bản X, tỉnh Y.</p>
+        <h3>Thông tin dự án</h3>
+        <ul>
+          <li>Thời gian: 3 tháng</li>
+          <li>Tổng kinh phí: 200 triệu đồng</li>
+          <li>Số phòng học: 2 phòng</li>
+          <li>Số học sinh hưởng lợi: 50 em</li>
+        </ul>
+        <h3>Kết quả đạt được</h3>
+        <p>Dự án đã hoàn thành thành công, mang đến môi trường học tập tốt hơn cho các em học sinh vùng cao.</p>
+      `,
+      category: "Giáo dục",
+      imageUrl: "",
+      videoUrl: "",
+      location: "Bản X, Tỉnh Y",
+      tripDate: "2024-01-15",
+      duration: 90,
+      volunteerCount: 20,
+      status: "completed",
+      isUpcoming: false,
+      createdAt: "2024-01-15",
+    },
+    "kham-benh-mien-phi-cho-dong-bao-vung-cao": {
+      id: 8,
+      title: "Khám bệnh miễn phí cho đồng bào vùng cao",
+      slug: "kham-benh-mien-phi-cho-dong-bao-vung-cao",
+      content: `
+        <h2>Khám bệnh miễn phí cho đồng bào vùng cao</h2>
+        <p>Tổ chức khám bệnh miễn phí cho 200 người dân tại 3 bản làng, cung cấp thuốc và tư vấn sức khỏe.</p>
+        <h3>Thông tin hoạt động</h3>
+        <ul>
+          <li>Số người được khám: 200 người</li>
+          <li>Địa điểm: 3 bản làng, Tỉnh Z</li>
+          <li>Số bác sĩ: 10 người</li>
+          <li>Số y tá: 20 người</li>
+        </ul>
+        <h3>Kết quả</h3>
+        <p>Hoạt động đã giúp nhiều người dân tiếp cận với dịch vụ y tế và nhận được tư vấn sức khỏe phù hợp.</p>
+      `,
+      category: "Y tế",
+      imageUrl: "",
+      videoUrl: "",
+      location: "3 bản làng, Tỉnh Z",
+      tripDate: "2024-02-20",
+      duration: 1,
+      volunteerCount: 30,
+      status: "completed",
+      isUpcoming: false,
+      createdAt: "2024-02-20",
+    },
+    "trao-hoc-bong-cho-hoc-sinh-ngheo-hieu-hoc": {
+      id: 9,
+      title: "Trao học bổng cho học sinh nghèo hiếu học",
+      slug: "trao-hoc-bong-cho-hoc-sinh-ngheo-hieu-hoc",
+      content: `
+        <h2>Trao học bổng cho học sinh nghèo hiếu học</h2>
+        <p>Trao 30 suất học bổng cho học sinh nghèo hiếu học, mỗi suất trị giá 2 triệu đồng.</p>
+        <h3>Thông tin chương trình</h3>
+        <ul>
+          <li>Số suất học bổng: 30 suất</li>
+          <li>Giá trị mỗi suất: 2 triệu đồng</li>
+          <li>Tổng giá trị: 60 triệu đồng</li>
+          <li>Địa điểm: 5 tỉnh miền núi</li>
+        </ul>
+        <h3>Mục tiêu</h3>
+        <p>Chương trình nhằm khuyến khích các em tiếp tục học tập và phát triển tài năng.</p>
+      `,
+      category: "Giáo dục",
+      imageUrl: "",
+      videoUrl: "",
+      location: "5 tỉnh miền núi",
+      tripDate: "2024-03-10",
+      duration: 1,
+      volunteerCount: 10,
+      status: "completed",
+      isUpcoming: false,
+      createdAt: "2024-03-10",
+    },
+    "xay-dung-he-thong-nuoc-sach": {
+      id: 10,
+      title: "Xây dựng hệ thống nước sạch",
+      slug: "xay-dung-he-thong-nuoc-sach",
+      content: `
+        <h2>Lắp đặt hệ thống nước sạch</h2>
+        <p>Lắp đặt hệ thống nước sạch cho 100 hộ gia đình tại bản A, tỉnh B.</p>
+        <h3>Thông tin dự án</h3>
+        <ul>
+          <li>Số hộ được hỗ trợ: 100 hộ</li>
+          <li>Địa điểm: Bản A, Tỉnh B</li>
+          <li>Thời gian: 2 tháng</li>
+        </ul>
+        <h3>Lợi ích</h3>
+        <p>Dự án giúp cải thiện chất lượng cuộc sống và giảm thiểu các bệnh liên quan đến nước không sạch.</p>
+      `,
+      category: "Cơ sở hạ tầng",
+      imageUrl: "",
+      videoUrl: "",
+      location: "Bản A, Tỉnh B",
+      tripDate: "2024-04-05",
+      duration: 60,
+      volunteerCount: 15,
+      status: "completed",
+      isUpcoming: false,
+      createdAt: "2024-04-05",
+    },
+    "ho-tro-phat-trien-kinh-te-ho-gia-dinh": {
+      id: 11,
+      title: "Hỗ trợ phát triển kinh tế hộ gia đình",
+      slug: "ho-tro-phat-trien-kinh-te-ho-gia-dinh",
+      content: `
+        <h2>Hỗ trợ phát triển kinh tế hộ gia đình</h2>
+        <p>Cung cấp giống cây trồng và đào tạo kỹ thuật canh tác cho 50 hộ gia đình.</p>
+        <h3>Thông tin chương trình</h3>
+        <ul>
+          <li>Số hộ tham gia: 50 hộ</li>
+          <li>Địa điểm: Bản C, Tỉnh D</li>
+          <li>Nội dung: Cung cấp giống cây + Đào tạo kỹ thuật</li>
+        </ul>
+        <h3>Mục tiêu</h3>
+        <p>Chương trình giúp các hộ gia đình có thu nhập ổn định và phát triển kinh tế bền vững.</p>
+      `,
+      category: "Phát triển kinh tế",
+      imageUrl: "",
+      videoUrl: "",
+      location: "Bản C, Tỉnh D",
+      tripDate: "2024-05-12",
+      duration: 30,
+      volunteerCount: 12,
+      status: "completed",
+      isUpcoming: false,
+      createdAt: "2024-05-12",
+    },
+    "to-chuc-lop-hoc-tieng-viet-cho-tre-em": {
+      id: 12,
+      title: "Tổ chức lớp học tiếng Việt cho trẻ em",
+      slug: "to-chuc-lop-hoc-tieng-viet-cho-tre-em",
+      content: `
+        <h2>Lớp học tiếng Việt cho trẻ em</h2>
+        <p>Mở lớp học tiếng Việt cho 80 trẻ em dân tộc thiểu số, giúp các em có thể giao tiếp tốt hơn và tiếp cận với giáo dục chính quy.</p>
+        <h3>Thông tin lớp học</h3>
+        <ul>
+          <li>Số học sinh: 80 em</li>
+          <li>Địa điểm: Bản E, Tỉnh F</li>
+          <li>Thời gian: Cuối tuần</li>
+          <li>Giáo viên: 5 tình nguyện viên</li>
+        </ul>
+        <h3>Kết quả</h3>
+        <p>Lớp học giúp các em có thể giao tiếp tốt hơn và tiếp cận với giáo dục chính quy.</p>
+      `,
+      category: "Giáo dục",
+      imageUrl: "",
+      videoUrl: "",
+      location: "Bản E, Tỉnh F",
+      tripDate: "2024-06-01",
+      duration: 90,
+      volunteerCount: 5,
+      status: "completed",
+      isUpcoming: false,
+      createdAt: "2024-06-01",
+    },
   }
   
   return activities[slug] || null
