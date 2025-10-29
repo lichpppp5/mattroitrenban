@@ -17,12 +17,16 @@ export async function GET(request: NextRequest) {
     // Kiểm tra session để phân biệt public và admin
     const session = await getServerSession(authOptions)
     
+    // Admin và editor có thể xem TẤT CẢ activities (published và draft)
+    // Chỉ public và viewer mới bị filter
     if (!session || session.user.role === "viewer") {
       // Public hoặc viewer chỉ xem published
       where.isPublished = true
     }
+    // Nếu có session và role là admin/editor, không filter - xem tất cả
     
-    if (isPublished !== null) {
+    // Chỉ apply published filter nếu có query param và user không phải admin/editor
+    if (isPublished !== null && (!session || session.user.role === "viewer")) {
       where.isPublished = isPublished === "true"
     }
     
@@ -122,9 +126,21 @@ export async function POST(request: NextRequest) {
     }
     
     // Convert images array to JSON string if provided
-    const imagesJson = images && Array.isArray(images) 
-      ? JSON.stringify(images) 
-      : null
+    let imagesJson = null
+    if (images !== undefined && images !== null) {
+      if (Array.isArray(images)) {
+        imagesJson = images.length > 0 ? JSON.stringify(images) : null
+      } else if (typeof images === 'string') {
+        // If already a string, validate it's valid JSON array
+        try {
+          const parsed = JSON.parse(images)
+          imagesJson = Array.isArray(parsed) && parsed.length > 0 ? images : null
+        } catch {
+          // If not valid JSON, treat as single image URL
+          imagesJson = images.trim() !== '' ? images : null
+        }
+      }
+    }
     
     // Ensure status and isPublished are synchronized
     const finalIsPublished = isPublished || false

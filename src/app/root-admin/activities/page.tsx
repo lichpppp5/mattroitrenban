@@ -30,14 +30,21 @@ export default function AdminActivities() {
   const fetchActivities = async () => {
     try {
       setIsLoading(true)
+      // Admin can see ALL activities (published and draft)
+      // No filter applied - API will handle based on session
       const response = await fetch("/api/activities")
-      if (!response.ok) throw new Error("Failed to fetch activities")
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `HTTP ${response.status}: Failed to fetch activities`)
+      }
       const data = await response.json()
-      setActivities(data)
+      console.log("Fetched activities:", data.length, "items") // Debug log
+      setActivities(Array.isArray(data) ? data : [])
       setError("")
     } catch (err: any) {
       console.error("Error fetching activities:", err)
       setError(err.message || "Failed to load activities")
+      setActivities([]) // Set empty array on error
     } finally {
       setIsLoading(false)
     }
@@ -201,14 +208,20 @@ export default function AdminActivities() {
         throw new Error(error.error || "Failed to save activity")
       }
       
+      const savedActivity = await response.json()
+      
       // Refresh activities list
       await fetchActivities()
       setIsDialogOpen(false)
       setEditingActivity(null)
+      
+      // Show success message
+      alert(editingActivity ? "Đã cập nhật hoạt động thành công!" : "Đã tạo hoạt động thành công!")
     } catch (err: any) {
       console.error("Error saving activity:", err)
-      setError(err.message || "Failed to save activity")
-      alert(err.message || "Failed to save activity")
+      const errorMessage = err.message || "Failed to save activity"
+      setError(errorMessage)
+      alert(`Lỗi: ${errorMessage}`)
     }
   }
 

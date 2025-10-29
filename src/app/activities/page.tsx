@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Heart, Calendar, MapPin, Users, ArrowRight, Search, Filter } from "lucide-react"
+import { Heart, Calendar, MapPin, Users, ArrowRight, Search, Filter, Play, Video, Image as ImageIcon } from "lucide-react"
 import { Input } from "@/components/ui/input"
 
 // Import utility function (sẽ sử dụng khi tích hợp database)
@@ -112,11 +112,61 @@ export default function Activities() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredActivities.map((activity) => (
+              {filteredActivities.map((activity) => {
+                // Parse images if exists
+                let imageArray: string[] = []
+                if (activity.images) {
+                  try {
+                    imageArray = typeof activity.images === 'string' 
+                      ? JSON.parse(activity.images) 
+                      : Array.isArray(activity.images) 
+                      ? activity.images 
+                      : []
+                  } catch {
+                    imageArray = []
+                  }
+                }
+                const hasImage = activity.imageUrl || imageArray.length > 0
+                const hasVideo = !!activity.videoUrl
+                
+                return (
                 <Card key={activity.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                   <Link href={`/activities/${activity.slug}`}>
-                    <div className="h-48 bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center cursor-pointer">
-                      <Heart className="h-16 w-16 text-white" />
+                    <div className="relative h-48 bg-gradient-to-br from-yellow-400 to-orange-500 overflow-hidden">
+                      {hasImage ? (
+                        <img 
+                          src={activity.imageUrl || imageArray[0]} 
+                          alt={activity.title}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement
+                            target.style.display = 'none'
+                          }}
+                        />
+                      ) : hasVideo ? (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="bg-white rounded-full p-4 cursor-pointer hover:scale-110 transition-transform">
+                            <Play className="h-12 w-12 text-orange-500 ml-1" fill="currentColor" />
+                          </div>
+                        </div>
+                      ) : imageArray.length > 0 ? (
+                        <div className="grid grid-cols-2 gap-2 p-4 w-full h-full">
+                          {imageArray.slice(0, 3).map((img, idx) => (
+                            <div key={idx} className="bg-white/20 rounded overflow-hidden">
+                              <img src={img} alt={`${activity.title} ${idx + 1}`} className="w-full h-full object-cover" />
+                            </div>
+                          ))}
+                          {imageArray.length > 3 && (
+                            <div className="bg-white/20 rounded flex items-center justify-center">
+                              <span className="text-white font-bold">+{imageArray.length - 3}</span>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Heart className="h-16 w-16 text-white" />
+                        </div>
+                      )}
                     </div>
                   </Link>
                   <CardHeader>
@@ -163,10 +213,11 @@ export default function Activities() {
                         Xem chi tiết
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
+                        </Button>
+                    </CardContent>
+                    </Card>
+                  )
+                })}
             </div>
           )}
 
