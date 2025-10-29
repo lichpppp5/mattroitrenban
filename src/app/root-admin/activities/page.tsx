@@ -154,10 +154,19 @@ export default function AdminActivities() {
 
   const handleSave = async () => {
     try {
+      // Ensure slug is generated if not provided
+      if (!formData.title) {
+        alert("Vui lòng nhập tiêu đề")
+        return
+      }
+      
+      const finalSlug = formData.slug || generateSlug(formData.title)
+      
       // Convert images array to JSON string for storage
       const activityData = {
         ...formData,
-        images: formData.images.length > 0 ? formData.images : undefined,
+        slug: finalSlug,
+        images: formData.images.length > 0 ? JSON.stringify(formData.images) : null,
         duration: formData.duration ? parseInt(formData.duration) : null,
         volunteerCount: formData.volunteerCount ? parseInt(formData.volunteerCount) : null,
         tripDate: formData.tripDate || null,

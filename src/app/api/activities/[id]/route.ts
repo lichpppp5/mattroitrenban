@@ -101,9 +101,22 @@ export async function PUT(
     }
     
     // Convert images array to JSON string if provided
-    const imagesJson = images !== undefined
-      ? (Array.isArray(images) ? JSON.stringify(images) : images)
-      : undefined
+    let imagesJson = undefined
+    if (images !== undefined) {
+      if (Array.isArray(images)) {
+        imagesJson = images.length > 0 ? JSON.stringify(images) : null
+      } else if (typeof images === 'string') {
+        // If already a string, check if it's valid JSON array
+        try {
+          const parsed = JSON.parse(images)
+          imagesJson = Array.isArray(parsed) && parsed.length > 0 ? images : null
+        } catch {
+          imagesJson = images || null
+        }
+      } else {
+        imagesJson = null
+      }
+    }
     
     const activity = await prisma.activity.update({
       where: { id },

@@ -1,12 +1,26 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Menu, X, Heart } from "lucide-react"
+import Image from "next/image"
 
 export function Navigation() {
   const [isOpen, setIsOpen] = useState(false)
+  const [logoUrl, setLogoUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    // Fetch logo from settings
+    fetch("/api/content")
+      .then(res => res.json())
+      .then(data => {
+        if (data && data["site.logo"]) {
+          setLogoUrl(data["site.logo"])
+        }
+      })
+      .catch(err => console.error("Error fetching logo:", err))
+  }, [])
 
   const navItems = [
     { href: "/", label: "Trang chủ" },
@@ -24,9 +38,21 @@ export function Navigation() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
-            <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full p-2">
-              <Heart className="h-6 w-6 text-white" />
-            </div>
+            {logoUrl ? (
+              <div className="relative h-10 w-10">
+                <Image 
+                  src={logoUrl} 
+                  alt="Logo Mặt Trời Trên Bản"
+                  fill
+                  className="object-contain"
+                  unoptimized={logoUrl.startsWith('data:')}
+                />
+              </div>
+            ) : (
+              <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full p-2">
+                <Heart className="h-6 w-6 text-white" />
+              </div>
+            )}
             <span className="font-poppins font-bold text-xl text-gray-800">
               Mặt Trời Trên Bản
             </span>

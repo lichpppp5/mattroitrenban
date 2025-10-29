@@ -65,14 +65,49 @@ async function getUpcomingTrips() {
   }
 }
 
+async function getSiteSettings() {
+  try {
+    const settings = await prisma.siteContent.findMany({
+      where: {
+        key: {
+          in: ["site.banner", "site.logo"]
+        }
+      }
+    })
+    
+    const settingsMap: Record<string, string> = {}
+    settings.forEach(item => {
+      settingsMap[item.key] = item.value
+    })
+    
+    return {
+      bannerUrl: settingsMap["site.banner"] || null,
+      logoUrl: settingsMap["site.logo"] || null,
+    }
+  } catch (error) {
+    console.error("Error fetching site settings:", error)
+    return { bannerUrl: null, logoUrl: null }
+  }
+}
+
 export default async function Home() {
   const recentActivities = await getRecentActivities()
   const upcomingTrips = await getUpcomingTrips()
+  const { bannerUrl } = await getSiteSettings()
+  
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-yellow-50 via-orange-50 to-red-50 py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section 
+        className={`relative py-20 ${bannerUrl ? '' : 'bg-gradient-to-br from-yellow-50 via-orange-50 to-red-50'}`}
+        style={bannerUrl ? {
+          backgroundImage: `url(${bannerUrl})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        } : {}}
+      >
+        {bannerUrl && <div className="absolute inset-0 bg-black/20"></div>}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center">
             <div className="flex justify-center mb-6">
               <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full p-4">
