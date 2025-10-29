@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,56 +17,30 @@ import { Plus, Edit, Trash2, Users, Upload, X, ChevronUp, ChevronDown, Eye, EyeO
 export default function AdminTeam() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingMember, setEditingMember] = useState<any>(null)
-  
-  const [teamMembers, setTeamMembers] = useState([
-    {
-      id: 1,
-      name: "Nguyễn Văn A",
-      role: "executive",
-      position: "Chủ tịch",
-      bio: "Hơn 15 năm kinh nghiệm trong lĩnh vực phát triển cộng đồng và xã hội",
-      image: "",
-      email: "nguyenvana@example.com",
-      phone: "+84 123 456 789",
-      facebookUrl: "",
-      linkedinUrl: "",
-      displayOrder: 1,
-      isActive: true,
-    },
-    {
-      id: 2,
-      name: "Trần Thị B",
-      role: "executive",
-      position: "Phó Chủ tịch",
-      bio: "Chuyên gia về giáo dục và phát triển trẻ em vùng cao",
-      image: "",
-      email: "tranthib@example.com",
-      displayOrder: 2,
-      isActive: true,
-    },
-    {
-      id: 3,
-      name: "Phạm Thị D",
-      role: "volunteer",
-      position: "Tình nguyện viên",
-      bio: "Sinh viên năm 3, tham gia từ 2023",
-      image: "",
-      displayOrder: 1,
-      isActive: true,
-    },
-    {
-      id: 4,
-      name: "Đỗ Văn G",
-      role: "expert",
-      position: "Hỗ trợ Giáo dục",
-      bio: "Thạc sĩ Giáo dục, 10 năm kinh nghiệm giảng dạy",
-      image: "",
-      email: "dovang@example.com",
-      displayOrder: 1,
-      isActive: true,
-    },
-  ])
+  const [teamMembers, setTeamMembers] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string>("")
 
+  // Fetch team members from API
+  useEffect(() => {
+    fetchTeamMembers()
+  }, [])
+
+  const fetchTeamMembers = async () => {
+    try {
+      setIsLoading(true)
+      const response = await fetch("/api/team")
+      if (!response.ok) throw new Error("Failed to fetch team members")
+      const data = await response.json()
+      setTeamMembers(data)
+      setError("")
+    } catch (err: any) {
+      console.error("Error fetching team members:", err)
+      setError(err.message || "Failed to load team members")
+    } finally {
+      setIsLoading(false)
+    }
+  }
   const [formData, setFormData] = useState({
     name: "",
     role: "volunteer",
@@ -77,9 +51,17 @@ export default function AdminTeam() {
     phone: "",
     facebookUrl: "",
     linkedinUrl: "",
-    displayOrder: teamMembers.length + 1,
+    displayOrder: 0,
     isActive: true,
   })
+  
+  // Update formData displayOrder when teamMembers changes
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      displayOrder: teamMembers.length + 1
+    }))
+  }, [teamMembers.length])
 
   const memberRoles = [
     { value: "executive", label: "Ban điều hành", icon: "👥" },
@@ -140,53 +122,126 @@ export default function AdminTeam() {
     setIsDialogOpen(true)
   }
 
-  const handleToggleActive = (id: number) => {
-    setTeamMembers(teamMembers.map(m => 
-      m.id === id ? { ...m, isActive: !m.isActive } : m
-    ))
-  }
-
-  const handleDelete = (id: number) => {
-    setTeamMembers(teamMembers.filter(m => m.id !== id))
-  }
-
-  const handleMoveOrder = (id: number, direction: "up" | "down") => {
-    const current = teamMembers.find(m => m.id === id)
-    if (!current) return
-
-    const sameRole = teamMembers.filter(m => m.role === current.role).sort((a, b) => a.displayOrder - b.displayOrder)
-    const currentIndex = sameRole.findIndex(m => m.id === id)
-    
-    if (direction === "up" && currentIndex > 0) {
-      const prev = sameRole[currentIndex - 1]
-      setTeamMembers(teamMembers.map(m => 
-        m.id === id ? { ...m, displayOrder: prev.displayOrder } :
-        m.id === prev.id ? { ...m, displayOrder: current.displayOrder } :
-        m
-      ))
-    } else if (direction === "down" && currentIndex < sameRole.length - 1) {
-      const next = sameRole[currentIndex + 1]
-      setTeamMembers(teamMembers.map(m => 
-        m.id === id ? { ...m, displayOrder: next.displayOrder } :
-        m.id === next.id ? { ...m, displayOrder: current.displayOrder } :
-        m
-      ))
-    }
-  }
-
-  const handleSave = () => {
-    if (editingMember) {
-      setTeamMembers(teamMembers.map(m => 
-        m.id === editingMember.id ? { ...m, ...formData } : m
-      ))
-    } else {
-      const newMember = {
-        id: teamMembers.length + 1,
-        ...formData,
+  const handleToggleActive = async (id: string) => {
+    try {
+      const member = teamMembers.find(m => m.id === id)
+      if (!member) return
+      
+      const response = await fetch(`/api/team/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...member,
+          isActive: !member.isActive,
+        }),
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Failed to update member")
       }
-      setTeamMembers([...teamMembers, newMember])
+      
+      await fetchTeamMembers()
+    } catch (err: any) {
+      console.error("Error toggling active:", err)
+      alert(err.message || "Failed to update member")
     }
-    setIsDialogOpen(false)
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Bạn có chắc chắn muốn xóa thành viên này?")) return
+    
+    try {
+      const response = await fetch(`/api/team/${id}`, {
+        method: "DELETE",
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Failed to delete member")
+      }
+      
+      await fetchTeamMembers()
+    } catch (err: any) {
+      console.error("Error deleting member:", err)
+      alert(err.message || "Failed to delete member")
+    }
+  }
+
+  const handleMoveOrder = async (id: string, direction: "up" | "down") => {
+    try {
+      const current = teamMembers.find(m => m.id === id)
+      if (!current) return
+
+      const sameRole = teamMembers.filter(m => m.role === current.role).sort((a, b) => a.displayOrder - b.displayOrder)
+      const currentIndex = sameRole.findIndex(m => m.id === id)
+      
+      let targetMember
+      if (direction === "up" && currentIndex > 0) {
+        targetMember = sameRole[currentIndex - 1]
+      } else if (direction === "down" && currentIndex < sameRole.length - 1) {
+        targetMember = sameRole[currentIndex + 1]
+      } else {
+        return
+      }
+      
+      // Swap displayOrder
+      const tempOrder = current.displayOrder
+      const response1 = await fetch(`/api/team/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...current, displayOrder: targetMember.displayOrder }),
+      })
+      const response2 = await fetch(`/api/team/${targetMember.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...targetMember, displayOrder: tempOrder }),
+      })
+      
+      if (!response1.ok || !response2.ok) {
+        throw new Error("Failed to update order")
+      }
+      
+      await fetchTeamMembers()
+    } catch (err: any) {
+      console.error("Error moving order:", err)
+      alert(err.message || "Failed to update order")
+    }
+  }
+
+  const handleSave = async () => {
+    try {
+      let response
+      if (editingMember) {
+        // Update existing
+        response = await fetch(`/api/team/${editingMember.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        })
+      } else {
+        // Create new
+        response = await fetch("/api/team", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        })
+      }
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Failed to save member")
+      }
+      
+      // Refresh team members list
+      await fetchTeamMembers()
+      setIsDialogOpen(false)
+      setEditingMember(null)
+    } catch (err: any) {
+      console.error("Error saving member:", err)
+      setError(err.message || "Failed to save member")
+      alert(err.message || "Failed to save member")
+    }
   }
 
   const handleImageUpload = (file: File | null) => {
@@ -212,6 +267,11 @@ export default function AdminTeam() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
+        {error && (
+          <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+            {error}
+          </div>
+        )}
         <div>
           <h2 className="text-3xl font-bold text-gray-900">Quản lý Đội ngũ</h2>
           <p className="text-gray-600">Quản lý thông tin thành viên đội ngũ</p>

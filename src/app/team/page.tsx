@@ -29,40 +29,6 @@ export default async function TeamPage() {
   const executiveTeam = allMembers.filter(m => m.role === "executive")
   const volunteers = allMembers.filter(m => m.role === "volunteer")
   const supporters = allMembers.filter(m => m.role === "expert") // expert = hỗ trợ
-    {
-    {
-      id: 3,
-      name: "Vũ Thị F",
-      position: "Tình nguyện viên",
-      bio: "Nhân viên văn phòng, tham gia từ 2024",
-      image: "",
-    },
-  ]
-
-  const supporters = [
-    {
-      id: 1,
-      name: "Đỗ Văn G",
-      position: "Hỗ trợ Giáo dục",
-      bio: "Thạc sĩ Giáo dục, 10 năm kinh nghiệm giảng dạy",
-      image: "",
-      email: "dovang@example.com",
-    },
-    {
-      id: 2,
-      name: "Bùi Thị H",
-      position: "Hỗ trợ Y tế",
-      bio: "Bác sĩ, chuyên về y tế cộng đồng vùng cao",
-      image: "",
-    },
-    {
-      id: 3,
-      name: "Ngô Văn I",
-      position: "Hỗ trợ Xây dựng",
-      bio: "Kỹ sư xây dựng, chuyên thiết kế cơ sở hạ tầng nông thôn",
-      image: "",
-    },
-  ]
 
   const renderMemberCard = (member: any, icon: any, iconColor: string) => (
     <Card key={member.id} className="overflow-hidden hover:shadow-lg transition-shadow">

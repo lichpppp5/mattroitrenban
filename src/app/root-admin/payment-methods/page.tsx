@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,64 +17,30 @@ import { Plus, Edit, Trash2, CreditCard, Upload, X, ChevronUp, ChevronDown, Eye,
 export default function AdminPaymentMethods() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingMethod, setEditingMethod] = useState<any>(null)
-  
-  const [paymentMethods, setPaymentMethods] = useState([
-    {
-      id: 1,
-      name: "MoMo",
-      type: "e-wallet",
-      icon: "",
-      accountNumber: "0901234567",
-      accountName: "Mặt Trời Trên Bản",
-      qrCode: "",
-      isActive: true,
-      displayOrder: 1,
-      description: "Quét QR code hoặc chuyển khoản qua số điện thoại",
-      instructions: "1. Mở app MoMo\n2. Quét QR code hoặc nhập số điện thoại\n3. Nhập số tiền và nội dung chuyển khoản",
-    },
-    {
-      id: 2,
-      name: "Chuyển khoản ngân hàng",
-      type: "bank",
-      icon: "",
-      accountNumber: "1234567890",
-      accountName: "Mặt Trời Trên Bản",
-      bankName: "Vietcombank",
-      branch: "Chi nhánh Hồ Chí Minh",
-      qrCode: "",
-      isActive: true,
-      displayOrder: 2,
-      description: "Chuyển khoản qua ngân hàng",
-      instructions: "1. Chuyển khoản đến số tài khoản\n2. Nội dung: [Tên] - Quyên góp",
-    },
-    {
-      id: 3,
-      name: "ZaloPay",
-      type: "e-wallet",
-      icon: "",
-      accountNumber: "0901234567",
-      accountName: "Mặt Trời Trên Bản",
-      qrCode: "",
-      isActive: true,
-      displayOrder: 3,
-      description: "Chuyển khoản qua ZaloPay",
-      instructions: "1. Mở app ZaloPay\n2. Quét QR code\n3. Nhập số tiền",
-    },
-    {
-      id: 4,
-      name: "Tiền mặt",
-      type: "cash",
-      icon: "",
-      accountNumber: "",
-      accountName: "",
-      qrCode: "",
-      isActive: false,
-      displayOrder: 4,
-      description: "Nộp tiền mặt trực tiếp tại văn phòng",
-      instructions: "Liên hệ văn phòng để nộp tiền mặt trực tiếp",
-    },
-  ])
+  const [paymentMethods, setPaymentMethods] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string>("")
 
+  // Fetch payment methods from API
+  useEffect(() => {
+    fetchPaymentMethods()
+  }, [])
+
+  const fetchPaymentMethods = async () => {
+    try {
+      setIsLoading(true)
+      const response = await fetch("/api/payment-methods")
+      if (!response.ok) throw new Error("Failed to fetch payment methods")
+      const data = await response.json()
+      setPaymentMethods(data)
+      setError("")
+    } catch (err: any) {
+      console.error("Error fetching payment methods:", err)
+      setError(err.message || "Failed to load payment methods")
+    } finally {
+      setIsLoading(false)
+    }
+  }
   const [formData, setFormData] = useState({
     name: "",
     type: "bank",
@@ -87,8 +53,16 @@ export default function AdminPaymentMethods() {
     description: "",
     instructions: "",
     isActive: true,
-    displayOrder: paymentMethods.length + 1,
+    displayOrder: 0,
   })
+  
+  // Update formData displayOrder when paymentMethods changes
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      displayOrder: paymentMethods.length + 1
+    }))
+  }, [paymentMethods.length])
 
   const paymentTypes = [
     { value: "bank", label: "Ngân hàng", icon: "🏦" },
@@ -136,34 +110,92 @@ export default function AdminPaymentMethods() {
     setIsDialogOpen(true)
   }
 
-  const handleToggleActive = (id: number) => {
-    setPaymentMethods(paymentMethods.map(m => 
-      m.id === id ? { ...m, isActive: !m.isActive } : m
-    ))
+  const handleToggleActive = async (id: string) => {
+    try {
+      const method = paymentMethods.find(m => m.id === id)
+      if (!method) return
+      
+      const response = await fetch(`/api/payment-methods/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...method,
+          isActive: !method.isActive,
+        }),
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Failed to update method")
+      }
+      
+      await fetchPaymentMethods()
+    } catch (err: any) {
+      console.error("Error toggling active:", err)
+      alert(err.message || "Failed to update payment method")
+    }
   }
 
-  const handleDelete = (id: number) => {
-    setPaymentMethods(paymentMethods.filter(m => m.id !== id).map((m, index) => ({
-      ...m,
-      displayOrder: index + 1
-    })))
-  }
-
-  const handleMoveOrder = (id: number, direction: "up" | "down") => {
-    const current = paymentMethods.find(m => m.id === id)
-    if (!current) return
-
-    const sorted = [...paymentMethods].sort((a, b) => a.displayOrder - b.displayOrder)
-    const currentIndex = sorted.findIndex(m => m.id === id)
+  const handleDelete = async (id: string) => {
+    if (!confirm("Bạn có chắc chắn muốn xóa phương thức thanh toán này?")) return
     
-    if (direction === "up" && currentIndex > 0) {
-      const prev = sorted[currentIndex - 1]
-      setPaymentMethods(paymentMethods.map(m => 
-        m.id === id ? { ...m, displayOrder: prev.displayOrder } :
-        m.id === prev.id ? { ...m, displayOrder: current.displayOrder } :
-        m
-      ))
-    } else if (direction === "down" && currentIndex < sorted.length - 1) {
+    try {
+      const response = await fetch(`/api/payment-methods/${id}`, {
+        method: "DELETE",
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Failed to delete method")
+      }
+      
+      await fetchPaymentMethods()
+    } catch (err: any) {
+      console.error("Error deleting method:", err)
+      alert(err.message || "Failed to delete payment method")
+    }
+  }
+
+  const handleMoveOrder = async (id: string, direction: "up" | "down") => {
+    try {
+      const current = paymentMethods.find(m => m.id === id)
+      if (!current) return
+
+      const sorted = [...paymentMethods].sort((a, b) => a.displayOrder - b.displayOrder)
+      const currentIndex = sorted.findIndex(m => m.id === id)
+      
+      let targetMethod
+      if (direction === "up" && currentIndex > 0) {
+        targetMethod = sorted[currentIndex - 1]
+      } else if (direction === "down" && currentIndex < sorted.length - 1) {
+        targetMethod = sorted[currentIndex + 1]
+      } else {
+        return
+      }
+      
+      // Swap displayOrder
+      const tempOrder = current.displayOrder
+      const response1 = await fetch(`/api/payment-methods/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...current, displayOrder: targetMethod.displayOrder }),
+      })
+      const response2 = await fetch(`/api/payment-methods/${targetMethod.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...targetMethod, displayOrder: tempOrder }),
+      })
+      
+      if (!response1.ok || !response2.ok) {
+        throw new Error("Failed to update order")
+      }
+      
+      await fetchPaymentMethods()
+    } catch (err: any) {
+      console.error("Error moving order:", err)
+      alert(err.message || "Failed to update order")
+    }
+  }
       const next = sorted[currentIndex + 1]
       setPaymentMethods(paymentMethods.map(m => 
         m.id === id ? { ...m, displayOrder: next.displayOrder } :
@@ -173,21 +205,39 @@ export default function AdminPaymentMethods() {
     }
   }
 
-  const handleSave = () => {
-    if (editingMethod) {
-      // Update
-      setPaymentMethods(paymentMethods.map(m => 
-        m.id === editingMethod.id ? { ...m, ...formData } : m
-      ))
-    } else {
-      // Create
-      const newMethod = {
-        id: paymentMethods.length + 1,
-        ...formData,
+  const handleSave = async () => {
+    try {
+      let response
+      if (editingMethod) {
+        // Update existing
+        response = await fetch(`/api/payment-methods/${editingMethod.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        })
+      } else {
+        // Create new
+        response = await fetch("/api/payment-methods", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        })
       }
-      setPaymentMethods([...paymentMethods, newMethod])
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Failed to save payment method")
+      }
+      
+      // Refresh payment methods list
+      await fetchPaymentMethods()
+      setIsDialogOpen(false)
+      setEditingMethod(null)
+    } catch (err: any) {
+      console.error("Error saving payment method:", err)
+      setError(err.message || "Failed to save payment method")
+      alert(err.message || "Failed to save payment method")
     }
-    setIsDialogOpen(false)
   }
 
   const handleImageUpload = (field: string, file: File | null) => {
@@ -207,6 +257,11 @@ export default function AdminPaymentMethods() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
+        {error && (
+          <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+            {error}
+          </div>
+        )}
         <div>
           <h2 className="text-3xl font-bold text-gray-900">Quản lý Phương thức Thanh toán</h2>
           <p className="text-gray-600">Quản lý các phương thức thanh toán cho quyên góp</p>
