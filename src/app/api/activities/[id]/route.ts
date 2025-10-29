@@ -118,6 +118,12 @@ export async function PUT(
       }
     }
     
+    // Ensure status and isPublished are synchronized
+    const finalIsPublished = isPublished !== undefined ? isPublished : existing.isPublished
+    const finalStatus = status !== undefined 
+      ? (finalIsPublished ? "published" : status) 
+      : (finalIsPublished ? "published" : existing.status)
+    
     const activity = await prisma.activity.update({
       where: { id },
       data: {
@@ -132,8 +138,8 @@ export async function PUT(
         tripDate: tripDate !== undefined ? (tripDate ? new Date(tripDate) : null) : existing.tripDate,
         duration: duration !== undefined ? (duration ? parseInt(duration) : null) : existing.duration,
         volunteerCount: volunteerCount !== undefined ? (volunteerCount ? parseInt(volunteerCount) : null) : existing.volunteerCount,
-        status: status !== undefined ? status : existing.status,
-        isPublished: isPublished !== undefined ? isPublished : existing.isPublished,
+        status: finalStatus, // Synchronized with isPublished
+        isPublished: finalIsPublished, // Explicitly set
         isUpcoming: isUpcoming !== undefined ? isUpcoming : existing.isUpcoming,
       },
     })

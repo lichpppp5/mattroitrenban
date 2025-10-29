@@ -126,6 +126,10 @@ export async function POST(request: NextRequest) {
       ? JSON.stringify(images) 
       : null
     
+    // Ensure status and isPublished are synchronized
+    const finalIsPublished = isPublished || false
+    const finalStatus = finalIsPublished ? "published" : (status || "draft")
+    
     const activity = await prisma.activity.create({
       data: {
         title,
@@ -139,8 +143,8 @@ export async function POST(request: NextRequest) {
         tripDate: tripDate ? new Date(tripDate) : null,
         duration: duration ? parseInt(duration) : null,
         volunteerCount: volunteerCount ? parseInt(volunteerCount) : null,
-        status: status || "draft",
-        isPublished: isPublished || false,
+        status: finalStatus,
+        isPublished: finalIsPublished, // Explicitly set
         isUpcoming: isUpcoming || false,
       },
     })

@@ -126,7 +126,7 @@ export default function AdminActivities() {
       volunteerCount: activity.volunteerCount?.toString() || "",
       status: activity.status || "draft",
       isUpcoming: activity.isUpcoming || false,
-      isPublished: activity.status === "published",
+      isPublished: activity.isPublished || false, // Use isPublished directly from database
     })
     setIsDialogOpen(true)
   }
@@ -163,6 +163,10 @@ export default function AdminActivities() {
       const finalSlug = formData.slug || generateSlug(formData.title)
       
       // Convert images array to JSON string for storage
+      // Ensure status and isPublished are synchronized
+      const finalIsPublished = formData.isPublished || false
+      const finalStatus = finalIsPublished ? "published" : (formData.status || "draft")
+      
       const activityData = {
         ...formData,
         slug: finalSlug,
@@ -170,8 +174,8 @@ export default function AdminActivities() {
         duration: formData.duration ? parseInt(formData.duration) : null,
         volunteerCount: formData.volunteerCount ? parseInt(formData.volunteerCount) : null,
         tripDate: formData.tripDate || null,
-        status: formData.status || "draft",
-        isPublished: formData.isPublished || false,
+        status: finalStatus,
+        isPublished: finalIsPublished, // Ensure this is explicitly set
         isUpcoming: formData.isUpcoming || false,
       }
       
@@ -519,7 +523,7 @@ export default function AdminActivities() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Đã xuất bản</p>
-                <p className="text-2xl font-bold">{activities.filter(a => a.status === "published").length}</p>
+                <p className="text-2xl font-bold">{activities.filter(a => a.isPublished).length}</p>
               </div>
               <Eye className="h-12 w-12 text-green-500" />
             </div>
