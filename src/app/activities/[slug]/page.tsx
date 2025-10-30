@@ -3,7 +3,7 @@ import { notFound } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Calendar, MapPin, Clock, Users, Video, Image as ImageIcon, Share2 } from "lucide-react"
+import { ArrowLeft, Calendar, MapPin, Clock, Users, Video, Image as ImageIcon, Share2, ArrowRight } from "lucide-react"
 import { ShareButtons } from "@/components/share-buttons"
 import { SafeImage } from "@/components/safe-image"
 
@@ -26,6 +26,37 @@ async function getActivityBySlug(slug: string) {
   } catch (error) {
     console.error("Error fetching activity:", error)
     return null
+  }
+}
+
+// Fetch related activities (other published activities)
+async function getRelatedActivities(currentSlug: string) {
+  try {
+    const activities = await prisma.activity.findMany({
+      where: {
+        isPublished: true,
+        slug: {
+          not: currentSlug // Exclude current activity
+        }
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: 2, // Show only 2 related activities
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        content: true,
+        imageUrl: true,
+        images: true,
+        videoUrl: true,
+      },
+    })
+    return activities
+  } catch (error) {
+    console.error("Error fetching related activities:", error)
+    return []
   }
 }
 
@@ -55,6 +86,9 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
   if (!activity) {
     notFound()
   }
+  
+  // Fetch related activities
+  const relatedActivities = await getRelatedActivities(slug)
   
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -262,35 +296,74 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
         )}
 
         {/* Related Activities */}
-        <div className="mt-12">
-          <h2 className="text-2xl font-bold mb-6">Các chuyến đi khác</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-semibold mb-2">Khám bệnh miễn phí tại 3 bản làng</h3>
-                <p className="text-gray-600 mb-4">Album ảnh ghi lại những khoảnh khắc đầy ấm áp...</p>
-                <Button asChild variant="outline" size="sm">
-                  <Link href="/activities/kham-benh-mien-phi">
-                    Xem chi tiết
-                    <ArrowLeft className="ml-2 h-4 w-4 rotate-180" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-            <Card className="hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-semibold mb-2">Trao học bổng tại Bản Z</h3>
-                <p className="text-gray-600 mb-4">Video cảm động về buổi lễ trao học bổng...</p>
-                <Button asChild variant="outline" size="sm">
-                  <Link href="/activities/trao-hoc-bong">
-                    Xem chi tiết
-                    <ArrowLeft className="ml-2 h-4 w-4 rotate-180" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
+        {relatedActivities.length > 0 && (
+          <div className="mt-12">
+            <h2 className="text-2xl font-bold mb-6">Các chuyến đi khác</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {relatedActivities.map((relatedActivity) => {
+                // Parse images or use imageUrl
+                let imageArray: string[] = []
+                if (relatedActivity.images) {
+                  if (typeof relatedActivity.images === 'string') {
+                    try {
+                      imageArray = JSON.parse(relatedActivity.images)
+                    } catch {
+                      imageArray = relatedActivity.images.split(',').map((s: string) => s.trim()).filter((s: string) => s)
+                    }
+                  } else if (Array.isArray(relatedActivity.images)) {
+                    imageArray = relatedActivity.images
+                  }
+                }
+                
+                const displayImage = imageArray.length > 0 ? imageArray[0] : relatedActivity.imageUrl
+                const description = relatedActivity.content?.replace(/<[^>]*>/g, "").substring(0, 100) + "..." || ""
+                const hasVideo = !!relatedActivity.videoUrl
+                
+                return (
+                  <Card key={relatedActivity.id} className="hover:shadow-lg transition-shadow overflow-hidden">
+                    {/* Thumbnail */}
+                    {displayImage ? (
+                      <Link href={`/activities/${relatedActivity.slug}`}>
+                        <div className="relative h-48 bg-gradient-to-br from-yellow-400 to-orange-500 overflow-hidden">
+                          <SafeImage 
+                            src={displayImage} 
+                            alt={relatedActivity.title}
+                            className="w-full h-full object-cover"
+                            placeholder="/api/placeholder/400/300"
+                            unoptimized
+                          />
+                        </div>
+                      </Link>
+                    ) : hasVideo ? (
+                      <Link href={`/activities/${relatedActivity.slug}`}>
+                        <div className="relative h-48 bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center">
+                          <div className="bg-white rounded-full p-4">
+                            <Video className="h-12 w-12 text-orange-500" />
+                          </div>
+                        </div>
+                      </Link>
+                    ) : null}
+                    
+                    <CardContent className="p-6">
+                      <Link href={`/activities/${relatedActivity.slug}`}>
+                        <h3 className="text-xl font-semibold mb-2 hover:text-orange-500 transition-colors">
+                          {relatedActivity.title}
+                        </h3>
+                      </Link>
+                      <p className="text-gray-600 mb-4 line-clamp-2">{description}</p>
+                      <Button asChild variant="outline" size="sm">
+                        <Link href={`/activities/${relatedActivity.slug}`}>
+                          Xem chi tiết
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )
