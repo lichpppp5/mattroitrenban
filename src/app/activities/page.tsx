@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -17,16 +18,22 @@ export default function Activities() {
   const [selectedCategory, setSelectedCategory] = useState("Tất cả")
   const [activities, setActivities] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const searchParams = useSearchParams()
 
   // Fetch activities from API (only published)
   useEffect(() => {
     fetchActivities()
-  }, [])
+    // re-fetch when query changes (e.g., upcoming)
+  }, [searchParams])
 
   const fetchActivities = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch("/api/activities?published=true")
+      const upcoming = searchParams?.get("upcoming")
+      const qs = new URLSearchParams()
+      qs.set("published", "true")
+      if (upcoming) qs.set("upcoming", upcoming)
+      const response = await fetch(`/api/activities?${qs.toString()}`)
       if (!response.ok) throw new Error("Failed to fetch activities")
       const data = await response.json()
       setActivities(data)

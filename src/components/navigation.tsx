@@ -70,7 +70,7 @@ export function Navigation() {
               </Link>
             ))}
             <Button asChild className="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white font-semibold">
-              <Link href="/activities">Chiến Dịch</Link>
+              <Link href="/activities?published=true&upcoming=true">Chiến Dịch</Link>
             </Button>
           </div>
 
@@ -103,7 +103,7 @@ export function Navigation() {
               ))}
               <div className="px-3 py-2">
                 <Button asChild className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white font-semibold">
-                  <Link href="/activities" onClick={() => setIsOpen(false)}>Chiến Dịch</Link>
+                  <Link href="/activities?published=true&upcoming=true" onClick={() => setIsOpen(false)}>Chiến Dịch</Link>
                 </Button>
               </div>
             </div>
