@@ -137,6 +137,8 @@ export default function Activities() {
                 const hasImage = activity.imageUrl || imageArray.length > 0
                 const hasVideo = !!activity.videoUrl
                 
+                const raised = typeof activity.donationTotal === 'number' ? activity.donationTotal : 0
+                const isUpcoming = !!activity.isUpcoming
                 return (
                 <Card key={activity.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                   <Link href={`/activities/${activity.slug}`}>
@@ -199,6 +201,12 @@ export default function Activities() {
                       ? activity.content.replace(/<[^>]*>/g, "").substring(0, 150) + "..."
                       : "Không có mô tả"}
                   </p>
+                  {isUpcoming && (
+                    <div className="mb-4 p-3 rounded-md bg-green-50 border border-green-200">
+                      <div className="text-xs text-gray-600 mb-1">Số tiền đã quyên góp</div>
+                      <div className="text-green-700 font-semibold">{raised.toLocaleString("vi-VN")}₫</div>
+                    </div>
+                  )}
                   <div className="space-y-2 text-sm text-gray-500 mb-4">
                     {activity.location && (
                       <div className="flex items-center">

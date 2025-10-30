@@ -41,8 +41,9 @@ export async function GET(request: NextRequest) {
     const activities = await prisma.activity.findMany({
       where,
       orderBy: [
-        { tripDate: "desc" },
-        { createdAt: "desc" },
+        // cast to any to avoid prisma type narrow issues in dev
+        { tripDate: "desc" } as any,
+        { createdAt: "desc" } as any,
       ],
       select: {
         id: true,
@@ -50,7 +51,7 @@ export async function GET(request: NextRequest) {
         slug: true,
         content: true,
         imageUrl: true,
-        images: true,
+        images: true as any,
         videoUrl: true,
         category: true,
         location: true,
@@ -62,10 +63,34 @@ export async function GET(request: NextRequest) {
         isUpcoming: true,
         createdAt: true,
         updatedAt: true,
-      },
+      } as any,
+    }) as any
+    // Enrich with confirmed donation sum per activity (for UI badges like "Số tiền đã quyên góp")
+    const activityIds = (activities as any[]).map((a: any) => a.id)
+    if (activityIds.length === 0) {
+      return NextResponse.json(activities)
+    }
+
+    const donationWhere: any = { isConfirmed: true, activityId: { in: activityIds } }
+    const donationRows: any[] = await prisma.donation.findMany({
+      where: donationWhere,
+      select: { activityId: true, amount: true } as any,
+    }) as any
+
+    const sumMap = new Map<string, number>()
+    donationRows.forEach((row: any) => {
+      const key = row.activityId as string | null
+      if (key) {
+        sumMap.set(key, (sumMap.get(key) || 0) + (row.amount || 0))
+      }
     })
-    
-    return NextResponse.json(activities)
+
+    const enriched = (activities as any[]).map((a: any) => ({
+      ...a,
+      donationTotal: sumMap.get(a.id) || 0,
+    }))
+
+    return NextResponse.json(enriched)
   } catch (error: any) {
     console.error("Error fetching activities:", error)
     return NextResponse.json(
@@ -162,7 +187,7 @@ export async function POST(request: NextRequest) {
         status: finalStatus,
         isPublished: finalIsPublished, // Explicitly set
         isUpcoming: isUpcoming || false,
-      },
+      } as any,
     })
     
     return NextResponse.json(activity, { status: 201 })
