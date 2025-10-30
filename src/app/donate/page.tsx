@@ -47,6 +47,31 @@ interface RecentDonation {
   createdAt: string
 }
 
+// Build transfer content without Vietnamese diacritics and with Title Case
+const removeVietnameseTones = (input: string) => {
+  if (!input) return ""
+  return input
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+}
+
+const toTitleCase = (input: string) => {
+  return input
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(" ")
+    .map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : ""))
+    .join(" ")
+}
+
+const buildTransferContent = (donorName: string, campaignTitle?: string | null) => {
+  const donor = toTitleCase(removeVietnameseTones(donorName || ""))
+  const campaign = campaignTitle ? toTitleCase(removeVietnameseTones(campaignTitle)) : null
+  return campaign ? `${donor}-${campaign}` : donor
+}
+
 export default function Donate() {
   const [donationAmount, setDonationAmount] = useState("")
   const [donorName, setDonorName] = useState("")
@@ -544,8 +569,7 @@ export default function Donate() {
                               <h4 className="font-bold text-gray-900 mb-2 text-sm">Nội dung chuyển khoản:</h4>
                               <div className="bg-white p-3 rounded-md border border-orange-200">
                                 <p className="font-mono text-base font-bold text-gray-900 break-all">
-                                  {submittedDonationData.donorName}
-                                  {submittedDonationData.campaignTitle && ` - ${submittedDonationData.campaignTitle}`}
+                                  {buildTransferContent(submittedDonationData.donorName, submittedDonationData.campaignTitle)}
                                 </p>
                               </div>
                               <Button
@@ -553,9 +577,10 @@ export default function Donate() {
                                 size="sm"
                                 className="mt-2 h-8 text-xs"
                                 onClick={() => {
-                                  const transferContent = submittedDonationData.campaignTitle
-                                    ? `${submittedDonationData.donorName} - ${submittedDonationData.campaignTitle}`
-                                    : submittedDonationData.donorName
+                                  const transferContent = buildTransferContent(
+                                    submittedDonationData.donorName,
+                                    submittedDonationData.campaignTitle
+                                  )
                                   copyToClipboard(transferContent, "transfer-content")
                                 }}
                               >
@@ -583,9 +608,10 @@ export default function Donate() {
                         paymentMethods.map((method) => {
                           // Generate transfer content for this method
                           const transferContent = donationSubmitted && submittedDonationData
-                            ? submittedDonationData.campaignTitle
-                              ? `${submittedDonationData.donorName} - ${submittedDonationData.campaignTitle}`
-                              : submittedDonationData.donorName
+                            ? buildTransferContent(
+                                submittedDonationData.donorName,
+                                submittedDonationData.campaignTitle
+                              )
                             : null
                           
                           return (
@@ -954,8 +980,7 @@ export default function Donate() {
                               <h4 className="font-bold text-gray-900 mb-2 text-sm">Nội dung chuyển khoản:</h4>
                               <div className="bg-white p-3 rounded-md border border-orange-200">
                                 <p className="font-mono text-base font-bold text-gray-900 break-all">
-                                  {submittedDonationData.donorName}
-                                  {submittedDonationData.campaignTitle && ` - ${submittedDonationData.campaignTitle}`}
+                                  {buildTransferContent(submittedDonationData.donorName, submittedDonationData.campaignTitle)}
                                 </p>
                               </div>
                               <Button
@@ -993,9 +1018,10 @@ export default function Donate() {
                         paymentMethods.map((method) => {
                           // Generate transfer content for this method
                           const transferContent = donationSubmitted && submittedDonationData
-                            ? submittedDonationData.campaignTitle
-                              ? `${submittedDonationData.donorName} - ${submittedDonationData.campaignTitle}`
-                              : submittedDonationData.donorName
+                            ? buildTransferContent(
+                                submittedDonationData.donorName,
+                                submittedDonationData.campaignTitle
+                              )
                             : null
                           
                           return (
