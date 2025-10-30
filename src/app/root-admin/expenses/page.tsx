@@ -27,9 +27,9 @@ export default function AdminExpenses() {
     title: "",
     amount: "",
     description: "",
-    category: "",
+    category: "none",
     event: "",
-    activityId: "",
+    activityId: "none",
   })
   const [activities, setActivities] = useState<any[]>([])
 
@@ -94,9 +94,9 @@ export default function AdminExpenses() {
       title: "",
       amount: "",
       description: "",
-      category: "",
+      category: "none",
       event: "",
-      activityId: "",
+      activityId: "none",
     })
     setIsDialogOpen(true)
   }
@@ -107,9 +107,9 @@ export default function AdminExpenses() {
       title: expense.title || "",
       amount: expense.amount?.toString() || "",
       description: expense.description || "",
-      category: expense.category || "",
+      category: expense.category || "none",
       event: expense.event || "",
-      activityId: expense.activityId || "",
+      activityId: expense.activityId || "none",
     })
     setIsDialogOpen(true)
   }
@@ -121,20 +121,27 @@ export default function AdminExpenses() {
         return
       }
 
+      // Normalize payload for API (map 'none' -> null/empty)
+      const payload = {
+        ...formData,
+        category: formData.category === "none" ? "" : formData.category,
+        activityId: formData.activityId === "none" ? null : formData.activityId,
+      }
+
       let response
       if (editingExpense) {
         // Update existing
         response = await fetch(`/api/expenses/${editingExpense.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(payload),
         })
       } else {
         // Create new
         response = await fetch("/api/expenses", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(payload),
         })
       }
 
@@ -248,7 +255,7 @@ export default function AdminExpenses() {
                     <SelectValue placeholder="Chọn danh mục" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Không có</SelectItem>
+                    <SelectItem value="none">Không có</SelectItem>
                     {categories.map((cat) => (
                       <SelectItem key={cat} value={cat}>
                         {cat}
@@ -260,14 +267,14 @@ export default function AdminExpenses() {
               <div>
                 <Label htmlFor="activityId">Chiến dịch (tùy chọn)</Label>
                 <Select 
-                  value={formData.activityId} 
+                  value={formData.activityId}
                   onValueChange={(value) => setFormData({...formData, activityId: value})}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Chọn chiến dịch hoặc để trống" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Không thuộc chiến dịch nào</SelectItem>
+                    <SelectItem value="none">Không thuộc chiến dịch nào</SelectItem>
                     {activities.map((activity) => (
                       <SelectItem key={activity.id} value={activity.id}>
                         {activity.title} {activity.location ? `(${activity.location})` : ''}
