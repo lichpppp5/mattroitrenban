@@ -29,6 +29,8 @@ services:
       dockerfile: Dockerfile
     container_name: mattroitrenban_app
     restart: unless-stopped
+    env_file:
+      - .env.production
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://${POSTGRES_USER:-mattroitrenban}:${POSTGRES_PASSWORD:-your_secure_password_here}@postgres:5432/${POSTGRES_DB:-mattroitrendb}?schema=public

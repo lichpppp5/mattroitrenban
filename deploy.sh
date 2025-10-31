@@ -12,8 +12,8 @@ if [ ! -f .env.production ]; then
     exit 1
 fi
 
-# Load environment variables
-export $(cat .env.production | grep -v '^#' | xargs)
+# Load environment variables (docker-compose will read .env.production automatically)
+# Skip manual export to avoid issues with values containing spaces
 
 # Create necessary directories
 echo "📁 Creating directories..."
