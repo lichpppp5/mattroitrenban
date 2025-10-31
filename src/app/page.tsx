@@ -29,9 +29,11 @@ async function getRecentActivities() {
         createdAt: true,
       },
     })
-    return activities
+    console.log(`[Home] Fetched ${activities.length} recent activities`)
+    return activities || []
   } catch (error) {
     console.error("Error fetching recent activities:", error)
+    // Return empty array on error to prevent page crash
     return []
   }
 }
@@ -58,9 +60,11 @@ async function getUpcomingTrips() {
         category: true,
       },
     })
-    return trips
+    console.log(`[Home] Fetched ${trips.length} upcoming trips`)
+    return trips || []
   } catch (error) {
     console.error("Error fetching upcoming trips:", error)
+    // Return empty array on error to prevent page crash
     return []
   }
 }
@@ -300,9 +304,21 @@ export default async function Home() {
               {siteContent.activitiesSubtitle}
             </p>
           </div>
-          {recentActivities.length === 0 ? (
+          {!recentActivities || recentActivities.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-500">Chưa có hoạt động nào được đăng tải</p>
+              <div className="bg-gray-50 rounded-lg p-8 max-w-md mx-auto">
+                <ImageIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500 text-lg mb-2">Chưa có hoạt động nào được đăng tải</p>
+                <p className="text-gray-400 text-sm mb-4">
+                  Các hoạt động sẽ hiển thị ở đây sau khi được tạo và xuất bản từ trang quản trị
+                </p>
+                <Button asChild variant="outline" className="border-orange-500 text-orange-500 hover:bg-orange-50">
+                  <Link href="/activities">
+                    Xem trang hoạt động
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -441,9 +457,21 @@ export default async function Home() {
               {siteContent.upcomingTripsSubtitle}
             </p>
           </div>
-          {upcomingTrips.length === 0 ? (
+          {!upcomingTrips || upcomingTrips.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-500">Chưa có chuyến đi sắp tới nào được lên lịch</p>
+              <div className="bg-white rounded-lg p-8 max-w-md mx-auto border-2 border-orange-200">
+                <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500 text-lg mb-2">Chưa có chuyến đi sắp tới nào được lên lịch</p>
+                <p className="text-gray-400 text-sm mb-4">
+                  Các chuyến đi sắp tới sẽ hiển thị ở đây sau khi được tạo và đánh dấu là "Sắp diễn ra" từ trang quản trị
+                </p>
+                <Button asChild variant="outline" className="border-orange-500 text-orange-500 hover:bg-orange-50">
+                  <Link href="/activities">
+                    Xem lịch trình
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
