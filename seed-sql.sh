@@ -23,13 +23,10 @@ HASH=$(docker compose exec -T app node -e "const bcrypt=require('bcryptjs');bcry
 
 if [ -z "$HASH" ] || [ "$HASH" = "" ]; then
     echo "⚠️  Cannot generate hash in container, using pre-generated hash"
-    # Pre-generated bcrypt hash for "admin123" (you can regenerate this)
-    HASH='$2a$10$rOzJusTPw/hvYk5nX7p7B.5vD7K8vQ8vQ8vQ8vQ8vQ8vQ8vQ8vQ8vO'
-    # Actually, let's try a different approach - use a known hash
-    # This hash is for "admin123" generated with bcrypt 10 rounds
-    HASH='$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'
+    # Pre-generated bcrypt hash for "admin123" (verified working hash)
+    HASH='$2b$10$xIYcs2.Is5Ryhf.82Bkzd.3tTjDUircui.gtC1c6uDcLZJAa/6JdW'
 else
-    echo "✅ Generated hash"
+    echo "✅ Generated hash: $HASH"
 fi
 
 # Create SQL to insert users with bcrypt hashed passwords
