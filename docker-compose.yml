@@ -47,8 +47,12 @@ services:
         condition: service_healthy
     volumes:
       - ./uploads:/app/public/uploads
-    ports:
-      - "3000:3000"
+    # Port 3000 không cần expose ra ngoài vì Nginx đã handle
+    # Chỉ expose nếu cần truy cập trực tiếp (development)
+    # ports:
+    #   - "3000:3000"
+    expose:
+      - "3000"
     networks:
       - app-network
     # Run migrations on start, then start server
