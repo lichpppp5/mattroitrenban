@@ -111,7 +111,7 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
             </Link>
           </Button>
           <Link href="/activities">
-            <Button variant="outline" className="mb-6">
+            <Button variant="outline" className="mb-6 border-2 border-orange-500 bg-transparent text-orange-500 hover:bg-orange-50 font-semibold">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Xem tất cả chuyến đi
             </Button>
@@ -285,7 +285,7 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
                     Liên hệ ngay
                   </Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-orange-500">
+                <Button asChild size="lg" variant="outline" className="border-2 border-white bg-transparent text-white hover:bg-white hover:text-orange-500 px-8 py-3 font-semibold">
                   <Link href="/donate">
                     Quyên góp hỗ trợ
                   </Link>
@@ -351,7 +351,7 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
                         </h3>
                       </Link>
                       <p className="text-gray-600 mb-4 line-clamp-2">{description}</p>
-                      <Button asChild variant="outline" size="sm">
+                      <Button asChild variant="outline" size="sm" className="border-orange-500 text-orange-500 hover:bg-orange-50 font-semibold">
                         <Link href={`/activities/${relatedActivity.slug}`}>
                           Xem chi tiết
                           <ArrowRight className="ml-2 h-4 w-4" />

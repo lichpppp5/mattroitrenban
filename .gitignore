@@ -65,4 +65,6 @@ jspm_packages/
 Thumbs.db
 
 # Prisma
-prisma/migrations/
+# prisma/migrations/ - Keep migrations in git, they are needed for production
+*.db
+*.sqlite

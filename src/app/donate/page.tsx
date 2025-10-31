@@ -91,6 +91,15 @@ export default function Donate() {
     campaignTitle: string | null
     amount: number
   } | null>(null)
+  const [donationStats, setDonationStats] = useState<{
+    totalDonations: number
+    donationCount: number
+    peopleSupported: number
+  }>({
+    totalDonations: 0,
+    donationCount: 0,
+    peopleSupported: 0,
+  })
 
   const quickAmounts = [50000, 100000, 200000, 500000, 1000000]
 
@@ -124,6 +133,38 @@ export default function Donate() {
         }
       })
       .catch(err => console.error("Error fetching recent donations:", err))
+
+    // Fetch donation statistics
+    fetch("/api/transparency")
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.summary) {
+          // Calculate people supported (estimate: donation count or use stat from content)
+          fetch("/api/content")
+            .then(contentRes => contentRes.json())
+            .then(contentData => {
+              const peopleSupported = contentData.stat1Number || 
+                Math.round(data.summary.donationCount * 0.48) // Estimate: ~48% of donations help someone
+              
+              setDonationStats({
+                totalDonations: data.summary.totalDonations || 0,
+                donationCount: data.summary.donationCount || 0,
+                peopleSupported: typeof peopleSupported === 'string' 
+                  ? parseInt(peopleSupported.replace(/[^\d]/g, '')) || 0
+                  : peopleSupported || 0,
+              })
+            })
+            .catch(err => {
+              console.error("Error fetching content:", err)
+              setDonationStats({
+                totalDonations: data.summary.totalDonations || 0,
+                donationCount: data.summary.donationCount || 0,
+                peopleSupported: Math.round((data.summary.donationCount || 0) * 0.48),
+              })
+            })
+        }
+      })
+      .catch(err => console.error("Error fetching transparency data:", err))
       .finally(() => setLoading(false))
   }, [])
 
@@ -1228,7 +1269,19 @@ export default function Donate() {
                 <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full p-4 w-20 h-20 mx-auto mb-4 flex items-center justify-center shadow-md">
                   <DollarSign className="h-10 w-10 text-white" />
                 </div>
-                <h3 className="text-3xl font-bold text-gray-900 mb-2">500M+</h3>
+                <h3 className="text-3xl font-bold text-gray-900 mb-2">
+                  {loading ? (
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
+                  ) : donationStats.totalDonations >= 1000000000 ? (
+                    `${(donationStats.totalDonations / 1000000000).toFixed(1)}T+`
+                  ) : donationStats.totalDonations >= 1000000 ? (
+                    `${(donationStats.totalDonations / 1000000).toFixed(0)}M+`
+                  ) : donationStats.totalDonations >= 1000 ? (
+                    `${(donationStats.totalDonations / 1000).toFixed(0)}K+`
+                  ) : (
+                    donationStats.totalDonations.toLocaleString("vi-VN")
+                  )}
+                </h3>
                 <p className="text-gray-600 font-medium">VND đã quyên góp</p>
               </CardContent>
             </Card>
@@ -1237,7 +1290,13 @@ export default function Donate() {
                 <div className="bg-gradient-to-r from-green-400 to-blue-500 rounded-full p-4 w-20 h-20 mx-auto mb-4 flex items-center justify-center shadow-md">
                   <Users className="h-10 w-10 text-white" />
                 </div>
-                <h3 className="text-3xl font-bold text-gray-900 mb-2">2,500+</h3>
+                <h3 className="text-3xl font-bold text-gray-900 mb-2">
+                  {loading ? (
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
+                  ) : (
+                    `${donationStats.donationCount.toLocaleString("vi-VN")}+`
+                  )}
+                </h3>
                 <p className="text-gray-600 font-medium">Lượt quyên góp</p>
               </CardContent>
             </Card>
@@ -1246,7 +1305,13 @@ export default function Donate() {
                 <div className="bg-gradient-to-r from-purple-400 to-pink-500 rounded-full p-4 w-20 h-20 mx-auto mb-4 flex items-center justify-center shadow-md">
                   <Heart className="h-10 w-10 text-white" />
                 </div>
-                <h3 className="text-3xl font-bold text-gray-900 mb-2">1,200+</h3>
+                <h3 className="text-3xl font-bold text-gray-900 mb-2">
+                  {loading ? (
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
+                  ) : (
+                    `${donationStats.peopleSupported.toLocaleString("vi-VN")}+`
+                  )}
+                </h3>
                 <p className="text-gray-600 font-medium">Người được hỗ trợ</p>
               </CardContent>
             </Card>

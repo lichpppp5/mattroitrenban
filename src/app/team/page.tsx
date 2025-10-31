@@ -222,7 +222,7 @@ export default async function TeamPage() {
                 ))}
               </div>
               <div className="text-center mt-12">
-                <Button asChild variant="outline" className="border-green-500 text-green-600 hover:bg-green-50 px-8 py-3 text-lg">
+                <Button asChild variant="outline" className="border-2 border-green-500 bg-transparent text-green-600 hover:bg-green-50 px-8 py-3 text-lg font-semibold">
                   <Link href="/contact">
                     Tham gia cùng chúng tôi
                   </Link>
@@ -234,7 +234,7 @@ export default async function TeamPage() {
               <UsersRound className="h-16 w-16 mx-auto mb-4 text-gray-300" />
               <p>Chưa có tình nguyện viên</p>
               <div className="mt-6">
-                <Button asChild variant="outline" className="border-green-500 text-green-600 hover:bg-green-50">
+                <Button asChild variant="outline" className="border-2 border-green-500 bg-transparent text-green-600 hover:bg-green-50 font-semibold">
                   <Link href="/contact">
                     Trở thành tình nguyện viên đầu tiên
                   </Link>
@@ -294,7 +294,7 @@ export default async function TeamPage() {
                 Liên hệ ngay
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-orange-500">
+            <Button asChild size="lg" variant="outline" className="border-2 border-white bg-transparent text-white hover:bg-white hover:text-orange-500 px-8 py-3 font-semibold">
               <Link href="/activities">
                 Xem hoạt động
               </Link>

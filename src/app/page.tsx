@@ -65,49 +65,103 @@ async function getUpcomingTrips() {
   }
 }
 
-async function getSiteSettings() {
+async function getSiteContent() {
   try {
-    const settings = await prisma.siteContent.findMany({
-      where: {
-        key: {
-          in: ["site.banner", "site.logo"]
-        }
-      }
+    const contents = await prisma.siteContent.findMany({
+      orderBy: { key: "asc" },
     })
     
-    const settingsMap: Record<string, string> = {}
-    settings.forEach(item => {
-      settingsMap[item.key] = item.value
+    const contentMap: Record<string, any> = {}
+    contents.forEach((item) => {
+      contentMap[item.key] = item.type === "json" 
+        ? JSON.parse(item.value) 
+        : item.value
     })
     
+    // Return với defaults nếu không có trong database
     return {
-      bannerUrl: settingsMap["site.banner"] || null,
-      logoUrl: settingsMap["site.logo"] || null,
+      heroTitle: contentMap["heroTitle"] || "Mặt Trời Trên Bản",
+      heroSubtitle: contentMap["heroSubtitle"] || "Mang ánh sáng và hy vọng đến những vùng cao xa xôi, nơi cần sự hỗ trợ và quan tâm nhất",
+      heroBannerImage: contentMap["heroBannerImage"] || null,
+      heroButton1Text: contentMap["heroButton1Text"] || "Quyên góp ngay",
+      heroButton2Text: contentMap["heroButton2Text"] || "Tìm hiểu thêm",
+      stat1Number: contentMap["stat1Number"] || "1,200+",
+      stat1Label: contentMap["stat1Label"] || "Người được hỗ trợ",
+      stat2Number: contentMap["stat2Number"] || "25+",
+      stat2Label: contentMap["stat2Label"] || "Bản làng được hỗ trợ",
+      stat3Number: contentMap["stat3Number"] || "500M+",
+      stat3Label: contentMap["stat3Label"] || "VND đã quyên góp",
+      stat4Number: contentMap["stat4Number"] || "50+",
+      stat4Label: contentMap["stat4Label"] || "Hoạt động thiện nguyện",
+      aboutTitle: contentMap["aboutTitle"] || "Về chúng tôi",
+      aboutSubtitle: contentMap["aboutSubtitle"] || "Câu chuyện của chúng tôi",
+      aboutContent: contentMap["aboutContent"] || "",
+      aboutVisionTitle: contentMap["aboutVisionTitle"] || "Tầm nhìn",
+      aboutVisionContent: contentMap["aboutVisionContent"] || "Trở thành tổ chức thiện nguyện hàng đầu trong việc hỗ trợ phát triển bền vững cho các vùng cao Việt Nam.",
+      aboutMissionTitle: contentMap["aboutMissionTitle"] || "Sứ mệnh",
+      aboutMissionContent: contentMap["aboutMissionContent"] || "Mang đến cơ hội học tập, chăm sóc sức khỏe và phát triển kinh tế cho đồng bào vùng cao thông qua các hoạt động thiện nguyện minh bạch và hiệu quả.",
+      activitiesTitle: contentMap["activitiesTitle"] || "Chuyến đi thiện nguyện gần đây",
+      activitiesSubtitle: contentMap["activitiesSubtitle"] || "Cùng xem lại những khoảnh khắc đẹp và ý nghĩa từ các chuyến đi của chúng tôi",
+      upcomingTripsTitle: contentMap["upcomingTripsTitle"] || "Lịch trình các chuyến tiếp theo",
+      upcomingTripsSubtitle: contentMap["upcomingTripsSubtitle"] || "Tham gia cùng chúng tôi trong những chuyến đi thiện nguyện sắp tới",
+      donationTitle: contentMap["donationTitle"] || "Cùng chúng tôi lan tỏa yêu thương",
+      donationSubtitle: contentMap["donationSubtitle"] || "Mỗi đóng góp của bạn sẽ mang đến hy vọng và cơ hội cho những người cần giúp đỡ",
+      donationButtonText: contentMap["donationButtonText"] || "Quyên góp ngay",
     }
   } catch (error) {
-    console.error("Error fetching site settings:", error)
-    return { bannerUrl: null, logoUrl: null }
+    console.error("Error fetching site content:", error)
+    // Return defaults on error
+    return {
+      heroTitle: "Mặt Trời Trên Bản",
+      heroSubtitle: "Mang ánh sáng và hy vọng đến những vùng cao xa xôi, nơi cần sự hỗ trợ và quan tâm nhất",
+      heroBannerImage: null,
+      heroButton1Text: "Quyên góp ngay",
+      heroButton2Text: "Tìm hiểu thêm",
+      stat1Number: "1,200+",
+      stat1Label: "Người được hỗ trợ",
+      stat2Number: "25+",
+      stat2Label: "Bản làng được hỗ trợ",
+      stat3Number: "500M+",
+      stat3Label: "VND đã quyên góp",
+      stat4Number: "50+",
+      stat4Label: "Hoạt động thiện nguyện",
+      aboutTitle: "Về chúng tôi",
+      aboutSubtitle: "Câu chuyện của chúng tôi",
+      aboutContent: "",
+      aboutVisionTitle: "Tầm nhìn",
+      aboutVisionContent: "Trở thành tổ chức thiện nguyện hàng đầu trong việc hỗ trợ phát triển bền vững cho các vùng cao Việt Nam.",
+      aboutMissionTitle: "Sứ mệnh",
+      aboutMissionContent: "Mang đến cơ hội học tập, chăm sóc sức khỏe và phát triển kinh tế cho đồng bào vùng cao thông qua các hoạt động thiện nguyện minh bạch và hiệu quả.",
+      activitiesTitle: "Chuyến đi thiện nguyện gần đây",
+      activitiesSubtitle: "Cùng xem lại những khoảnh khắc đẹp và ý nghĩa từ các chuyến đi của chúng tôi",
+      upcomingTripsTitle: "Lịch trình các chuyến tiếp theo",
+      upcomingTripsSubtitle: "Tham gia cùng chúng tôi trong những chuyến đi thiện nguyện sắp tới",
+      donationTitle: "Cùng chúng tôi lan tỏa yêu thương",
+      donationSubtitle: "Mỗi đóng góp của bạn sẽ mang đến hy vọng và cơ hội cho những người cần giúp đỡ",
+      donationButtonText: "Quyên góp ngay",
+    }
   }
 }
 
 export default async function Home() {
   const recentActivities = await getRecentActivities()
   const upcomingTrips = await getUpcomingTrips()
-  const { bannerUrl } = await getSiteSettings()
+  const siteContent = await getSiteContent()
   
-  // Đảm bảo bannerUrl luôn là string hoặc null để tránh hydration mismatch
-  const safeBannerUrl = bannerUrl && typeof bannerUrl === 'string' && bannerUrl.trim() !== '' ? bannerUrl : null
+  // Đảm bảo heroBannerImage luôn là string hoặc null để tránh hydration mismatch
+  const safeBannerUrl = siteContent.heroBannerImage && typeof siteContent.heroBannerImage === 'string' && siteContent.heroBannerImage.trim() !== '' ? siteContent.heroBannerImage : null
   
-  // Tính toán className một cách deterministic
+  // Tính toán className một cách deterministic - luôn có cùng số lượng classes
   const heroClassName = safeBannerUrl 
     ? "relative py-20" 
     : "relative py-20 bg-gradient-to-br from-yellow-50 via-orange-50 to-red-50"
   
-  const heroStyle = safeBannerUrl ? {
+  // Style object phải luôn là object, không bao giờ undefined
+  const heroStyle: React.CSSProperties = safeBannerUrl ? {
     backgroundImage: `url(${safeBannerUrl})`,
     backgroundSize: 'cover',
     backgroundPosition: 'center',
-  } as React.CSSProperties : undefined
+  } : {}
   
   return (
     <div className="min-h-screen">
@@ -116,7 +170,9 @@ export default async function Home() {
         className={heroClassName}
         style={heroStyle}
       >
-        {safeBannerUrl && <div className="absolute inset-0 bg-black/20"></div>}
+        {safeBannerUrl ? (
+          <div className="absolute inset-0 bg-black/20" />
+        ) : null}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center">
             <div className="flex justify-center mb-6">
@@ -125,22 +181,21 @@ export default async function Home() {
               </div>
             </div>
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 font-poppins">
-              Mặt Trời Trên Bản
+              {siteContent.heroTitle}
             </h1>
             <p className="text-xl md:text-2xl text-gray-700 mb-8 max-w-3xl mx-auto">
-              Mang ánh sáng và hy vọng đến những vùng cao xa xôi, 
-              nơi cần sự hỗ trợ và quan tâm nhất
+              {siteContent.heroSubtitle}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild size="lg" className="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white font-semibold px-8 py-3">
-                <Link href="/activities">
-                  Chiến Dịch
+                <Link href="/donate">
+                  {siteContent.heroButton1Text}
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
-              <Button asChild variant="outline" size="lg" className="border-orange-500 text-orange-500 hover:bg-orange-50 px-8 py-3">
+              <Button asChild variant="outline" size="lg" className="border-2 border-orange-500 bg-transparent text-orange-500 hover:bg-orange-50 px-8 py-3 font-semibold">
                 <Link href="/about">
-                  Tìm hiểu thêm
+                  {siteContent.heroButton2Text}
                 </Link>
               </Button>
             </div>
@@ -156,29 +211,29 @@ export default async function Home() {
               <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full p-3 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
                 <Users className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-3xl font-bold text-gray-900 mb-2">1,200+</h3>
-              <p className="text-gray-600">Người được hỗ trợ</p>
+              <h3 className="text-3xl font-bold text-gray-900 mb-2">{siteContent.stat1Number}</h3>
+              <p className="text-gray-600">{siteContent.stat1Label}</p>
             </div>
             <div className="text-center">
               <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full p-3 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
                 <MapPin className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-3xl font-bold text-gray-900 mb-2">25+</h3>
-              <p className="text-gray-600">Bản làng được hỗ trợ</p>
+              <h3 className="text-3xl font-bold text-gray-900 mb-2">{siteContent.stat2Number}</h3>
+              <p className="text-gray-600">{siteContent.stat2Label}</p>
             </div>
             <div className="text-center">
               <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full p-3 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
                 <DollarSign className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-3xl font-bold text-gray-900 mb-2">500M+</h3>
-              <p className="text-gray-600">VND đã quyên góp</p>
+              <h3 className="text-3xl font-bold text-gray-900 mb-2">{siteContent.stat3Number}</h3>
+              <p className="text-gray-600">{siteContent.stat3Label}</p>
             </div>
             <div className="text-center">
               <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full p-3 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
                 <Star className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-3xl font-bold text-gray-900 mb-2">50+</h3>
-              <p className="text-gray-600">Hoạt động thiện nguyện</p>
+              <h3 className="text-3xl font-bold text-gray-900 mb-2">{siteContent.stat4Number}</h3>
+              <p className="text-gray-600">{siteContent.stat4Label}</p>
             </div>
           </div>
         </div>
@@ -190,20 +245,28 @@ export default async function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6 font-poppins">
-                Câu chuyện của chúng tôi
+                {siteContent.aboutSubtitle}
               </h2>
-              <p className="text-lg text-gray-700 mb-6">
-                "Mặt Trời Trên Bản" được thành lập với sứ mệnh mang ánh sáng và hy vọng 
-                đến những vùng cao xa xôi, nơi mà cuộc sống còn nhiều khó khăn. 
-                Chúng tôi tin rằng mỗi đứa trẻ đều có quyền được học tập, 
-                mỗi gia đình đều có quyền được sống trong điều kiện tốt hơn.
-              </p>
-              <p className="text-lg text-gray-700 mb-8">
-                Với tình yêu thương và sự đồng cảm, chúng tôi đã và đang thực hiện 
-                nhiều hoạt động thiện nguyện ý nghĩa, từ xây dựng trường học, 
-                cung cấp học bổng đến hỗ trợ y tế cho đồng bào vùng cao.
-              </p>
-              <Button asChild variant="outline" className="border-orange-500 text-orange-500 hover:bg-orange-50">
+              {siteContent.aboutContent ? (
+                <div className="text-lg text-gray-700 mb-8 whitespace-pre-line">
+                  {siteContent.aboutContent}
+                </div>
+              ) : (
+                <>
+                  <p className="text-lg text-gray-700 mb-6">
+                    "Mặt Trời Trên Bản" được thành lập với sứ mệnh mang ánh sáng và hy vọng 
+                    đến những vùng cao xa xôi, nơi mà cuộc sống còn nhiều khó khăn. 
+                    Chúng tôi tin rằng mỗi đứa trẻ đều có quyền được học tập, 
+                    mỗi gia đình đều có quyền được sống trong điều kiện tốt hơn.
+                  </p>
+                  <p className="text-lg text-gray-700 mb-8">
+                    Với tình yêu thương và sự đồng cảm, chúng tôi đã và đang thực hiện 
+                    nhiều hoạt động thiện nguyện ý nghĩa, từ xây dựng trường học, 
+                    cung cấp học bổng đến hỗ trợ y tế cho đồng bào vùng cao.
+                  </p>
+                </>
+              )}
+              <Button asChild variant="outline" className="border-2 border-orange-500 bg-transparent text-orange-500 hover:bg-orange-50 font-semibold">
                 <Link href="/about">
                   Đọc thêm câu chuyện
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -212,16 +275,13 @@ export default async function Home() {
             </div>
             <div className="relative">
               <div className="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl p-8 text-white">
-                <h3 className="text-2xl font-bold mb-4">Tầm nhìn</h3>
+                <h3 className="text-2xl font-bold mb-4">{siteContent.aboutVisionTitle}</h3>
                 <p className="text-lg mb-6">
-                  Trở thành tổ chức thiện nguyện hàng đầu trong việc hỗ trợ 
-                  phát triển bền vững cho các vùng cao Việt Nam.
+                  {siteContent.aboutVisionContent}
                 </p>
-                <h3 className="text-2xl font-bold mb-4">Sứ mệnh</h3>
+                <h3 className="text-2xl font-bold mb-4">{siteContent.aboutMissionTitle}</h3>
                 <p className="text-lg">
-                  Mang đến cơ hội học tập, chăm sóc sức khỏe và phát triển 
-                  kinh tế cho đồng bào vùng cao thông qua các hoạt động 
-                  thiện nguyện minh bạch và hiệu quả.
+                  {siteContent.aboutMissionContent}
                 </p>
               </div>
             </div>
@@ -234,10 +294,10 @@ export default async function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 font-poppins">
-              Chuyến đi thiện nguyện gần đây
+              {siteContent.activitiesTitle}
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Cùng xem lại những khoảnh khắc đẹp và ý nghĩa từ các chuyến đi của chúng tôi
+              {siteContent.activitiesSubtitle}
             </p>
           </div>
           {recentActivities.length === 0 ? (
@@ -348,7 +408,7 @@ export default async function Home() {
                         </div>
                       )}
                       <Link href={`/activities/${activity.slug}`}>
-                        <Button variant="outline" size="sm" className="w-full">
+                        <Button variant="outline" size="sm" className="w-full border-orange-500 text-orange-500 hover:bg-orange-50 font-semibold">
                           {hasVideo ? "Xem video đầy đủ" : imageArray.length > 0 ? "Xem album đầy đủ" : "Xem chi tiết"}
                           <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
@@ -360,7 +420,7 @@ export default async function Home() {
             </div>
           )}
           <div className="text-center mt-12">
-            <Button asChild variant="outline" className="border-orange-500 text-orange-500 hover:bg-orange-50">
+            <Button asChild variant="outline" className="border-2 border-orange-500 bg-transparent text-orange-500 hover:bg-orange-50 font-semibold">
               <Link href="/activities">
                 Xem tất cả chuyến đi
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -375,10 +435,10 @@ export default async function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 font-poppins">
-              Chiến Dịch tiếp theo
+              {siteContent.upcomingTripsTitle}
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Tham gia cùng chúng tôi trong những chiến dịch thiện nguyện sắp tới
+              {siteContent.upcomingTripsSubtitle}
             </p>
           </div>
           {upcomingTrips.length === 0 ? (
@@ -444,7 +504,7 @@ export default async function Home() {
                           </div>
                         )}
                       </div>
-                      <Button asChild variant="outline" className="w-full border-orange-500 text-orange-500 hover:bg-orange-50">
+                      <Button asChild variant="outline" className="w-full border-2 border-orange-500 bg-transparent text-orange-500 hover:bg-orange-50 font-semibold">
                         <Link href={`/activities/${trip.slug}`}>
                           Tìm hiểu thêm
                           <ArrowRight className="ml-2 h-4 w-4" />
@@ -471,19 +531,19 @@ export default async function Home() {
       <section className="py-16 bg-gradient-to-r from-yellow-400 to-orange-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-6 font-poppins">
-            Cùng chúng tôi lan tỏa yêu thương
+            {siteContent.donationTitle}
           </h2>
           <p className="text-xl text-white mb-8 max-w-2xl mx-auto">
-            Mỗi đóng góp của bạn sẽ mang đến hy vọng và cơ hội cho những người cần giúp đỡ
+            {siteContent.donationSubtitle}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild size="lg" variant="secondary" className="bg-white text-orange-500 hover:bg-gray-50 px-8 py-3">
               <Link href="/donate">
-                Quyên góp ngay
+                {siteContent.donationButtonText}
                 <Heart className="ml-2 h-5 w-5" />
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-orange-500 px-8 py-3">
+            <Button asChild size="lg" variant="outline" className="border-2 border-white bg-transparent text-white hover:bg-white hover:text-orange-500 px-8 py-3 font-semibold">
               <Link href="/contact">
                 Liên hệ với chúng tôi
               </Link>

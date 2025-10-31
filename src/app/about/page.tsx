@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Heart, Users, Target, Award, MapPin, Calendar, ArrowRight } from "lucide-react"
+import Link from "next/link"
 
 export default function About() {
   return (
@@ -224,11 +225,11 @@ export default function About() {
                 <Heart className="ml-2 h-5 w-5" />
               </a>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-orange-500 px-8 py-3">
-              <a href="/contact">
+            <Button asChild size="lg" variant="outline" className="border-2 border-white bg-transparent text-white hover:bg-white hover:text-orange-500 px-8 py-3 font-semibold">
+              <Link href="/contact">
                 Liên hệ với chúng tôi
                 <ArrowRight className="ml-2 h-5 w-5" />
-              </a>
+              </Link>
             </Button>
           </div>
         </div>

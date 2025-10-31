@@ -16,7 +16,8 @@ import {
   Activity as ActivityIcon,
   LogOut,
   CreditCard,
-  BarChart3
+  BarChart3,
+  Mail
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { canEditContent, canManageUsers, canManageSettings } from "@/lib/permissions"
@@ -70,6 +71,12 @@ const allSidebarItems = [
     icon: FileText,
     href: "/root-admin/content",
     requiredRole: "editor" as const,
+  },
+  {
+    title: "Tin nhắn liên hệ",
+    icon: Mail,
+    href: "/root-admin/contact-messages",
+    requiredRole: "viewer" as const,
   },
   {
     title: "Media",

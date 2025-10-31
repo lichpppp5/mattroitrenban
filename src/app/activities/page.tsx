@@ -18,13 +18,46 @@ export default function Activities() {
   const [selectedCategory, setSelectedCategory] = useState("Tất cả")
   const [activities, setActivities] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [statsData, setStatsData] = useState({
+    stat1Number: "1,200+",
+    stat1Label: "Người được hỗ trợ",
+    stat2Number: "25+",
+    stat2Label: "Bản làng được hỗ trợ",
+    stat3Number: "500M+",
+    stat3Label: "VND đã quyên góp",
+    stat4Number: "50+",
+    stat4Label: "Hoạt động thiện nguyện",
+  })
   const searchParams = useSearchParams()
 
   // Fetch activities from API (only published)
   useEffect(() => {
     fetchActivities()
+    fetchStatsData()
     // re-fetch when query changes (e.g., upcoming)
   }, [searchParams])
+  
+  const fetchStatsData = async () => {
+    try {
+      const response = await fetch("/api/content")
+      if (!response.ok) throw new Error("Failed to fetch stats")
+      const data = await response.json()
+      if (data.stat1Number) {
+        setStatsData({
+          stat1Number: data.stat1Number || "1,200+",
+          stat1Label: data.stat1Label || "Người được hỗ trợ",
+          stat2Number: data.stat2Number || "25+",
+          stat2Label: data.stat2Label || "Bản làng được hỗ trợ",
+          stat3Number: data.stat3Number || "500M+",
+          stat3Label: data.stat3Label || "VND đã quyên góp",
+          stat4Number: data.stat4Number || "50+",
+          stat4Label: data.stat4Label || "Hoạt động thiện nguyện",
+        })
+      }
+    } catch (err) {
+      console.error("Error fetching stats:", err)
+    }
+  }
 
   const fetchActivities = async () => {
     try {
@@ -221,12 +254,12 @@ export default function Activities() {
                       </div>
                     )}
                   </div>
-                    <Button asChild variant="outline" size="sm" className="w-full">
+                    <Button asChild variant="outline" size="sm" className="w-full border-orange-500 text-orange-500 hover:bg-orange-50 font-semibold">
                       <Link href={`/activities/${activity.slug}`}>
                         Xem chi tiết
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Link>
-                        </Button>
+                    </Button>
                     </CardContent>
                     </Card>
                   )
@@ -236,7 +269,7 @@ export default function Activities() {
 
           {/* Load More */}
           <div className="text-center mt-12">
-            <Button variant="outline" className="border-orange-500 text-orange-500 hover:bg-orange-50">
+            <Button variant="outline" className="border-2 border-orange-500 bg-transparent text-orange-500 hover:bg-orange-50 font-semibold">
               Xem thêm hoạt động
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
@@ -260,29 +293,29 @@ export default function Activities() {
               <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full p-4 w-20 h-20 mx-auto mb-4 flex items-center justify-center">
                 <Heart className="h-10 w-10 text-white" />
               </div>
-              <h3 className="text-3xl font-bold text-gray-900 mb-2">100+</h3>
-              <p className="text-gray-600">Hoạt động thiện nguyện</p>
+              <h3 className="text-3xl font-bold text-gray-900 mb-2">{statsData.stat4Number || "50+"}</h3>
+              <p className="text-gray-600">{statsData.stat4Label || "Hoạt động thiện nguyện"}</p>
             </div>
             <div className="text-center">
               <div className="bg-gradient-to-r from-green-400 to-blue-500 rounded-full p-4 w-20 h-20 mx-auto mb-4 flex items-center justify-center">
                 <Users className="h-10 w-10 text-white" />
               </div>
-              <h3 className="text-3xl font-bold text-gray-900 mb-2">5,000+</h3>
-              <p className="text-gray-600">Người được hỗ trợ</p>
+              <h3 className="text-3xl font-bold text-gray-900 mb-2">{statsData.stat1Number || "1,200+"}</h3>
+              <p className="text-gray-600">{statsData.stat1Label || "Người được hỗ trợ"}</p>
             </div>
             <div className="text-center">
               <div className="bg-gradient-to-r from-purple-400 to-pink-500 rounded-full p-4 w-20 h-20 mx-auto mb-4 flex items-center justify-center">
                 <MapPin className="h-10 w-10 text-white" />
               </div>
-              <h3 className="text-3xl font-bold text-gray-900 mb-2">50+</h3>
-              <p className="text-gray-600">Bản làng được hỗ trợ</p>
+              <h3 className="text-3xl font-bold text-gray-900 mb-2">{statsData.stat2Number || "25+"}</h3>
+              <p className="text-gray-600">{statsData.stat2Label || "Bản làng được hỗ trợ"}</p>
             </div>
             <div className="text-center">
               <div className="bg-gradient-to-r from-red-400 to-orange-500 rounded-full p-4 w-20 h-20 mx-auto mb-4 flex items-center justify-center">
                 <Calendar className="h-10 w-10 text-white" />
               </div>
-              <h3 className="text-3xl font-bold text-gray-900 mb-2">4</h3>
-              <p className="text-gray-600">Năm hoạt động</p>
+              <h3 className="text-3xl font-bold text-gray-900 mb-2">{statsData.stat3Number || "500M+"}</h3>
+              <p className="text-gray-600">{statsData.stat3Label || "VND đã quyên góp"}</p>
             </div>
           </div>
         </div>
@@ -299,16 +332,16 @@ export default function Activities() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild size="lg" variant="secondary" className="bg-white text-orange-500 hover:bg-gray-50 px-8 py-3">
-              <a href="/donate">
+              <Link href="/donate">
                 Tham gia quyên góp
                 <Heart className="ml-2 h-5 w-5" />
-              </a>
+              </Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-orange-500 px-8 py-3">
-              <a href="/contact">
+            <Button asChild size="lg" variant="outline" className="border-2 border-white bg-transparent text-white hover:bg-white hover:text-orange-500 px-8 py-3 font-semibold">
+              <Link href="/contact">
                 Liên hệ với chúng tôi
                 <ArrowRight className="ml-2 h-5 w-5" />
-              </a>
+              </Link>
             </Button>
           </div>
         </div>

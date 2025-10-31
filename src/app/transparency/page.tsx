@@ -615,29 +615,29 @@ export default function Transparency() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-white">
             <div>
-              <div className="bg-white bg-opacity-20 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                <DollarSign className="h-8 w-8" />
+              <div className="bg-white/20 rounded-full p-4 w-20 h-20 mx-auto mb-4 flex items-center justify-center shadow-lg">
+                <DollarSign className="h-10 w-10 text-white" />
               </div>
               <h3 className="text-xl font-semibold mb-2">Công khai tài chính</h3>
-              <p className="text-sm">
+              <p className="text-sm opacity-90">
                 Mọi khoản thu chi đều được công khai và cập nhật theo thời gian thực
               </p>
             </div>
             <div>
-              <div className="bg-white bg-opacity-20 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                <Calendar className="h-8 w-8" />
+              <div className="bg-white/20 rounded-full p-4 w-20 h-20 mx-auto mb-4 flex items-center justify-center shadow-lg">
+                <Calendar className="h-10 w-10 text-white" />
               </div>
               <h3 className="text-xl font-semibold mb-2">Báo cáo định kỳ</h3>
-              <p className="text-sm">
+              <p className="text-sm opacity-90">
                 Báo cáo tài chính chi tiết theo từng chiến dịch và theo tháng
               </p>
             </div>
             <div>
-              <div className="bg-white bg-opacity-20 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                <TrendingUp className="h-8 w-8" />
+              <div className="bg-white/20 rounded-full p-4 w-20 h-20 mx-auto mb-4 flex items-center justify-center shadow-lg">
+                <TrendingUp className="h-10 w-10 text-white" />
               </div>
               <h3 className="text-xl font-semibold mb-2">Hiệu quả sử dụng</h3>
-              <p className="text-sm">
+              <p className="text-sm opacity-90">
                 Đảm bảo mọi đồng quyên góp được sử dụng hiệu quả và minh bạch nhất
               </p>
             </div>
