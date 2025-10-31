@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { revalidatePath, revalidateTag } from "next/cache"
+import { revalidatePath } from "next/cache"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 
@@ -19,17 +19,13 @@ export async function POST(request: NextRequest) {
     
     const { searchParams } = new URL(request.url)
     const path = searchParams.get("path") || "/team"
-    const tag = searchParams.get("tag")
     
-    if (tag) {
-      revalidateTag(tag)
-    } else {
-      revalidatePath(path)
-    }
+    // Revalidate the path
+    revalidatePath(path)
     
     return NextResponse.json({ 
       revalidated: true, 
-      path: path || tag,
+      path: path,
       now: Date.now() 
     })
   } catch (error: any) {
@@ -40,4 +36,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-
