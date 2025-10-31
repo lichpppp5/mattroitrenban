@@ -32,7 +32,12 @@ export async function GET(request: NextRequest) {
       ],
     })
     
-    return NextResponse.json(members)
+    const response = NextResponse.json(members)
+    
+    // Add cache headers - shorter cache for team (updates more frequently)
+    response.headers.set('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=60')
+    
+    return response
   } catch (error: any) {
     console.error("Error fetching team members:", error)
     return NextResponse.json(
@@ -91,6 +96,14 @@ export async function POST(request: NextRequest) {
         isActive: isActive !== undefined ? isActive : true,
       },
     })
+    
+    // Revalidate team page after create
+    try {
+      const { revalidatePath } = await import("next/cache")
+      revalidatePath("/team")
+    } catch (e) {
+      console.warn("Failed to revalidate team page:", e)
+    }
     
     return NextResponse.json(member, { status: 201 })
   } catch (error: any) {

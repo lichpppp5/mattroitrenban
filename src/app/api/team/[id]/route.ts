@@ -26,6 +26,14 @@ export async function PUT(
       data: body,
     })
     
+    // Revalidate team page after update
+    try {
+      const { revalidatePath } = await import("next/cache")
+      revalidatePath("/team")
+    } catch (e) {
+      console.warn("Failed to revalidate team page:", e)
+    }
+    
     return NextResponse.json(member)
   } catch (error: any) {
     console.error("Error updating team member:", error)
@@ -56,6 +64,14 @@ export async function DELETE(
     await prisma.teamMember.delete({
       where: { id },
     })
+    
+    // Revalidate team page after delete
+    try {
+      const { revalidatePath } = await import("next/cache")
+      revalidatePath("/team")
+    } catch (e) {
+      console.warn("Failed to revalidate team page:", e)
+    }
     
     return NextResponse.json({ success: true })
   } catch (error: any) {

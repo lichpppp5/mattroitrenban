@@ -17,12 +17,17 @@ async function getTeamMembers() {
         { createdAt: "asc" },
       ],
     })
-    return members
+    console.log(`[Team] Fetched ${members.length} team members`)
+    return members || []
   } catch (error) {
     console.error("Error fetching team members:", error)
+    // Return empty array on error to prevent page crash
     return []
   }
 }
+
+// Enable ISR for team page - revalidate every 30 seconds (faster updates)
+export const revalidate = 30
 
 export default async function TeamPage() {
   const allMembers = await getTeamMembers()
