@@ -52,9 +52,27 @@ $DOCKER_COMPOSE exec -T app npx prisma generate || {
 # Seed database
 echo ""
 echo "🌱 Seeding database with initial data..."
-$DOCKER_COMPOSE exec -T app npm run db:seed || {
-    echo "⚠️  Seed failed - this might be okay if data already exists"
-}
+
+# Try to run seed - check for seed-manual.sh first
+if [ -f ./seed-manual.sh ]; then
+    chmod +x ./seed-manual.sh
+    ./seed-manual.sh || {
+        echo "⚠️  Seed failed - trying direct method..."
+        $DOCKER_COMPOSE exec -T app npx tsx prisma/seed.ts || \
+        $DOCKER_COMPOSE exec -T app node node_modules/tsx/dist/cli.mjs prisma/seed.ts || {
+            echo "⚠️  Seed failed - you may need to rebuild container with tsx"
+            echo "   Run: git pull && ./deploy.sh"
+        }
+    }
+else
+    # Try multiple methods to run seed
+    $DOCKER_COMPOSE exec -T app npx tsx prisma/seed.ts 2>/dev/null || \
+    $DOCKER_COMPOSE exec -T app node node_modules/tsx/dist/cli.mjs prisma/seed.ts 2>/dev/null || \
+    $DOCKER_COMPOSE exec -T app npm run db:seed 2>/dev/null || {
+        echo "⚠️  Seed failed - tsx might not be in production image"
+        echo "   Please rebuild container: ./deploy.sh"
+    }
+fi
 
 echo ""
 echo "✅ Database setup complete!"
