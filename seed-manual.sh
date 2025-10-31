@@ -15,27 +15,34 @@ fi
 
 echo "🌱 Seeding database manually..."
 
-# Check if tsx is available
-if $DOCKER_COMPOSE exec -T app sh -c "which tsx || which npx" >/dev/null 2>&1; then
-    echo "✅ Found tsx/npx, running seed..."
-    $DOCKER_COMPOSE exec -T app npx tsx prisma/seed.ts
-elif $DOCKER_COMPOSE exec -T app sh -c "test -f node_modules/tsx/dist/cli.mjs" >/dev/null 2>&1; then
-    echo "✅ Found tsx in node_modules, running seed..."
-    $DOCKER_COMPOSE exec -T app node node_modules/tsx/dist/cli.mjs prisma/seed.ts
-else
-    echo "⚠️  tsx not found. Installing tsx in container..."
-    echo "   This might take a moment..."
-    $DOCKER_COMPOSE exec -T app sh -c "npm install --save-dev tsx || npm install -g tsx" || {
-        echo "❌ Failed to install tsx"
-        echo ""
-        echo "💡 Alternative: Run seed from host machine with database connection"
-        echo "   1. Install tsx: npm install -g tsx"
-        echo "   2. Set DATABASE_URL from .env.production"
-        echo "   3. Run: tsx prisma/seed.ts"
+# Check if required modules exist
+if $DOCKER_COMPOSE exec -T app sh -c "test -d node_modules/bcryptjs" >/dev/null 2>&1; then
+    echo "✅ Required dependencies found"
+    
+    # Try different methods to run seed
+    if $DOCKER_COMPOSE exec -T app sh -c "test -f node_modules/tsx/dist/cli.mjs" >/dev/null 2>&1; then
+        echo "✅ Running seed with tsx from node_modules..."
+        $DOCKER_COMPOSE exec -T app node node_modules/tsx/dist/cli.mjs prisma/seed.ts
+    elif $DOCKER_COMPOSE exec -T app sh -c "which npx" >/dev/null 2>&1; then
+        echo "✅ Running seed with npx tsx..."
+        $DOCKER_COMPOSE exec -T app npx tsx prisma/seed.ts
+    else
+        echo "⚠️  tsx not found in container"
+        echo "   Please rebuild container: git pull && ./deploy.sh"
         exit 1
-    }
-    echo "✅ tsx installed, running seed..."
-    $DOCKER_COMPOSE exec -T app npx tsx prisma/seed.ts
+    fi
+else
+    echo "❌ Required dependencies (bcryptjs) not found in production image"
+    echo ""
+    echo "💡 Solution: Rebuild container with updated Dockerfile"
+    echo "   1. git pull origin main"
+    echo "   2. ./deploy.sh"
+    echo ""
+    echo "   Or run seed from outside container (requires database access):"
+    echo "   1. Install dependencies on host: npm install"
+    echo "   2. Set DATABASE_URL (from .env.production)"
+    echo "   3. Run: npx tsx prisma/seed.ts"
+    exit 1
 fi
 
 echo ""
