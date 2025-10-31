@@ -6,10 +6,13 @@ import { prisma } from "@/lib/prisma"
 
 async function getRecentActivities() {
   try {
+    // Fetch activities - chỉ cần published, không filter isUpcoming
+    // Vì có thể có activities vừa published vừa có thể là upcoming
     const activities = await prisma.activity.findMany({
       where: {
         isPublished: true,
-        isUpcoming: false,
+        // Remove isUpcoming filter - show all published activities as recent
+        // Only exclude if explicitly marked as upcoming for the "upcoming trips" section
       },
       orderBy: {
         createdAt: "desc",
@@ -27,10 +30,22 @@ async function getRecentActivities() {
         location: true,
         tripDate: true,
         createdAt: true,
+        isUpcoming: true, // Add this to check later
       },
     })
-    console.log(`[Home] Fetched ${activities.length} recent activities`)
-    return activities || []
+    
+    // Filter out upcoming trips from recent activities (they show in separate section)
+    const recentOnly = activities.filter(a => !a.isUpcoming)
+    
+    console.log(`[Home] Fetched ${activities.length} total published activities, ${recentOnly.length} recent (non-upcoming)`)
+    
+    // If no recent-only activities, show all published (including upcoming) but limit to 6
+    if (recentOnly.length === 0 && activities.length > 0) {
+      console.log(`[Home] No non-upcoming activities, showing all published instead`)
+      return activities.slice(0, 6) || []
+    }
+    
+    return recentOnly || []
   } catch (error) {
     console.error("Error fetching recent activities:", error)
     // Return empty array on error to prevent page crash
