@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -13,7 +13,7 @@ import { SafeImage } from "@/components/safe-image"
 // Import utility function (sẽ sử dụng khi tích hợp database)
 // Hiện tại activities đã có slug sẵn trong data
 
-export default function Activities() {
+function ActivitiesContent() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("Tất cả")
   const [activities, setActivities] = useState<any[]>([])
@@ -347,5 +347,17 @@ export default function Activities() {
         </div>
       </section>
     </div>
+  )
+}
+
+export default function Activities() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+      </div>
+    }>
+      <ActivitiesContent />
+    </Suspense>
   )
 }
