@@ -52,13 +52,20 @@ $DOCKER_COMPOSE up -d
 echo "⏳ Waiting for database..."
 sleep 10
 
-# Run migrations
-echo "📊 Running database migrations..."
-$DOCKER_COMPOSE exec -T app npx prisma migrate deploy
-
-# Seed database (optional, only if needed)
-# echo "🌱 Seeding database..."
-# docker-compose exec -T app npm run db:seed
+# Setup database (migrations + seed)
+echo "📊 Setting up database..."
+if [ -f ./setup-database.sh ]; then
+    chmod +x ./setup-database.sh
+    ./setup-database.sh
+else
+    # Fallback: manual setup
+    echo "⏳ Waiting for database..."
+    sleep 5
+    echo "📊 Running migrations..."
+    $DOCKER_COMPOSE exec -T app npx prisma migrate deploy || true
+    echo "🌱 Seeding database..."
+    $DOCKER_COMPOSE exec -T app npm run db:seed || true
+fi
 
 # Show status
 echo "✅ Deployment complete!"
