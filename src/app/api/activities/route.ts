@@ -90,7 +90,12 @@ export async function GET(request: NextRequest) {
       donationTotal: sumMap.get(a.id) || 0,
     }))
 
-    return NextResponse.json(enriched)
+    const response = NextResponse.json(enriched)
+    
+    // Add caching headers for GET requests
+    response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=120')
+    
+    return response
   } catch (error: any) {
     console.error("Error fetching activities:", error)
     return NextResponse.json(

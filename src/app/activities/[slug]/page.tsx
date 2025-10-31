@@ -79,6 +79,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 }
 
+// Enable ISR - revalidate every 60 seconds
+export const revalidate = 60
+
 export default async function ActivityDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const activity = await getActivityBySlug(slug)
