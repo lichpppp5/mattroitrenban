@@ -443,16 +443,30 @@ export default function AdminActivities() {
                       multiple
                       onChange={async (e) => {
                         const files = Array.from(e.target.files || [])
+                        if (files.length === 0) return
+                        
+                        // Track uploading files
+                        const fileNames = files.map(f => f.name)
+                        setUploadingImages(fileNames)
+                        
+                        let successCount = 0
+                        const errors: string[] = []
                         
                         for (const file of files) {
                           try {
                             // Check file size (max 10MB per image)
                             if (file.size > 10 * 1024 * 1024) {
-                              alert(`File "${file.name}" quá lớn (${(file.size / 1024 / 1024).toFixed(1)}MB). Vui lòng chọn file nhỏ hơn 10MB`)
+                              errors.push(`"${file.name}" quá lớn (${(file.size / 1024 / 1024).toFixed(1)}MB)`)
                               continue
                             }
                             
-                            // Upload to server instead of just using base64
+                            // Check file type
+                            if (!file.type.startsWith("image/")) {
+                              errors.push(`"${file.name}" không phải là file ảnh`)
+                              continue
+                            }
+                            
+                            // Upload to server
                             const uploadFormData = new FormData()
                             uploadFormData.append("file", file)
                             
@@ -467,51 +481,63 @@ export default function AdminActivities() {
                             if (!contentType || !contentType.includes("application/json")) {
                               const text = await uploadResponse.text()
                               console.error("Upload failed - non-JSON response:", text.substring(0, 500))
-                              throw new Error(`Lỗi upload: Server trả về HTML thay vì JSON (HTTP ${uploadResponse.status}). Có thể do session hết hạn hoặc lỗi server.`)
+                              throw new Error(`Server trả về HTML (HTTP ${uploadResponse.status}). Session có thể hết hạn.`)
                             }
                             
                             if (!uploadResponse.ok) {
                               const errorData = await uploadResponse.json().catch(() => ({
                                 error: `HTTP ${uploadResponse.status}: Upload failed`
                               }))
+                              
+                              // Check for auth errors
+                              if (uploadResponse.status === 401 || uploadResponse.status === 403) {
+                                throw new Error("Không có quyền upload. Vui lòng đăng nhập lại.")
+                              }
+                              
                               throw new Error(errorData.error || `HTTP ${uploadResponse.status}: Upload failed`)
                             }
                             
                             const uploadData = await uploadResponse.json()
                             const imageUrl = uploadData.media?.url || uploadData.url
                             
-                            if (imageUrl) {
-                              // Use functional update to avoid stale closure
-                              setFormData((prev) => ({
-                                ...prev,
-                                images: [...prev.images, imageUrl],
-                              }))
-                            } else {
-                              // Fallback to base64 if upload fails but no error thrown
-                              const reader = new FileReader()
-                              reader.onloadend = () => {
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  images: [...prev.images, reader.result as string],
-                                }))
-                              }
-                              reader.readAsDataURL(file)
+                            if (!imageUrl) {
+                              throw new Error("Server không trả về URL ảnh")
                             }
+                            
+                            // Success - add to images
+                            setFormData((prev) => ({
+                              ...prev,
+                              images: [...prev.images, imageUrl],
+                            }))
+                            
+                            successCount++
+                            console.log(`✅ Uploaded: ${file.name} -> ${imageUrl}`)
+                            
                           } catch (uploadErr: any) {
-                            console.error("Error uploading image:", uploadErr)
-                            const errorMessage = uploadErr.message || "Lỗi không xác định"
-                            
-                            // Show error to user
-                            alert(`Không thể upload "${file.name}": ${errorMessage}\n\nVui lòng:\n1. Kiểm tra đã đăng nhập chưa\n2. Thử đăng nhập lại\n3. Kiểm tra kết nối mạng\n4. Thử upload lại`)
-                            
-                            // Don't use base64 fallback - require successful upload
-                            // User can try uploading again or use image URL instead
+                            console.error(`Error uploading ${file.name}:`, uploadErr)
+                            const errorMsg = uploadErr.message || "Lỗi không xác định"
+                            errors.push(`${file.name}: ${errorMsg}`)
                           }
                         }
+                        
+                        // Clear uploading state
+                        setUploadingImages([])
                         
                         // Reset file input
                         const input = e.target as HTMLInputElement
                         if (input) input.value = ""
+                        
+                        // Show results
+                        if (successCount === files.length) {
+                          // All succeeded
+                          console.log(`✅ Uploaded ${successCount} file(s) successfully`)
+                        } else if (successCount > 0) {
+                          // Partial success
+                          alert(`Đã upload thành công ${successCount}/${files.length} file(s).\n\nLỗi:\n${errors.join("\n")}`)
+                        } else {
+                          // All failed
+                          alert(`Không thể upload file nào.\n\nLỗi:\n${errors.join("\n")}\n\nVui lòng:\n1. Đăng nhập lại\n2. Kiểm tra kết nối mạng\n3. Thử lại`)
+                        }
                       }}
                     />
                     <Button
