@@ -43,19 +43,35 @@ rsync -av --exclude='node_modules' \
 }
 
 # 2. Backup database
-if [ -n "$DOCKER_COMPOSE" ] && $DOCKER_COMPOSE ps postgres | grep -q "Up"; then
+if [ -n "$DOCKER_COMPOSE" ] && $DOCKER_COMPOSE ps postgres 2>/dev/null | grep -q "Up"; then
     echo ""
     echo "🗄️  Backing up database..."
     DB_BACKUP_FILE="${BACKUP_PATH}/database_${TIMESTAMP}.sql.gz"
     
-    # Get database credentials from .env.production or docker-compose
+    # Get database credentials from .env.production
+    if [ -f .env.production ]; then
+        POSTGRES_USER=$(grep "^POSTGRES_USER=" .env.production | cut -d '=' -f2 | tr -d '"' | tr -d "'" | head -1)
+        POSTGRES_DB=$(grep "^POSTGRES_DB=" .env.production | cut -d '=' -f2 | tr -d '"' | tr -d "'" | head -1)
+    fi
+    
     POSTGRES_USER="${POSTGRES_USER:-mattroitrenban}"
     POSTGRES_DB="${POSTGRES_DB:-mattroitrendb}"
     
     if $DOCKER_COMPOSE exec -T postgres pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" 2>/dev/null | gzip > "$DB_BACKUP_FILE"; then
-        echo "✅ Database backed up: $(du -h "$DB_BACKUP_FILE" | cut -f1)"
+        DB_SIZE=$(du -h "$DB_BACKUP_FILE" 2>/dev/null | cut -f1 || echo "0")
+        echo "✅ Database backed up: ${DB_SIZE}"
     else
-        echo "⚠️  Database backup failed (might not be running)"
+        echo "⚠️  Database backup failed (checking connection...)"
+        # Try alternative method
+        if $DOCKER_COMPOSE exec postgres pg_isready -U "$POSTGRES_USER" >/dev/null 2>&1; then
+            echo "   Database is reachable, retrying..."
+            $DOCKER_COMPOSE exec -T postgres pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" | gzip > "$DB_BACKUP_FILE" 2>&1 && {
+                DB_SIZE=$(du -h "$DB_BACKUP_FILE" 2>/dev/null | cut -f1 || echo "0")
+                echo "✅ Database backed up (retry successful): ${DB_SIZE}"
+            } || echo "⚠️  Database backup failed after retry"
+        else
+            echo "⚠️  Database container is not reachable"
+        fi
     fi
 else
     echo ""
