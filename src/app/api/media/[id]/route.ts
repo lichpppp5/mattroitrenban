@@ -67,11 +67,16 @@ export async function DELETE(
         console.error("Error deleting from Cloudinary:", cloudinaryError)
         // Continue with database deletion even if Cloudinary delete fails
       }
-    } else if (media.url.startsWith("/uploads/")) {
-      // Delete local file
+    } else if (media.url.startsWith("/uploads/") || media.url.startsWith("/media/")) {
+      // Delete local file (support both /uploads and /media)
       try {
-        const filePath = join(process.cwd(), "public", media.url)
+        // Extract path from URL (remove domain if absolute URL)
+        const urlPath = media.url.startsWith("http") 
+          ? new URL(media.url).pathname 
+          : media.url
+        const filePath = join(process.cwd(), "public", urlPath)
         await unlink(filePath)
+        console.log(`Deleted file: ${filePath}`)
       } catch (fileError) {
         console.error("Error deleting local file:", fileError)
         // Continue with database deletion even if file delete fails
