@@ -214,20 +214,26 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
                   Album ảnh
                 </h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {imageArray.map((img: string, index: number) => (
-                    <div 
-                      key={index}
-                      className="relative aspect-square rounded-lg overflow-hidden border cursor-pointer hover:opacity-90 transition-opacity group"
-                    >
-                      <SafeImage 
-                        src={img} 
-                        alt={`Hình ảnh ${index + 1}`}
-                        className="w-full h-full object-cover"
-                        placeholder="/api/placeholder/400/400"
-                        unoptimized
-                      />
-                    </div>
-                  ))}
+                  {imageArray.map((img: string, index: number) => {
+                    // Normalize URL to absolute if it's a local upload
+                    const imageUrl = img.startsWith("/uploads/") 
+                      ? `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}${img}`
+                      : img
+                    return (
+                      <div 
+                        key={index}
+                        className="relative aspect-square rounded-lg overflow-hidden border cursor-pointer hover:opacity-90 transition-opacity group"
+                      >
+                        <SafeImage 
+                          src={imageUrl} 
+                          alt={`Hình ảnh ${index + 1}`}
+                          className="w-full h-full object-cover"
+                          placeholder="/api/placeholder/400/400"
+                          unoptimized
+                        />
+                      </div>
+                    )
+                  })}
                 </div>
               </CardContent>
             </Card>
