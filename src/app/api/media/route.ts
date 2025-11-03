@@ -118,6 +118,9 @@ export async function POST(request: NextRequest) {
     let fileUrl: string
     let uploadedFilename = file.name
 
+    // Get base URL for absolute URLs
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin
+
     // Upload to Cloudinary if configured, otherwise save locally
     if (process.env.CLOUDINARY_URL) {
       try {
@@ -147,18 +150,25 @@ export async function POST(request: NextRequest) {
         // Fallback to local storage
         const bytes = await file.arrayBuffer()
         const buffer = Buffer.from(bytes)
-        const filename = `${Date.now()}-${file.name}`
-        const path = join(process.cwd(), "public", "uploads", filename)
+        const fallbackFilename = `${Date.now()}-${file.name}`
+        const fallbackPath = join(process.cwd(), "public", "uploads", fallbackFilename)
         
         // Ensure uploads directory exists
         const fs = require("fs")
         const uploadsDir = join(process.cwd(), "public", "uploads")
-        if (!fs.existsSync(uploadsDir)) {
-          fs.mkdirSync(uploadsDir, { recursive: true })
-        }
         
-        await writeFile(path, buffer)
-        fileUrl = `/uploads/${filename}`
+        try {
+          if (!fs.existsSync(uploadsDir)) {
+            fs.mkdirSync(uploadsDir, { recursive: true })
+          }
+          
+          await writeFile(fallbackPath, buffer)
+          // Use absolute URL for local files
+          fileUrl = `${baseUrl}/uploads/${fallbackFilename}`
+        } catch (writeError: any) {
+          console.error("Fallback write also failed:", writeError)
+          throw new Error(`Cannot upload file: Cloudinary failed (${cloudinaryError.message}) and local storage failed (${writeError.message})`)
+        }
       }
     } else {
       // Save to local storage
@@ -178,7 +188,8 @@ export async function POST(request: NextRequest) {
         
         // Check write permissions
         await writeFile(path, buffer)
-        fileUrl = `/uploads/${filename}`
+        // Use absolute URL for local files to ensure they load correctly
+        fileUrl = `${baseUrl}/uploads/${filename}`
       } catch (writeError: any) {
         console.error("Error writing file to disk:", writeError)
         // If write fails, try alternative location
@@ -189,7 +200,7 @@ export async function POST(request: NextRequest) {
             fs.mkdirSync(altDir, { recursive: true })
           }
           await writeFile(altPath, buffer)
-          fileUrl = `/uploads/${filename}` // Still use same URL, might need nginx config
+          fileUrl = `${baseUrl}/uploads/${filename}` // Still use same URL, might need nginx config
           console.log("Saved to alternative location:", altPath)
         } catch (altError: any) {
           throw new Error(`Cannot write file: ${writeError.message}. Alternative location also failed: ${altError.message}`)
@@ -223,4 +234,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-
