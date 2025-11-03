@@ -153,10 +153,11 @@ export default function AdminSettings() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ key: "heroBannerImage", value: settings.bannerUrl, type: "image" }),
         }),
+        // Favicon is already saved when uploaded, but save URL for reference
         fetch("/api/content", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ key: "site.favicon", value: settings.faviconUrl, type: "text" }),
+          body: JSON.stringify({ key: "site.favicon", value: settings.faviconUrl || "/favicon.ico", type: "text" }),
         }),
         
         // Social Media
@@ -626,14 +627,125 @@ export default function AdminSettings() {
               />
             </div>
 
+            {/* Favicon Upload */}
             <div>
-              <Label htmlFor="faviconUrl">URL Favicon</Label>
+              <Label>Favicon (Icon hiển thị trên tab browser)</Label>
+              <div className="mt-2">
+                {settings.faviconUrl ? (
+                  <div className="relative inline-block">
+                    <img 
+                      src={settings.faviconUrl} 
+                      alt="Favicon" 
+                      className="h-16 w-16 border rounded-lg object-contain"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute -top-2 -right-2 bg-red-500 text-white hover:bg-red-600"
+                      onClick={async () => {
+                        setSettings({...settings, faviconUrl: ""})
+                        // Also delete from database
+                        try {
+                          await fetch("/api/content", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ 
+                              key: "site.favicon", 
+                              value: "", 
+                              type: "text" 
+                            }),
+                          })
+                        } catch (err) {
+                          console.error("Error deleting favicon:", err)
+                        }
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                    <ImageIcon className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500 mb-2">Chưa có favicon</p>
+                    <Input
+                      type="file"
+                      accept=".ico,.png,.svg"
+                      className="hidden"
+                      id="favicon-upload"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        if (file) {
+                          try {
+                            // Check file size (max 1MB for favicon)
+                            if (file.size > 1 * 1024 * 1024) {
+                              alert("File quá lớn! Vui lòng chọn file nhỏ hơn 1MB")
+                              return
+                            }
+                            
+                            // Upload favicon
+                            const formData = new FormData()
+                            formData.append("file", file)
+                            
+                            const response = await fetch("/api/favicon", {
+                              method: "POST",
+                              body: formData,
+                            })
+                            
+                            if (!response.ok) {
+                              const error = await response.json()
+                              alert(error.error || "Lỗi khi upload favicon")
+                              return
+                            }
+                            
+                            const data = await response.json()
+                            const faviconUrl = data.url || "/favicon.ico"
+                            
+                            setSettings({...settings, faviconUrl: faviconUrl})
+                            
+                            // Also save URL to database
+                            try {
+                              await fetch("/api/content", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ 
+                                  key: "site.favicon", 
+                                  value: faviconUrl, 
+                                  type: "text" 
+                                }),
+                              })
+                              setSaveStatus("success")
+                              setTimeout(() => setSaveStatus(null), 2000)
+                            } catch (err) {
+                              console.error("Error saving favicon URL:", err)
+                            }
+                          } catch (err) {
+                            alert("Lỗi khi upload favicon. Vui lòng thử lại.")
+                            console.error("Upload error:", err)
+                          }
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => document.getElementById('favicon-upload')?.click()}
+                    >
+                      <Upload className="mr-2 h-4 w-4" />
+                      Upload Favicon
+                    </Button>
+                  </div>
+                )}
+              </div>
               <Input
                 id="faviconUrl"
-                value={settings.faviconUrl}
+                value={settings.faviconUrl || ""}
                 onChange={(e) => setSettings({...settings, faviconUrl: e.target.value})}
-                placeholder="https://example.com/favicon.ico"
+                placeholder="Hoặc nhập URL favicon..."
+                className="mt-2"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Khuyến nghị: File .ico (32x32px hoặc 16x16px) hoặc PNG (32x32px)
+              </p>
             </div>
           </CardContent>
         </Card>
