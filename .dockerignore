@@ -20,4 +20,7 @@ build
 docker-compose.yml
 Dockerfile
 .dockerignore
+# Keep backups out but ensure src/ is included
+backups/
+scripts/src
 
