@@ -68,3 +68,6 @@ Thumbs.db
 # prisma/migrations/ - Keep migrations in git, they are needed for production
 *.db
 *.sqlite
+# Backups
+backups/
+server_backups/
