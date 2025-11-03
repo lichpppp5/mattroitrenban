@@ -438,21 +438,22 @@ export default function AdminActivities() {
                             const uploadResponse = await fetch("/api/media", {
                               method: "POST",
                               body: uploadFormData,
+                              credentials: "include", // Include cookies for auth
                             })
                             
+                            // ALWAYS check content-type before parsing JSON
+                            const contentType = uploadResponse.headers.get("content-type")
+                            if (!contentType || !contentType.includes("application/json")) {
+                              const text = await uploadResponse.text()
+                              console.error("Upload failed - non-JSON response:", text.substring(0, 500))
+                              throw new Error(`Lỗi upload: Server trả về HTML thay vì JSON (HTTP ${uploadResponse.status}). Có thể do session hết hạn hoặc lỗi server.`)
+                            }
+                            
                             if (!uploadResponse.ok) {
-                              // Check content-type
-                              const contentType = uploadResponse.headers.get("content-type")
-                              if (!contentType || !contentType.includes("application/json")) {
-                                const text = await uploadResponse.text()
-                                console.error("Upload failed - non-JSON response:", text.substring(0, 200))
-                                throw new Error(`Lỗi upload: Server trả về HTML thay vì JSON (HTTP ${uploadResponse.status})`)
-                              }
-                              
                               const errorData = await uploadResponse.json().catch(() => ({
                                 error: `HTTP ${uploadResponse.status}: Upload failed`
                               }))
-                              throw new Error(errorData.error || "Upload failed")
+                              throw new Error(errorData.error || `HTTP ${uploadResponse.status}: Upload failed`)
                             }
                             
                             const uploadData = await uploadResponse.json()
@@ -477,16 +478,13 @@ export default function AdminActivities() {
                             }
                           } catch (uploadErr: any) {
                             console.error("Error uploading image:", uploadErr)
-                            // Fallback to base64 for local preview, but show warning
-                            const reader = new FileReader()
-                            reader.onloadend = () => {
-                              setFormData((prev) => ({
-                                ...prev,
-                                images: [...prev.images, reader.result as string],
-                              }))
-                              alert(`Cảnh báo: Không thể upload "${file.name}" lên server. Đang dùng ảnh tạm thời (base64). Lỗi: ${uploadErr.message}`)
-                            }
-                            reader.readAsDataURL(file)
+                            const errorMessage = uploadErr.message || "Lỗi không xác định"
+                            
+                            // Show error to user
+                            alert(`Không thể upload "${file.name}": ${errorMessage}\n\nVui lòng:\n1. Kiểm tra đã đăng nhập chưa\n2. Thử đăng nhập lại\n3. Kiểm tra kết nối mạng\n4. Thử upload lại`)
+                            
+                            // Don't use base64 fallback - require successful upload
+                            // User can try uploading again or use image URL instead
                           }
                         }
                         

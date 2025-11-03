@@ -79,12 +79,20 @@ export async function GET(request: NextRequest) {
 // POST - Upload media
 export async function POST(request: NextRequest) {
   try {
+    // Check session first
     const session = await getServerSession(authOptions)
     
-    if (!session || (session.user.role !== "admin" && session.user.role !== "editor")) {
+    if (!session) {
       return NextResponse.json(
-        { error: "Unauthorized" },
+        { error: "Unauthorized: No session found. Please log in again." },
         { status: 401 }
+      )
+    }
+    
+    if (session.user.role !== "admin" && session.user.role !== "editor") {
+      return NextResponse.json(
+        { error: "Unauthorized: Insufficient permissions. Admin or Editor role required." },
+        { status: 403 }
       )
     }
 
