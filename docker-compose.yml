@@ -46,7 +46,7 @@ services:
       postgres:
         condition: service_healthy
     volumes:
-      - ./uploads:/app/public/uploads
+      - ./media:/app/public/media
     # Port 3000 không cần expose ra ngoài vì Nginx đã handle
     # Chỉ expose nếu cần truy cập trực tiếp (development)
     # ports:
@@ -71,7 +71,7 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./ssl:/etc/nginx/ssl:ro
-      - ./uploads:/var/www/uploads:ro
+      - ./media:/var/www/media:ro
       - nginx_cache:/var/cache/nginx
     depends_on:
       - app

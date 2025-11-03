@@ -193,7 +193,8 @@ function ActivitiesContent() {
                         <div className="grid grid-cols-2 gap-2 p-4 w-full h-full">
                           {imageArray.slice(0, 3).map((img, idx) => {
                             // Normalize URL to absolute if it's a local upload (client-side)
-                            const imageUrl = img.startsWith("/uploads/")
+                            // Support both /uploads/ (legacy) and /media/ (new)
+                            const imageUrl = (img.startsWith("/uploads/") || img.startsWith("/media/"))
                               ? `${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}${img}`
                               : img
                             return (

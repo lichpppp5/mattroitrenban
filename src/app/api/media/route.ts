@@ -159,56 +159,57 @@ export async function POST(request: NextRequest) {
         const bytes = await file.arrayBuffer()
         const buffer = Buffer.from(bytes)
         const fallbackFilename = `${Date.now()}-${file.name}`
-        const fallbackPath = join(process.cwd(), "public", "uploads", fallbackFilename)
+        const fallbackPath = join(process.cwd(), "public", "media", fallbackFilename)
         
-        // Ensure uploads directory exists
+        // Ensure media directory exists
         const fs = require("fs")
-        const uploadsDir = join(process.cwd(), "public", "uploads")
+        const mediaDir = join(process.cwd(), "public", "media")
         
         try {
-          if (!fs.existsSync(uploadsDir)) {
-            fs.mkdirSync(uploadsDir, { recursive: true })
+          if (!fs.existsSync(mediaDir)) {
+            fs.mkdirSync(mediaDir, { recursive: true })
           }
           
           await writeFile(fallbackPath, buffer)
           // Use absolute URL for local files
-          fileUrl = `${baseUrl}/uploads/${fallbackFilename}`
+          fileUrl = `${baseUrl}/media/${fallbackFilename}`
         } catch (writeError: any) {
           console.error("Fallback write also failed:", writeError)
           throw new Error(`Cannot upload file: Cloudinary failed (${cloudinaryError.message}) and local storage failed (${writeError.message})`)
         }
       }
     } else {
-      // Save to local storage
+      // Save to local storage in /media directory
       const bytes = await file.arrayBuffer()
       const buffer = Buffer.from(bytes)
-      const filename = `${Date.now()}-${file.name}`
-      const path = join(process.cwd(), "public", "uploads", filename)
+      const filename = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}` // Sanitize filename
+      const path = join(process.cwd(), "public", "media", filename)
       
-      // Ensure uploads directory exists
+      // Ensure media directory exists
       const fs = require("fs")
-      const uploadsDir = join(process.cwd(), "public", "uploads")
+      const mediaDir = join(process.cwd(), "public", "media")
       
       try {
-        if (!fs.existsSync(uploadsDir)) {
-          fs.mkdirSync(uploadsDir, { recursive: true })
+        if (!fs.existsSync(mediaDir)) {
+          fs.mkdirSync(mediaDir, { recursive: true })
         }
         
         // Check write permissions
         await writeFile(path, buffer)
         // Use absolute URL for local files to ensure they load correctly
-        fileUrl = `${baseUrl}/uploads/${filename}`
+        fileUrl = `${baseUrl}/media/${filename}`
+        console.log(`File saved to: ${path}, URL: ${fileUrl}`)
       } catch (writeError: any) {
         console.error("Error writing file to disk:", writeError)
         // If write fails, try alternative location
-        const altPath = join(process.cwd(), "uploads", filename)
-        const altDir = join(process.cwd(), "uploads")
+        const altPath = join(process.cwd(), "media", filename)
+        const altDir = join(process.cwd(), "media")
         try {
           if (!fs.existsSync(altDir)) {
             fs.mkdirSync(altDir, { recursive: true })
           }
           await writeFile(altPath, buffer)
-          fileUrl = `${baseUrl}/uploads/${filename}` // Still use same URL, might need nginx config
+          fileUrl = `${baseUrl}/media/${filename}`
           console.log("Saved to alternative location:", altPath)
         } catch (altError: any) {
           throw new Error(`Cannot write file: ${writeError.message}. Alternative location also failed: ${altError.message}`)

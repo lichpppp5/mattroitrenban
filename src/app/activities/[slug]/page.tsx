@@ -216,7 +216,8 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {imageArray.map((img: string, index: number) => {
                     // Normalize URL to absolute if it's a local upload
-                    const imageUrl = img.startsWith("/uploads/") 
+                    // Support both /uploads/ (legacy) and /media/ (new)
+                    const imageUrl = (img.startsWith("/uploads/") || img.startsWith("/media/"))
                       ? `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}${img}`
                       : img
                     return (
