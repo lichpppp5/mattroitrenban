@@ -432,12 +432,12 @@ export default function AdminActivities() {
                             }
                             
                             // Upload to server instead of just using base64
-                            const formData = new FormData()
-                            formData.append("file", file)
+                            const uploadFormData = new FormData()
+                            uploadFormData.append("file", file)
                             
                             const uploadResponse = await fetch("/api/media", {
                               method: "POST",
-                              body: formData,
+                              body: uploadFormData,
                             })
                             
                             if (!uploadResponse.ok) {
@@ -459,18 +459,19 @@ export default function AdminActivities() {
                             const imageUrl = uploadData.media?.url || uploadData.url
                             
                             if (imageUrl) {
-                              setFormData({
-                                ...formData,
-                                images: [...formData.images, imageUrl],
-                              })
+                              // Use functional update to avoid stale closure
+                              setFormData((prev) => ({
+                                ...prev,
+                                images: [...prev.images, imageUrl],
+                              }))
                             } else {
                               // Fallback to base64 if upload fails but no error thrown
                               const reader = new FileReader()
                               reader.onloadend = () => {
-                                setFormData({
-                                  ...formData,
-                                  images: [...formData.images, reader.result as string],
-                                })
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  images: [...prev.images, reader.result as string],
+                                }))
                               }
                               reader.readAsDataURL(file)
                             }
@@ -479,10 +480,10 @@ export default function AdminActivities() {
                             // Fallback to base64 for local preview, but show warning
                             const reader = new FileReader()
                             reader.onloadend = () => {
-                              setFormData({
-                                ...formData,
-                                images: [...formData.images, reader.result as string],
-                              })
+                              setFormData((prev) => ({
+                                ...prev,
+                                images: [...prev.images, reader.result as string],
+                              }))
                               alert(`Cảnh báo: Không thể upload "${file.name}" lên server. Đang dùng ảnh tạm thời (base64). Lỗi: ${uploadErr.message}`)
                             }
                             reader.readAsDataURL(file)
@@ -516,10 +517,10 @@ export default function AdminActivities() {
                           e.preventDefault()
                           const input = e.target as HTMLInputElement
                           if (input.value.trim()) {
-                            setFormData({
-                              ...formData,
-                              images: [...formData.images, input.value.trim()],
-                            })
+                            setFormData((prev) => ({
+                              ...prev,
+                              images: [...prev.images, input.value.trim()],
+                            }))
                             input.value = ''
                           }
                         }
@@ -531,10 +532,10 @@ export default function AdminActivities() {
                       onClick={() => {
                         const input = document.querySelector('input[placeholder="https://example.com/image.jpg"]') as HTMLInputElement
                         if (input?.value.trim()) {
-                          setFormData({
-                            ...formData,
-                            images: [...formData.images, input.value.trim()],
-                          })
+                          setFormData((prev) => ({
+                            ...prev,
+                            images: [...prev.images, input.value.trim()],
+                          }))
                           input.value = ''
                         }
                       }}
