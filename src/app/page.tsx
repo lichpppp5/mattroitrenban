@@ -98,10 +98,14 @@ async function getSiteContent() {
     })
     
     // Return với defaults nếu không có trong database
+    // Banner có thể được lưu với key "site.banner" (từ Settings) hoặc "heroBannerImage" (từ Content)
+    // Ưu tiên "site.banner" nếu có, fallback về "heroBannerImage"
+    const bannerImage = contentMap["site.banner"] || contentMap["heroBannerImage"] || null
+    
     return {
       heroTitle: contentMap["heroTitle"] || "Mặt Trời Trên Bản",
       heroSubtitle: contentMap["heroSubtitle"] || "Mang ánh sáng và hy vọng đến những vùng cao xa xôi, nơi cần sự hỗ trợ và quan tâm nhất",
-      heroBannerImage: contentMap["heroBannerImage"] || null,
+      heroBannerImage: bannerImage,
       heroButton1Text: contentMap["heroButton1Text"] || "Quyên góp ngay",
       heroButton2Text: contentMap["heroButton2Text"] || "Tìm hiểu thêm",
       stat1Number: contentMap["stat1Number"] || "1,200+",

@@ -142,10 +142,16 @@ export default function AdminSettings() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ key: "site.logo", value: settings.logoUrl, type: "image" }),
         }),
+        // Lưu banner vào cả 2 keys để đảm bảo tương thích
         fetch("/api/content", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ key: "site.banner", value: settings.bannerUrl, type: "image" }),
+        }),
+        fetch("/api/content", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: "heroBannerImage", value: settings.bannerUrl, type: "image" }),
         }),
         fetch("/api/content", {
           method: "POST",
@@ -203,6 +209,15 @@ export default function AdminSettings() {
       ]
       
       await Promise.all(savePromises)
+      
+      // Revalidate homepage nếu có thay đổi banner
+      if (settings.bannerUrl) {
+        try {
+          await fetch("/api/revalidate?path=/")
+        } catch (revalidateErr) {
+          console.error("Error revalidating homepage:", revalidateErr)
+        }
+      }
       
       setSaveStatus("success")
       setTimeout(() => setSaveStatus(null), 3000)
@@ -486,7 +501,7 @@ export default function AdminSettings() {
                       className="absolute top-2 right-2 bg-red-500 text-white hover:bg-red-600"
                       onClick={async () => {
                         setSettings({...settings, bannerUrl: ""})
-                        // Also delete from database
+                        // Also delete from database - xóa cả 2 keys
                         try {
                           await fetch("/api/content", {
                             method: "POST",
@@ -497,6 +512,21 @@ export default function AdminSettings() {
                               type: "image" 
                             }),
                           })
+                          await fetch("/api/content", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ 
+                              key: "heroBannerImage", 
+                              value: "", 
+                              type: "image" 
+                            }),
+                          })
+                          // Revalidate homepage
+                          try {
+                            await fetch("/api/revalidate?path=/")
+                          } catch (revalidateErr) {
+                            console.error("Error revalidating homepage:", revalidateErr)
+                          }
                         } catch (err) {
                           console.error("Error deleting banner:", err)
                         }
@@ -531,8 +561,9 @@ export default function AdminSettings() {
                               const base64Url = reader.result as string
                               setSettings({...settings, bannerUrl: base64Url})
                               
-                              // Auto-save to database
+                              // Auto-save to database - lưu vào cả 2 keys để đảm bảo tương thích
                               try {
+                                // Lưu vào "site.banner" (cho Settings)
                                 await fetch("/api/content", {
                                   method: "POST",
                                   headers: { "Content-Type": "application/json" },
@@ -542,6 +573,22 @@ export default function AdminSettings() {
                                     type: "image" 
                                   }),
                                 })
+                                // Lưu vào "heroBannerImage" (cho Content/Homepage)
+                                await fetch("/api/content", {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ 
+                                    key: "heroBannerImage", 
+                                    value: base64Url, 
+                                    type: "image" 
+                                  }),
+                                })
+                                // Revalidate homepage để banner hiển thị ngay
+                                try {
+                                  await fetch("/api/revalidate?path=/")
+                                } catch (revalidateErr) {
+                                  console.error("Error revalidating homepage:", revalidateErr)
+                                }
                                 setSaveStatus("success")
                                 setTimeout(() => setSaveStatus(null), 2000)
                               } catch (err) {

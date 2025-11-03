@@ -124,6 +124,16 @@ export default function AdminContent() {
       })
       
       await Promise.all(updates)
+      
+      // Revalidate homepage nếu có thay đổi banner
+      if (siteContent.heroBannerImage) {
+        try {
+          await fetch("/api/revalidate?path=/")
+        } catch (revalidateErr) {
+          console.error("Error revalidating homepage:", revalidateErr)
+        }
+      }
+      
       alert("Nội dung đã được lưu thành công!")
     } catch (err: any) {
       console.error("Error saving content:", err)
@@ -133,11 +143,56 @@ export default function AdminContent() {
     }
   }
 
-  const handleImageUpload = (field: string, file: File | null) => {
+  const handleImageUpload = async (field: string, file: File | null) => {
     if (file) {
+      // Check file size (max 10MB for banner, 5MB for others)
+      const maxSize = field === "heroBannerImage" ? 10 * 1024 * 1024 : 5 * 1024 * 1024
+      if (file.size > maxSize) {
+        alert(`File quá lớn! Vui lòng chọn file nhỏ hơn ${field === "heroBannerImage" ? "10MB" : "5MB"}`)
+        return
+      }
+      
       const reader = new FileReader()
-      reader.onloadend = () => {
-        setSiteContent({...siteContent, [field]: reader.result as string})
+      reader.onloadend = async () => {
+        const base64Url = reader.result as string
+        setSiteContent({...siteContent, [field]: base64Url})
+        
+        // Auto-save to database
+        try {
+          await fetch("/api/content", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              key: field,
+              value: base64Url,
+              type: "image"
+            }),
+          })
+          
+          // Nếu là banner, cũng lưu vào "site.banner" để tương thích với Settings
+          if (field === "heroBannerImage") {
+            await fetch("/api/content", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                key: "site.banner",
+                value: base64Url,
+                type: "image"
+              }),
+            })
+            // Revalidate homepage
+            try {
+              await fetch("/api/revalidate?path=/")
+            } catch (revalidateErr) {
+              console.error("Error revalidating homepage:", revalidateErr)
+            }
+          }
+        } catch (err) {
+          console.error(`Error auto-saving ${field}:`, err)
+        }
+      }
+      reader.onerror = () => {
+        alert("Lỗi khi đọc file. Vui lòng thử lại.")
       }
       reader.readAsDataURL(file)
     }
