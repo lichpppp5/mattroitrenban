@@ -1,0 +1,85 @@
+import { NextRequest, NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
+
+// PUT - Cập nhật team member
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session || (session.user.role !== "admin" && session.user.role !== "editor")) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      )
+    }
+    
+    const { id } = await params
+    const body = await request.json()
+    
+    const member = await prisma.teamMember.update({
+      where: { id },
+      data: body,
+    })
+    
+    // Revalidate team page after update
+    try {
+      const { revalidatePath } = await import("next/cache")
+      revalidatePath("/team")
+    } catch (e) {
+      console.warn("Failed to revalidate team page:", e)
+    }
+    
+    return NextResponse.json(member)
+  } catch (error: any) {
+    console.error("Error updating team member:", error)
+    return NextResponse.json(
+      { error: "Failed to update team member", message: error.message },
+      { status: 500 }
+    )
+  }
+}
+
+// DELETE - Xóa team member
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session || (session.user.role !== "admin" && session.user.role !== "editor")) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      )
+    }
+    
+    const { id } = await params
+    
+    await prisma.teamMember.delete({
+      where: { id },
+    })
+    
+    // Revalidate team page after delete
+    try {
+      const { revalidatePath } = await import("next/cache")
+      revalidatePath("/team")
+    } catch (e) {
+      console.warn("Failed to revalidate team page:", e)
+    }
+    
+    return NextResponse.json({ success: true })
+  } catch (error: any) {
+    console.error("Error deleting team member:", error)
+    return NextResponse.json(
+      { error: "Failed to delete team member", message: error.message },
+      { status: 500 }
+    )
+  }
+}
+

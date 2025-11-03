@@ -215,20 +215,9 @@ export default function AdminActivities() {
         })
       }
       
-      // Check if response is actually JSON before parsing
-      const contentType = response.headers.get("content-type")
-      if (!contentType || !contentType.includes("application/json")) {
-        // Server returned HTML (likely error page)
-        const text = await response.text()
-        console.error("Non-JSON response:", text.substring(0, 200))
-        throw new Error(`Server error: HTTP ${response.status}. Response is not JSON.`)
-      }
-      
       if (!response.ok) {
-        const error = await response.json().catch(() => ({
-          error: `HTTP ${response.status}: Failed to save activity`
-        }))
-        throw new Error(error.error || `HTTP ${response.status}: Failed to save activity`)
+        const error = await response.json()
+        throw new Error(error.error || "Failed to save activity")
       }
       
       const savedActivity = await response.json()
@@ -244,18 +233,7 @@ export default function AdminActivities() {
       console.error("Error saving activity:", err)
       const errorMessage = err.message || "Failed to save activity"
       setError(errorMessage)
-      
-      // Better error display
-      let displayMessage = errorMessage
-      if (errorMessage.includes("not valid JSON") || errorMessage.includes("is not JSON")) {
-        displayMessage = "Lỗi kết nối server. Vui lòng kiểm tra lại hoặc thử lại sau."
-      } else if (errorMessage.includes("Unauthorized")) {
-        displayMessage = "Bạn không có quyền thực hiện thao tác này. Vui lòng đăng nhập lại."
-      } else if (errorMessage.includes("Slug already exists")) {
-        displayMessage = "URL slug đã tồn tại. Vui lòng thay đổi slug."
-      }
-      
-      alert(`Lỗi: ${displayMessage}`)
+      alert(`Lỗi: ${errorMessage}`)
     }
   }
 
@@ -420,78 +398,18 @@ export default function AdminActivities() {
                       className="hidden"
                       id="gallery-upload"
                       multiple
-                      onChange={async (e) => {
+                      onChange={(e) => {
                         const files = Array.from(e.target.files || [])
-                        
-                        for (const file of files) {
-                          try {
-                            // Check file size (max 10MB per image)
-                            if (file.size > 10 * 1024 * 1024) {
-                              alert(`File "${file.name}" quá lớn (${(file.size / 1024 / 1024).toFixed(1)}MB). Vui lòng chọn file nhỏ hơn 10MB`)
-                              continue
-                            }
-                            
-                            // Upload to server instead of just using base64
-                            const formData = new FormData()
-                            formData.append("file", file)
-                            
-                            const uploadResponse = await fetch("/api/media", {
-                              method: "POST",
-                              body: formData,
+                        files.forEach((file) => {
+                          const reader = new FileReader()
+                          reader.onloadend = () => {
+                            setFormData({
+                              ...formData,
+                              images: [...formData.images, reader.result as string],
                             })
-                            
-                            if (!uploadResponse.ok) {
-                              // Check content-type
-                              const contentType = uploadResponse.headers.get("content-type")
-                              if (!contentType || !contentType.includes("application/json")) {
-                                const text = await uploadResponse.text()
-                                console.error("Upload failed - non-JSON response:", text.substring(0, 200))
-                                throw new Error(`Lỗi upload: Server trả về HTML thay vì JSON (HTTP ${uploadResponse.status})`)
-                              }
-                              
-                              const errorData = await uploadResponse.json().catch(() => ({
-                                error: `HTTP ${uploadResponse.status}: Upload failed`
-                              }))
-                              throw new Error(errorData.error || "Upload failed")
-                            }
-                            
-                            const uploadData = await uploadResponse.json()
-                            const imageUrl = uploadData.media?.url || uploadData.url
-                            
-                            if (imageUrl) {
-                              setFormData({
-                                ...formData,
-                                images: [...formData.images, imageUrl],
-                              })
-                            } else {
-                              // Fallback to base64 if upload fails but no error thrown
-                              const reader = new FileReader()
-                              reader.onloadend = () => {
-                                setFormData({
-                                  ...formData,
-                                  images: [...formData.images, reader.result as string],
-                                })
-                              }
-                              reader.readAsDataURL(file)
-                            }
-                          } catch (uploadErr: any) {
-                            console.error("Error uploading image:", uploadErr)
-                            // Fallback to base64 for local preview, but show warning
-                            const reader = new FileReader()
-                            reader.onloadend = () => {
-                              setFormData({
-                                ...formData,
-                                images: [...formData.images, reader.result as string],
-                              })
-                              alert(`Cảnh báo: Không thể upload "${file.name}" lên server. Đang dùng ảnh tạm thời (base64). Lỗi: ${uploadErr.message}`)
-                            }
-                            reader.readAsDataURL(file)
                           }
-                        }
-                        
-                        // Reset file input
-                        const input = e.target as HTMLInputElement
-                        if (input) input.value = ""
+                          reader.readAsDataURL(file)
+                        })
                       }}
                     />
                     <Button

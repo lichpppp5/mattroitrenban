@@ -1,0 +1,90 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: mattroitrenban_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-mattroitrenban}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-your_secure_password_here}
+      POSTGRES_DB: ${POSTGRES_DB:-mattroitrendb}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # Port mapping removed - database only accessible within Docker network
+    # If you need external access, change to: - "5433:5432" (maps host port 5433 to container port 5432)
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mattroitrenban}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  # Next.js Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mattroitrenban_app
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-mattroitrenban}:${POSTGRES_PASSWORD:-your_secure_password_here}@postgres:5432/${POSTGRES_DB:-mattroitrendb}?schema=public&connection_limit=20&pool_timeout=20
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-mattroitrenban_secret_key_production_2025_change_this}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://44.207.127.115}
+      CLOUDINARY_URL: ${CLOUDINARY_URL:-}
+      NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: ${NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+      NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-Mặt Trời Trên Bản}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://44.207.127.115}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./uploads:/app/public/uploads
+    # Port 3000 không cần expose ra ngoài vì Nginx đã handle
+    # Chỉ expose nếu cần truy cập trực tiếp (development)
+    # ports:
+    #   - "3000:3000"
+    expose:
+      - "3000"
+    networks:
+      - app-network
+    # Run migrations on start, then start server
+    command: >
+      sh -c "npx prisma migrate deploy || true &&
+             node server.js"
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: mattroitrenban_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - ./uploads:/var/www/uploads:ro
+      - nginx_cache:/var/cache/nginx
+    depends_on:
+      - app
+    networks:
+      - app-network
+
+volumes:
+  postgres_data:
+    driver: local
+  nginx_cache:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge
+

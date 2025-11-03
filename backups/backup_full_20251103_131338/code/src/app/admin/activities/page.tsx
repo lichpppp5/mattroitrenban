@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,63 +11,65 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Switch } from "@/components/ui/switch"
-import Link from "next/link"
 import { Download, Search, Plus, FileText, Eye, Edit, Trash2, Upload, Image as ImageIcon, Video, X, Calendar } from "lucide-react"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 
 export default function AdminActivities() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingActivity, setEditingActivity] = useState<any>(null)
-  const [activities, setActivities] = useState<any[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string>("")
-
-  // Fetch activities from API
-  useEffect(() => {
-    fetchActivities()
-  }, [])
-
-  const fetchActivities = async () => {
-    try {
-      setIsLoading(true)
-      // Admin can see ALL activities (published and draft)
-      // No filter applied - API will handle based on session
-      const response = await fetch("/api/activities")
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.error || `HTTP ${response.status}: Failed to fetch activities`)
-      }
-      const data = await response.json()
-      console.log("Fetched activities:", data.length, "items") // Debug log
-      // Normalize data - ensure duration and volunteerCount are numbers (not strings)
-      const normalizedData: any[] = Array.isArray(data) ? data.map((activity: any) => {
-        return {
-          ...activity,
-          duration: activity.duration !== null && activity.duration !== undefined 
-            ? (typeof activity.duration === 'string' ? parseInt(activity.duration) || null : Number(activity.duration) || null)
-            : null,
-          volunteerCount: activity.volunteerCount !== null && activity.volunteerCount !== undefined
-            ? (typeof activity.volunteerCount === 'string' ? parseInt(activity.volunteerCount) || null : Number(activity.volunteerCount) || null)
-            : null,
-        }
-      }) : []
-      setActivities(normalizedData)
-      setError("")
-    } catch (err: any) {
-      console.error("Error fetching activities:", err)
-      setError(err.message || "Failed to load activities")
-      setActivities([]) // Set empty array on error
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  const [activities, setActivities] = useState([
+    {
+      id: 1,
+      title: "Xây dựng trường học tại bản X, tỉnh Y",
+      slug: "xay-dung-truong-hoc-ban-x-tinh-y",
+      category: "Giáo dục",
+      status: "published",
+      createdAt: "2024-06-15",
+      updatedAt: "2024-06-15",
+      views: 1250,
+      location: "Bản X, Tỉnh Y",
+      tripDate: "2024-06-15",
+      duration: 5,
+      volunteerCount: 15,
+      isUpcoming: false,
+    },
+    {
+      id: 2,
+      title: "Khám bệnh miễn phí cho đồng bào vùng cao",
+      slug: "kham-benh-mien-phi-dong-bao-vung-cao",
+      category: "Y tế",
+      status: "published",
+      createdAt: "2024-06-14",
+      updatedAt: "2024-06-14",
+      views: 890,
+      location: "Bản A, B, C - Tỉnh Y",
+      tripDate: "2024-06-14",
+      duration: 3,
+      volunteerCount: 20,
+      isUpcoming: false,
+    },
+    {
+      id: 3,
+      title: "Xây dựng cầu đi bộ tại Bản M",
+      slug: "xay-dung-cau-di-bo-ban-m",
+      category: "Cơ sở hạ tầng",
+      status: "preparing",
+      createdAt: "2024-06-13",
+      updatedAt: "2024-06-13",
+      views: 0,
+      location: "Bản M, Huyện X, Tỉnh Y",
+      tripDate: "2024-07-15",
+      duration: 5,
+      volunteerCount: 15,
+      isUpcoming: true,
+    },
+  ])
 
   const [formData, setFormData] = useState({
     title: "",
     slug: "",
     content: "",
     imageUrl: "",
-    images: [] as string[], // Array of image URLs for gallery
     videoUrl: "",
     category: "",
     location: "",
@@ -105,7 +107,6 @@ export default function AdminActivities() {
       slug: "",
       content: "",
       imageUrl: "",
-      images: [],
       videoUrl: "",
       category: "",
       location: "",
@@ -126,17 +127,6 @@ export default function AdminActivities() {
       slug: activity.slug,
       content: activity.content || "",
       imageUrl: activity.imageUrl || "",
-      images: (() => {
-        if (!activity.images) return []
-        if (typeof activity.images === 'string') {
-          try {
-            return JSON.parse(activity.images)
-          } catch {
-            return []
-          }
-        }
-        return Array.isArray(activity.images) ? activity.images : []
-      })(),
       videoUrl: activity.videoUrl || "",
       category: activity.category || "",
       location: activity.location || "",
@@ -145,129 +135,48 @@ export default function AdminActivities() {
       volunteerCount: activity.volunteerCount?.toString() || "",
       status: activity.status || "draft",
       isUpcoming: activity.isUpcoming || false,
-      isPublished: activity.isPublished || false, // Use isPublished directly from database
+      isPublished: activity.status === "published",
     })
     setIsDialogOpen(true)
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Bạn có chắc chắn muốn xóa hoạt động này?")) return
-    
-    try {
-      const response = await fetch(`/api/activities/${id}`, {
-        method: "DELETE",
-      })
-      
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || "Failed to delete activity")
-      }
-      
-      // Refresh activities list
-      await fetchActivities()
-    } catch (err: any) {
-      console.error("Error deleting activity:", err)
-      alert(err.message || "Failed to delete activity")
-    }
+  const handleDelete = (id: number) => {
+    setActivities(activities.filter(a => a.id !== id))
   }
 
-  const handleSave = async () => {
-    try {
-      // Ensure slug is generated if not provided
-      if (!formData.title) {
-        alert("Vui lòng nhập tiêu đề")
-        return
-      }
-      
-      const finalSlug = formData.slug || generateSlug(formData.title)
-      
-      // Convert images array to JSON string for storage
-      // Ensure status and isPublished are synchronized
-      const finalIsPublished = formData.isPublished || false
-      const finalStatus = finalIsPublished ? "published" : (formData.status || "draft")
-      
-      const activityData = {
-        ...formData,
-        slug: finalSlug,
-        images: formData.images.length > 0 ? JSON.stringify(formData.images) : null,
-        duration: formData.duration ? parseInt(formData.duration) : null,
-        volunteerCount: formData.volunteerCount ? parseInt(formData.volunteerCount) : null,
-        tripDate: formData.tripDate || null,
-        status: finalStatus,
-        isPublished: finalIsPublished, // Ensure this is explicitly set
-        isUpcoming: formData.isUpcoming || false,
-      }
-      
-      let response
-      if (editingActivity) {
-        // Update existing
-        response = await fetch(`/api/activities/${editingActivity.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(activityData),
-        })
-      } else {
-        // Create new
-        response = await fetch("/api/activities", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(activityData),
-        })
-      }
-      
-      // Check if response is actually JSON before parsing
-      const contentType = response.headers.get("content-type")
-      if (!contentType || !contentType.includes("application/json")) {
-        // Server returned HTML (likely error page)
-        const text = await response.text()
-        console.error("Non-JSON response:", text.substring(0, 200))
-        throw new Error(`Server error: HTTP ${response.status}. Response is not JSON.`)
-      }
-      
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({
-          error: `HTTP ${response.status}: Failed to save activity`
-        }))
-        throw new Error(error.error || `HTTP ${response.status}: Failed to save activity`)
-      }
-      
-      const savedActivity = await response.json()
-      
-      // Refresh activities list
-      await fetchActivities()
-      setIsDialogOpen(false)
-      setEditingActivity(null)
-      
-      // Show success message
-      alert(editingActivity ? "Đã cập nhật hoạt động thành công!" : "Đã tạo hoạt động thành công!")
-    } catch (err: any) {
-      console.error("Error saving activity:", err)
-      const errorMessage = err.message || "Failed to save activity"
-      setError(errorMessage)
-      
-      // Better error display
-      let displayMessage = errorMessage
-      if (errorMessage.includes("not valid JSON") || errorMessage.includes("is not JSON")) {
-        displayMessage = "Lỗi kết nối server. Vui lòng kiểm tra lại hoặc thử lại sau."
-      } else if (errorMessage.includes("Unauthorized")) {
-        displayMessage = "Bạn không có quyền thực hiện thao tác này. Vui lòng đăng nhập lại."
-      } else if (errorMessage.includes("Slug already exists")) {
-        displayMessage = "URL slug đã tồn tại. Vui lòng thay đổi slug."
-      }
-      
-      alert(`Lỗi: ${displayMessage}`)
+  const handleSave = () => {
+    // Normalize formData before merging (convert strings to numbers where needed)
+    const normalizedFormData: any = {
+      ...formData,
+      duration: formData.duration ? (typeof formData.duration === 'string' ? parseInt(formData.duration) || null : formData.duration) : null,
+      volunteerCount: formData.volunteerCount ? (typeof formData.volunteerCount === 'string' ? parseInt(formData.volunteerCount) || null : formData.volunteerCount) : null,
     }
+
+    if (editingActivity) {
+      // Update existing
+      setActivities(activities.map((a: any) => 
+        a.id === editingActivity.id 
+          ? { ...a, ...normalizedFormData, updatedAt: new Date().toISOString().split('T')[0] }
+          : a
+      ) as any)
+    } else {
+      // Create new
+      const newActivity: any = {
+        id: activities.length + 1,
+        ...normalizedFormData,
+        createdAt: new Date().toISOString().split('T')[0],
+        updatedAt: new Date().toISOString().split('T')[0],
+        views: 0,
+      }
+      setActivities([...activities, newActivity] as any)
+    }
+    setIsDialogOpen(false)
   }
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        {error && (
-          <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-            {error}
-          </div>
-        )}
         <div>
           <h2 className="text-3xl font-bold text-gray-900">Quản lý Hoạt động</h2>
           <p className="text-gray-600">Tạo và quản lý các hoạt động thiện nguyện</p>
@@ -393,156 +302,55 @@ export default function AdminActivities() {
                 </div>
               </div>
 
-              {/* Image Gallery Upload */}
+              {/* Image Upload */}
               <div>
-                <Label>Album ảnh (có thể upload nhiều ảnh)</Label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-2 mb-2">
-                  {formData.images.map((img, index) => (
-                    <div key={index} className="relative aspect-square rounded-lg overflow-hidden border group">
-                      <img src={img} alt={`Image ${index + 1}`} className="w-full h-full object-cover" />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute top-2 right-2 bg-red-500 text-white hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => {
-                          const newImages = formData.images.filter((_, i) => i !== index)
-                          setFormData({...formData, images: newImages})
-                        }}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg aspect-square flex items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors">
+                <Label>Hình ảnh</Label>
+                {formData.imageUrl ? (
+                  <div className="relative mt-2">
+                    <img src={formData.imageUrl} alt="Preview" className="w-full h-48 object-cover rounded-lg border" />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute top-2 right-2 bg-red-500 text-white hover:bg-red-600"
+                      onClick={() => setFormData({...formData, imageUrl: ""})}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 mt-2 text-center">
                     <Input
                       type="file"
                       accept="image/*"
                       className="hidden"
-                      id="gallery-upload"
-                      multiple
-                      onChange={async (e) => {
-                        const files = Array.from(e.target.files || [])
-                        
-                        for (const file of files) {
-                          try {
-                            // Check file size (max 10MB per image)
-                            if (file.size > 10 * 1024 * 1024) {
-                              alert(`File "${file.name}" quá lớn (${(file.size / 1024 / 1024).toFixed(1)}MB). Vui lòng chọn file nhỏ hơn 10MB`)
-                              continue
-                            }
-                            
-                            // Upload to server instead of just using base64
-                            const formData = new FormData()
-                            formData.append("file", file)
-                            
-                            const uploadResponse = await fetch("/api/media", {
-                              method: "POST",
-                              body: formData,
-                            })
-                            
-                            if (!uploadResponse.ok) {
-                              // Check content-type
-                              const contentType = uploadResponse.headers.get("content-type")
-                              if (!contentType || !contentType.includes("application/json")) {
-                                const text = await uploadResponse.text()
-                                console.error("Upload failed - non-JSON response:", text.substring(0, 200))
-                                throw new Error(`Lỗi upload: Server trả về HTML thay vì JSON (HTTP ${uploadResponse.status})`)
-                              }
-                              
-                              const errorData = await uploadResponse.json().catch(() => ({
-                                error: `HTTP ${uploadResponse.status}: Upload failed`
-                              }))
-                              throw new Error(errorData.error || "Upload failed")
-                            }
-                            
-                            const uploadData = await uploadResponse.json()
-                            const imageUrl = uploadData.media?.url || uploadData.url
-                            
-                            if (imageUrl) {
-                              setFormData({
-                                ...formData,
-                                images: [...formData.images, imageUrl],
-                              })
-                            } else {
-                              // Fallback to base64 if upload fails but no error thrown
-                              const reader = new FileReader()
-                              reader.onloadend = () => {
-                                setFormData({
-                                  ...formData,
-                                  images: [...formData.images, reader.result as string],
-                                })
-                              }
-                              reader.readAsDataURL(file)
-                            }
-                          } catch (uploadErr: any) {
-                            console.error("Error uploading image:", uploadErr)
-                            // Fallback to base64 for local preview, but show warning
-                            const reader = new FileReader()
-                            reader.onloadend = () => {
-                              setFormData({
-                                ...formData,
-                                images: [...formData.images, reader.result as string],
-                              })
-                              alert(`Cảnh báo: Không thể upload "${file.name}" lên server. Đang dùng ảnh tạm thời (base64). Lỗi: ${uploadErr.message}`)
-                            }
-                            reader.readAsDataURL(file)
+                      id="image-upload"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) {
+                          const reader = new FileReader()
+                          reader.onloadend = () => {
+                            setFormData({...formData, imageUrl: reader.result as string})
                           }
-                        }
-                        
-                        // Reset file input
-                        const input = e.target as HTMLInputElement
-                        if (input) input.value = ""
-                      }}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      onClick={() => document.getElementById('gallery-upload')?.click()}
-                      className="flex flex-col items-center justify-center w-full h-full"
-                    >
-                      <Upload className="h-8 w-8 text-gray-400 mb-2" />
-                      <span className="text-sm text-gray-500">Thêm ảnh</span>
-                    </Button>
-                  </div>
-                </div>
-                <div className="mt-2">
-                  <Label className="text-sm text-gray-600 mb-2 block">Hoặc thêm URL ảnh:</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="https://example.com/image.jpg"
-                      className="flex-1"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault()
-                          const input = e.target as HTMLInputElement
-                          if (input.value.trim()) {
-                            setFormData({
-                              ...formData,
-                              images: [...formData.images, input.value.trim()],
-                            })
-                            input.value = ''
-                          }
+                          reader.readAsDataURL(file)
                         }
                       }}
                     />
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => {
-                        const input = document.querySelector('input[placeholder="https://example.com/image.jpg"]') as HTMLInputElement
-                        if (input?.value.trim()) {
-                          setFormData({
-                            ...formData,
-                            images: [...formData.images, input.value.trim()],
-                          })
-                          input.value = ''
-                        }
-                      }}
+                      onClick={() => document.getElementById('image-upload')?.click()}
                     >
-                      <Plus className="h-4 w-4" />
+                      <Upload className="mr-2 h-4 w-4" />
+                      Upload hình ảnh
                     </Button>
                   </div>
-                </div>
+                )}
+                <Input
+                  value={formData.imageUrl}
+                  onChange={(e) => setFormData({...formData, imageUrl: e.target.value})}
+                  placeholder="Hoặc nhập URL hình ảnh..."
+                  className="mt-2"
+                />
               </div>
 
               {/* Video URL */}
@@ -630,7 +438,7 @@ export default function AdminActivities() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Đã xuất bản</p>
-                <p className="text-2xl font-bold">{activities.filter(a => a.isPublished).length}</p>
+                <p className="text-2xl font-bold">{activities.filter(a => a.status === "published").length}</p>
               </div>
               <Eye className="h-12 w-12 text-green-500" />
             </div>
@@ -718,28 +526,12 @@ export default function AdminActivities() {
                 <TableHead>Danh mục</TableHead>
                 <TableHead>Trạng thái</TableHead>
                 <TableHead>Ngày tạo</TableHead>
-                <TableHead>Xem</TableHead>
+                <TableHead>Lượt xem</TableHead>
                 <TableHead className="text-right">Thao tác</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8">
-                    <div className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
-                      <span className="ml-3">Đang tải...</span>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : activities.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                    Chưa có hoạt động nào. Hãy tạo hoạt động mới!
-                  </TableCell>
-                </TableRow>
-              ) : (
-                activities.map((activity) => (
+              {activities.map((activity) => (
                 <TableRow key={activity.id}>
                   <TableCell className="font-medium">{activity.title}</TableCell>
                   <TableCell>
@@ -764,18 +556,13 @@ export default function AdminActivities() {
                       <Badge variant="outline" className="ml-2">Sắp tới</Badge>
                     )}
                   </TableCell>
-                  <TableCell>
-                    {activity.createdAt ? new Date(activity.createdAt).toLocaleDateString("vi-VN") : "-"}
-                  </TableCell>
-                  <TableCell>
-                    <Link href={`/activities/${activity.slug}`} target="_blank">
-                      <Button variant="ghost" size="sm" title="Xem trên website">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                  </TableCell>
+                  <TableCell>{activity.createdAt}</TableCell>
+                  <TableCell>{activity.views.toLocaleString()}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end space-x-2">
+                      <Button variant="ghost" size="sm">
+                        <Eye className="h-4 w-4" />
+                      </Button>
                       <Button variant="ghost" size="sm" onClick={() => handleEdit(activity)}>
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -803,7 +590,7 @@ export default function AdminActivities() {
                     </div>
                   </TableCell>
                 </TableRow>
-              )))}
+              ))}
             </TableBody>
           </Table>
         </CardContent>

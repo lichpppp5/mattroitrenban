@@ -170,31 +170,12 @@ export async function POST(request: NextRequest) {
       // Ensure uploads directory exists
       const fs = require("fs")
       const uploadsDir = join(process.cwd(), "public", "uploads")
-      
-      try {
-        if (!fs.existsSync(uploadsDir)) {
-          fs.mkdirSync(uploadsDir, { recursive: true })
-        }
-        
-        // Check write permissions
-        await writeFile(path, buffer)
-        fileUrl = `/uploads/${filename}`
-      } catch (writeError: any) {
-        console.error("Error writing file to disk:", writeError)
-        // If write fails, try alternative location
-        const altPath = join(process.cwd(), "uploads", filename)
-        const altDir = join(process.cwd(), "uploads")
-        try {
-          if (!fs.existsSync(altDir)) {
-            fs.mkdirSync(altDir, { recursive: true })
-          }
-          await writeFile(altPath, buffer)
-          fileUrl = `/uploads/${filename}` // Still use same URL, might need nginx config
-          console.log("Saved to alternative location:", altPath)
-        } catch (altError: any) {
-          throw new Error(`Cannot write file: ${writeError.message}. Alternative location also failed: ${altError.message}`)
-        }
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true })
       }
+      
+      await writeFile(path, buffer)
+      fileUrl = `/uploads/${filename}`
     }
 
     // Save to database

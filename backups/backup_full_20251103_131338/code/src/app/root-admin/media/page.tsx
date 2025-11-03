@@ -57,54 +57,24 @@ export default function AdminMedia() {
 
     try {
       const uploadPromises = Array.from(files).map(async (file) => {
-        try {
-          const formData = new FormData()
-          formData.append("file", file)
+        const formData = new FormData()
+        formData.append("file", file)
 
-          const response = await fetch("/api/media", {
-            method: "POST",
-            body: formData,
-          })
+        const response = await fetch("/api/media", {
+          method: "POST",
+          body: formData,
+        })
 
-          // Check if response is actually JSON before parsing
-          const contentType = response.headers.get("content-type")
-          if (!contentType || !contentType.includes("application/json")) {
-            // Server returned HTML (likely error page)
-            const text = await response.text()
-            console.error("Media upload - Non-JSON response:", text.substring(0, 200))
-            throw new Error(`Server error: HTTP ${response.status}. Response is not JSON. Kiểm tra server logs.`)
-          }
-
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => ({
-              error: `HTTP ${response.status}: Upload failed`
-            }))
-            throw new Error(errorData.error || `HTTP ${response.status}: Upload failed`)
-          }
-
-          return await response.json()
-        } catch (err: any) {
-          console.error(`Error uploading ${file.name}:`, err)
-          return { error: err.message, filename: file.name }
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || "Upload failed")
         }
+
+        return response.json()
       })
 
-      const results = await Promise.allSettled(uploadPromises)
-      const successful = results.filter(r => r.status === "fulfilled" && !r.value?.error).length
-      const failed = results.filter(r => r.status === "rejected" || r.value?.error)
-      
-      if (successful === files.length) {
-        setSuccess(`Đã upload thành công ${files.length} file(s)!`)
-        setError("")
-      } else if (successful > 0) {
-        setError(`Chỉ upload thành công ${successful}/${files.length} file(s). Các file lỗi: ${failed.map((r: any) => r.value?.filename || r.reason?.message || "unknown").join(", ")}`)
-      } else {
-        const errorMessages = failed.map((r: any) => {
-          if (r.status === "rejected") return r.reason?.message || "Unknown error"
-          return r.value?.error || "Upload failed"
-        }).join("; ")
-        setError(`Không thể upload file nào. Lỗi: ${errorMessages}`)
-      }
+      await Promise.all(uploadPromises)
+      setSuccess(`Đã upload thành công ${files.length} file(s)!`)
       
       // Refresh media list
       await fetchMedia()
@@ -114,18 +84,7 @@ export default function AdminMedia() {
       if (fileInput) fileInput.value = ""
     } catch (err: any) {
       console.error("Error uploading files:", err)
-      let errorMessage = err.message || "Không thể upload file. Vui lòng thử lại."
-      
-      // Better error messages
-      if (errorMessage.includes("not valid JSON") || errorMessage.includes("is not JSON")) {
-        errorMessage = "Lỗi kết nối server. Vui lòng kiểm tra logs hoặc thử lại sau."
-      } else if (errorMessage.includes("Unauthorized")) {
-        errorMessage = "Bạn không có quyền upload. Vui lòng đăng nhập lại."
-      } else if (errorMessage.includes("File size")) {
-        errorMessage = "File quá lớn. Kích thước tối đa là 10MB."
-      }
-      
-      setError(errorMessage)
+      setError(err.message || "Không thể upload file. Vui lòng thử lại.")
     } finally {
       setUploading(false)
     }
