@@ -185,17 +185,28 @@ export async function POST(request: NextRequest) {
       const filename = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}` // Sanitize filename
       const path = join(process.cwd(), "public", "media", filename)
       
-      // Ensure media directory exists
-      const fs = require("fs")
-      const mediaDir = join(process.cwd(), "public", "media")
-      
-      try {
-        if (!fs.existsSync(mediaDir)) {
-          fs.mkdirSync(mediaDir, { recursive: true })
-        }
+        // Ensure media directory exists with correct permissions
+        const fs = require("fs")
+        const mediaDir = join(process.cwd(), "public", "media")
         
-        // Check write permissions
-        await writeFile(path, buffer)
+        try {
+          if (!fs.existsSync(mediaDir)) {
+            fs.mkdirSync(mediaDir, { recursive: true })
+            // Set permissions (0o755 = rwxr-xr-x)
+            fs.chmodSync(mediaDir, 0o755)
+          }
+          
+          // Ensure directory is writable
+          try {
+            await fs.promises.access(mediaDir, fs.constants.W_OK)
+          } catch (accessError) {
+            // Try to fix permissions
+            fs.chmodSync(mediaDir, 0o755)
+            console.log(`Fixed permissions for ${mediaDir}`)
+          }
+          
+          // Check write permissions
+          await writeFile(path, buffer)
         // Use absolute URL for local files to ensure they load correctly
         fileUrl = `${baseUrl}/media/${filename}`
         console.log(`✅ File saved to: ${path}`)
@@ -212,9 +223,30 @@ export async function POST(request: NextRequest) {
           console.log(`⚠️  Trying alternative location: ${altPath}`)
           if (!fs.existsSync(altDir)) {
             fs.mkdirSync(altDir, { recursive: true })
+            fs.chmodSync(altDir, 0o755)
             console.log(`✅ Created alternative directory: ${altDir}`)
           }
           await writeFile(altPath, buffer)
+          
+          // IMPORTANT: Copy to correct location for Nginx to serve
+          try {
+            const correctPath = join(process.cwd(), "public", "media", filename)
+            const correctDir = join(process.cwd(), "public", "media")
+            
+            // Ensure correct directory exists
+            if (!fs.existsSync(correctDir)) {
+              fs.mkdirSync(correctDir, { recursive: true })
+              fs.chmodSync(correctDir, 0o755)
+            }
+            
+            // Copy file to correct location
+            await fs.promises.copyFile(altPath, correctPath)
+            fs.chmodSync(correctPath, 0o644)
+            console.log(`✅ Copied to correct location: ${correctPath}`)
+          } catch (copyError: any) {
+            console.warn(`⚠️  Could not copy to public/media: ${copyError.message}`)
+          }
+          
           fileUrl = `${baseUrl}/media/${filename}`
           console.log(`✅ Saved to alternative location: ${altPath}`)
         } catch (altError: any) {

@@ -47,8 +47,11 @@ COPY --from=builder /app/node_modules/tsx ./node_modules/tsx
 COPY --from=builder /app/node_modules/typescript ./node_modules/typescript
 COPY --from=builder /app/prisma ./prisma
 
-# Set proper ownership
-RUN chown -R nextjs:nodejs /app
+# Set proper ownership (including public/media directory)
+RUN chown -R nextjs:nodejs /app && \
+    mkdir -p /app/public/media && \
+    chown -R nextjs:nodejs /app/public/media && \
+    chmod -R 755 /app/public/media
 
 USER nextjs
 
