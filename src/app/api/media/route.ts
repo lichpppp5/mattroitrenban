@@ -198,21 +198,33 @@ export async function POST(request: NextRequest) {
         await writeFile(path, buffer)
         // Use absolute URL for local files to ensure they load correctly
         fileUrl = `${baseUrl}/media/${filename}`
-        console.log(`File saved to: ${path}, URL: ${fileUrl}`)
+        console.log(`✅ File saved to: ${path}`)
+        console.log(`✅ File URL: ${fileUrl}`)
       } catch (writeError: any) {
-        console.error("Error writing file to disk:", writeError)
+        console.error("❌ Error writing file to disk:", writeError)
+        console.error(`   Path: ${path}`)
+        console.error(`   Error: ${writeError.message}`)
+        
         // If write fails, try alternative location
         const altPath = join(process.cwd(), "media", filename)
         const altDir = join(process.cwd(), "media")
         try {
+          console.log(`⚠️  Trying alternative location: ${altPath}`)
           if (!fs.existsSync(altDir)) {
             fs.mkdirSync(altDir, { recursive: true })
+            console.log(`✅ Created alternative directory: ${altDir}`)
           }
           await writeFile(altPath, buffer)
           fileUrl = `${baseUrl}/media/${filename}`
-          console.log("Saved to alternative location:", altPath)
+          console.log(`✅ Saved to alternative location: ${altPath}`)
         } catch (altError: any) {
-          throw new Error(`Cannot write file: ${writeError.message}. Alternative location also failed: ${altError.message}`)
+          console.error("❌ Alternative location also failed:", altError)
+          throw new Error(
+            `Cannot write file to disk. ` +
+            `Primary location failed: ${writeError.message}. ` +
+            `Alternative location failed: ${altError.message}. ` +
+            `Please check directory permissions on the server.`
+          )
         }
       }
     }

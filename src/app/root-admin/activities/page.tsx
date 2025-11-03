@@ -78,6 +78,8 @@ export default function AdminActivities() {
     isUpcoming: false,
     isPublished: false,
   })
+  
+  const [uploadingImages, setUploadingImages] = useState<string[]>([]) // Track which files are uploading
 
   const categories = [
     "Giáo dục",
@@ -399,11 +401,21 @@ export default function AdminActivities() {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-2 mb-2">
                   {formData.images.map((img, index) => (
                     <div key={index} className="relative aspect-square rounded-lg overflow-hidden border group">
-                      <img src={img} alt={`Image ${index + 1}`} className="w-full h-full object-cover" />
+                      <img 
+                        src={img} 
+                        alt={`Image ${index + 1}`} 
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          console.error(`Image failed to load: ${img}`)
+                          // Replace with placeholder or remove
+                          const target = e.target as HTMLImageElement
+                          target.src = "/api/placeholder/400/400"
+                        }}
+                      />
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="absolute top-2 right-2 bg-red-500 text-white hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-2 right-2 bg-red-500 text-white hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity z-10"
                         onClick={() => {
                           const newImages = formData.images.filter((_, i) => i !== index)
                           setFormData({...formData, images: newImages})
@@ -413,6 +425,15 @@ export default function AdminActivities() {
                       </Button>
                     </div>
                   ))}
+                  {uploadingImages.length > 0 && (
+                    <div className="border-2 border-dashed border-blue-300 rounded-lg aspect-square flex items-center justify-center bg-blue-50">
+                      <div className="text-center">
+                        <Upload className="h-8 w-8 text-blue-500 mx-auto mb-2 animate-pulse" />
+                        <p className="text-sm text-blue-600">Đang upload...</p>
+                        <p className="text-xs text-gray-500">{uploadingImages.length} file(s)</p>
+                      </div>
+                    </div>
+                  )}
                   <div className="border-2 border-dashed border-gray-300 rounded-lg aspect-square flex items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors">
                     <Input
                       type="file"
