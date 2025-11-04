@@ -6,9 +6,27 @@ const nextConfig: NextConfig = {
   
   // Image optimization
   images: {
-    domains: [
-      "res.cloudinary.com",
-      "mattroitrenban.vn",
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "mattroitrenban.vn",
+        pathname: "/**",
+      },
+      {
+        protocol: "http",
+        hostname: "mattroitrenban.vn",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "**.cloudinary.com",
+        pathname: "/**",
+      },
     ],
     formats: ["image/avif", "image/webp"],
   },

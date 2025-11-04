@@ -1,8 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 
 export async function GET(request: NextRequest) {
   try {
+    // Check authentication
+    const session = await getServerSession(authOptions)
+    
+    if (!session || (session.user.role !== "admin" && session.user.role !== "editor")) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      )
+    }
+
     // Fetch all donations (only confirmed) and expenses
     const [donations, expenses, activities] = await Promise.all([
       prisma.donation.findMany({

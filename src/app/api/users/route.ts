@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
 
 // POST /api/users - Create new user (only for admin)
 export async function POST(request: NextRequest) {
-  try {
+  try { {
     const session = await getServerSession(authOptions)
     
     if (!session) {
