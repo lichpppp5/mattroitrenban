@@ -73,6 +73,7 @@ async function getUpcomingTrips() {
         tripDate: true,
         duration: true,
         volunteerCount: true,
+        isUpcoming: true, // Add isUpcoming to fix TypeScript error
       },
     })
     
