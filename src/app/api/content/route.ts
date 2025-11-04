@@ -8,33 +8,39 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const key = searchParams.get("key")
-    
+
     if (key) {
       const content = await prisma.siteContent.findUnique({
         where: { key },
       })
-      
+
       if (!content) {
         return NextResponse.json(null)
       }
-      
-      return NextResponse.json(content)
+
+      const response = NextResponse.json(content)
+      // Cache for 5 minutes, stale-while-revalidate for 10 minutes
+      response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
+      return response
     }
-    
+
     // Lấy tất cả
     const contents = await prisma.siteContent.findMany({
       orderBy: { key: "asc" },
     })
-    
+
     // Convert to key-value object for easier access
     const contentMap: Record<string, any> = {}
     contents.forEach((item) => {
-      contentMap[item.key] = item.type === "json" 
-        ? JSON.parse(item.value) 
+      contentMap[item.key] = item.type === "json"
+        ? JSON.parse(item.value)
         : item.value
     })
-    
-    return NextResponse.json(contentMap)
+
+    const response = NextResponse.json(contentMap)
+    // Cache for 5 minutes, stale-while-revalidate for 10 minutes
+    response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
+    return response
   } catch (error: any) {
     console.error("Error fetching content:", error)
     return NextResponse.json(
@@ -86,6 +92,18 @@ export async function POST(request: NextRequest) {
         type: type || "text",
       },
     })
+    
+    // Auto-revalidate homepage if banner/content changed
+    if (key === "site.banner" || key === "heroBannerImage" || key.startsWith("hero") || key.startsWith("site.")) {
+      try {
+        // Fire and forget - don't wait for revalidation
+        fetch(`${process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/revalidate?path=/`, {
+          method: "GET",
+        }).catch(() => {}) // Ignore errors
+      } catch (e) {
+        // Ignore revalidation errors
+      }
+    }
     
     return NextResponse.json(content)
   } catch (error: any) {

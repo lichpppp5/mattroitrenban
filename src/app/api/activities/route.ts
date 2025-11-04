@@ -93,7 +93,9 @@ export async function GET(request: NextRequest) {
     const response = NextResponse.json(enriched)
     
     // Add caching headers for GET requests
-    response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=120')
+    // Cache for 2 minutes, stale-while-revalidate for 5 minutes
+    // This allows fast updates while still serving cached content
+    response.headers.set('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=300')
     
     return response
   } catch (error: any) {
@@ -194,6 +196,19 @@ export async function POST(request: NextRequest) {
         isUpcoming: isUpcoming || false,
       } as any,
     })
+    
+    // Auto-revalidate pages if published
+    if (finalIsPublished) {
+      try {
+        const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+        // Revalidate homepage, activities page, and activity detail page
+        fetch(`${baseUrl}/api/revalidate?path=/,/activities,/activities/${activity.slug}`, {
+          method: "GET",
+        }).catch(() => {}) // Fire and forget
+      } catch (e) {
+        // Ignore revalidation errors
+      }
+    }
     
     return NextResponse.json(activity, { status: 201 })
   } catch (error: any) {
