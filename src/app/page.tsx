@@ -123,8 +123,9 @@ async function getSiteContent() {
       activitiesTitle: contentMap["activitiesTitle"] || "Hoạt động nổi bật",
       activitiesSubtitle: contentMap["activitiesSubtitle"] || "Cùng xem những hoạt động ý nghĩa mà chúng tôi đã và đang thực hiện",
       activitiesButtonText: contentMap["activitiesButtonText"] || "Xem tất cả hoạt động",
-      upcomingTitle: contentMap["upcomingTitle"] || "Chuyến đi sắp tới",
-      upcomingSubtitle: contentMap["upcomingSubtitle"] || "Tham gia cùng chúng tôi trong những chuyến đi sắp tới",
+                  upcomingTitle: contentMap["upcomingTitle"] || "Chuyến đi sắp tới",
+                  upcomingSubtitle: contentMap["upcomingSubtitle"] || "Tham gia cùng chúng tôi trong những chuyến đi sắp tới",
+                  upcomingTripButtonText: contentMap["upcomingTripButtonText"] || "Xem tất cả chuyến đi",
       donationTitle: contentMap["donationTitle"] || "Chung tay quyên góp",
       donationSubtitle: contentMap["donationSubtitle"] || "Mỗi đóng góp của bạn đều có ý nghĩa và tạo nên sự khác biệt",
       donationButtonText: contentMap["donationButtonText"] || "Quyên góp ngay",
@@ -152,8 +153,9 @@ async function getSiteContent() {
       activitiesTitle: "Hoạt động nổi bật",
       activitiesSubtitle: "Cùng xem những hoạt động ý nghĩa mà chúng tôi đã và đang thực hiện",
       activitiesButtonText: "Xem tất cả hoạt động",
-      upcomingTitle: "Chuyến đi sắp tới",
-      upcomingSubtitle: "Tham gia cùng chúng tôi trong những chuyến đi sắp tới",
+                  upcomingTitle: "Chuyến đi sắp tới",
+                  upcomingSubtitle: "Tham gia cùng chúng tôi trong những chuyến đi sắp tới",
+                  upcomingTripButtonText: "Xem tất cả chuyến đi",
       donationTitle: "Chung tay quyên góp",
       donationSubtitle: "Mỗi đóng góp của bạn đều có ý nghĩa và tạo nên sự khác biệt",
       donationButtonText: "Quyên góp ngay",
@@ -519,7 +521,7 @@ export default async function Home() {
             <div className="text-center mt-12">
               <Button asChild variant="outline" className="border-2 border-orange-500 bg-transparent text-orange-500 hover:bg-orange-50 font-semibold">
                 <Link href="/activities?upcoming=true">
-                  {siteContent.upcomingTripButtonText || "Xem tất cả chuyến đi"}
+                  {siteContent.upcomingTripButtonText}
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
