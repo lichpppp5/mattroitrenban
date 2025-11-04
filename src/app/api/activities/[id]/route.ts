@@ -144,6 +144,23 @@ export async function PUT(
       },
     })
     
+    // Auto-revalidate pages if published status changed or content updated
+    if (isPublished !== undefined || body.content || body.title || body.images) {
+      try {
+        const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+        // Revalidate homepage, activities page, and activity detail page
+        const paths = ["/", "/activities"]
+        if (activity.slug) {
+          paths.push(`/activities/${activity.slug}`)
+        }
+        fetch(`${baseUrl}/api/revalidate?path=${paths.join(",")}`, {
+          method: "GET",
+        }).catch(() => {}) // Fire and forget
+      } catch (e) {
+        // Ignore revalidation errors
+      }
+    }
+    
     return NextResponse.json(activity)
   } catch (error: any) {
     console.error("Error updating activity:", error)
@@ -174,6 +191,7 @@ export async function DELETE(
     // Check if activity exists
     const existing = await prisma.activity.findUnique({
       where: { id },
+      select: { slug: true, isPublished: true },
     })
     
     if (!existing) {
@@ -186,6 +204,22 @@ export async function DELETE(
     await prisma.activity.delete({
       where: { id },
     })
+    
+    // Revalidate if it was published
+    if (existing.isPublished) {
+      try {
+        const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+        const paths = ["/", "/activities"]
+        if (existing.slug) {
+          paths.push(`/activities/${existing.slug}`)
+        }
+        fetch(`${baseUrl}/api/revalidate?path=${paths.join(",")}`, {
+          method: "GET",
+        }).catch(() => {}) // Fire and forget
+      } catch (e) {
+        // Ignore revalidation errors
+      }
+    }
     
     return NextResponse.json({ success: true, message: "Activity deleted" })
   } catch (error: any) {
