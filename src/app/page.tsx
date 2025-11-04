@@ -354,27 +354,6 @@ export default async function Home() {
                             </div>
                           </div>
                         )}
-                        {imageArray.length > 0 && (
-                          <div className="absolute bottom-2 right-2 flex gap-1">
-                            {imageArray.slice(0, 3).map((img: string, idx: number) => {
-                              // Normalize URL to absolute if it's a local upload
-                              // Support both /uploads/ (legacy) and /media/ (new)
-                              const imageUrl = (img.startsWith("/uploads/") || img.startsWith("/media/"))
-                                ? `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}${img}`
-                                : img
-                              return (
-                                <div key={idx} className="bg-white/20 rounded overflow-hidden">
-                                  <img src={imageUrl} alt={`${activity.title} ${idx + 1}`} className="w-full h-full object-cover" />
-                                </div>
-                              )
-                            })}
-                            {imageArray.length > 3 && (
-                              <div className="bg-white/20 rounded flex items-center justify-center">
-                                <span className="text-white text-xs font-semibold px-2">+{imageArray.length - 3}</span>
-                              </div>
-                            )}
-                          </div>
-                        )}
                         {activity.isUpcoming && (
                           <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center absolute top-2 left-2">
                             <Calendar className="h-4 w-4 mr-1" />
