@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Heart, Users, DollarSign, MapPin, ArrowRight, Star, Calendar, Clock, Video, Image as ImageIcon, Play } from "lucide-react"
 import { prisma } from "@/lib/prisma"
+import { SafeImage } from "@/components/safe-image"
 
 async function getRecentActivities() {
   try {
