@@ -271,15 +271,15 @@ export default async function Home() {
       {/* About Preview */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div>
+          <div className="lg:flex lg:items-center lg:gap-12">
+            <div className="lg:w-1/2 mb-8 lg:mb-0">
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 font-poppins">
                 {siteContent.aboutTitle}
               </h2>
               <p className="text-xl text-gray-700 mb-6">
                 {siteContent.aboutSubtitle}
               </p>
-              <p className="text-gray-600 mb-8">
+              <p className="text-lg text-gray-600 mb-6">
                 {siteContent.aboutDescription}
               </p>
               <Button asChild variant="outline" className="border-2 border-orange-500 bg-transparent text-orange-500 hover:bg-orange-50 font-semibold">
@@ -289,24 +289,23 @@ export default async function Home() {
                 </Link>
               </Button>
             </div>
-            <div className="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl p-8 text-white">
-              <div className="grid grid-cols-2 gap-6">
-                <div className="text-center">
-                  <div className="text-4xl font-bold mb-2">15+</div>
-                  <div className="text-sm opacity-90">Năm kinh nghiệm</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-4xl font-bold mb-2">50+</div>
-                  <div className="text-sm opacity-90">Hoạt động</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-4xl font-bold mb-2">1,200+</div>
-                  <div className="text-sm opacity-90">Người được hỗ trợ</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-4xl font-bold mb-2">25+</div>
-                  <div className="text-sm opacity-90">Bản làng</div>
-                </div>
+            <div className="lg:w-1/2 relative">
+              <div className="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl p-8 text-white">
+                <h3 className="text-2xl font-bold mb-4">Sứ mệnh của chúng tôi</h3>
+                <ul className="space-y-3 text-lg">
+                  <li className="flex items-center">
+                    <Heart className="h-6 w-6 mr-3 text-white" />
+                    Mang tri thức đến vùng cao
+                  </li>
+                  <li className="flex items-center">
+                    <Users className="h-6 w-6 mr-3 text-white" />
+                    Hỗ trợ cộng đồng phát triển bền vững
+                  </li>
+                  <li className="flex items-center">
+                    <DollarSign className="h-6 w-6 mr-3 text-white" />
+                    Xây dựng tương lai tươi sáng cho trẻ em
+                  </li>
+                </ul>
               </div>
             </div>
           </div>
