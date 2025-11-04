@@ -69,11 +69,12 @@ async function getUpcomingTrips() {
         title: true,
         slug: true,
         imageUrl: true,
+        images: true,
         location: true,
         tripDate: true,
         duration: true,
         volunteerCount: true,
-        isUpcoming: true, // Add isUpcoming to fix TypeScript error
+        isUpcoming: true,
       },
     })
     
@@ -340,10 +341,12 @@ export default async function Home() {
                             ? `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}${mainImage}`
                             : mainImage
                           return (
-                            <img 
-                              src={imageUrl} 
-                              alt={activity.title} 
+                            <SafeImage
+                              src={imageUrl}
+                              alt={activity.title}
                               className="w-full h-full object-cover"
+                              placeholder="/api/placeholder/800/450"
+                              unoptimized
                             />
                           )
                         })()}
@@ -430,55 +433,95 @@ export default async function Home() {
               </p>
             </div>
 
-            <div className="bg-white rounded-lg p-8 max-w-md mx-auto border-2 border-orange-200">
-              <div className="text-center mb-6">
-                <Calendar className="h-12 w-12 text-orange-500 mx-auto mb-4" />
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Chuyến đi tiếp theo</h3>
-                <Button asChild variant="outline" className="border-orange-500 text-orange-500 hover:bg-orange-50">
-                  <Link href="/activities?upcoming=true">Xem tất cả</Link>
-                </Button>
-              </div>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-6 mt-8">
-              {upcomingTrips.map((trip) => (
-                <Card key={trip.id} className="bg-white border-2 border-orange-200 hover:border-orange-400 transition-colors">
-                  <CardContent className="p-6">
-                    <div className="flex items-start mb-4">
-                      <div className="bg-orange-100 rounded-full p-2">
-                        <Calendar className="h-6 w-6 text-orange-500" />
-                      </div>
-                      <div className="ml-4 flex-1">
-                        <h3 className="text-lg font-bold text-gray-900 mb-2">{trip.title}</h3>
-                        {trip.location && (
-                          <div className="flex items-center text-sm text-gray-600 mb-2">
-                            <MapPin className="h-4 w-4 mr-1" />
-                            {trip.location}
-                          </div>
-                        )}
-                        {trip.tripDate && (
-                          <div className="flex items-center text-sm text-gray-600">
-                            <Clock className="h-4 w-4 mr-1" />
-                            {new Date(trip.tripDate).toLocaleDateString('vi-VN')}
-                            {trip.duration && ` - ${trip.duration} ngày`}
-                          </div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {upcomingTrips.map((trip) => {
+                // Get first image from images array or use imageUrl
+                const imageArray = trip.images ? (typeof trip.images === 'string' ? JSON.parse(trip.images) : trip.images) : []
+                const tripImage = trip.imageUrl || (imageArray.length > 0 ? imageArray[0] : null)
+                
+                return (
+                  <Card key={trip.id} className="bg-white border-2 border-orange-200 hover:border-orange-400 transition-colors overflow-hidden">
+                    {tripImage && (
+                      <div className="relative h-48 bg-gradient-to-br from-yellow-400 to-orange-500">
+                        {(() => {
+                          const imageUrl = (tripImage.startsWith("/uploads/") || tripImage.startsWith("/media/"))
+                            ? `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}${tripImage}`
+                            : tripImage
+                          return (
+                            <SafeImage
+                              src={imageUrl}
+                              alt={trip.title}
+                              className="w-full h-full object-cover"
+                              placeholder="/api/placeholder/800/450"
+                              unoptimized
+                            />
+                          )
+                        })()}
+                        {trip.isUpcoming && (
+                          <span className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold absolute top-2 right-2">
+                            Sắp diễn ra
+                          </span>
                         )}
                       </div>
-                    </div>
-                    {trip.isUpcoming && (
-                      <span className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                        Sắp diễn ra
-                      </span>
                     )}
-                    <Button asChild variant="outline" className="w-full border-2 border-orange-500 bg-transparent text-orange-500 hover:bg-orange-50 font-semibold mt-4">
-                      <Link href={`/activities/${trip.slug}`}>
-                        Xem chi tiết
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center">
+                          <div className="bg-orange-100 rounded-full p-2">
+                            <Calendar className="h-5 w-5 text-orange-500" />
+                          </div>
+                          <span className="ml-3 text-gray-700 font-medium">
+                            {trip.tripDate ? new Date(trip.tripDate).toLocaleDateString('vi-VN') : 'Chưa xác định'}
+                          </span>
+                        </div>
+                        {!tripImage && trip.isUpcoming && (
+                          <span className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                            Sắp diễn ra
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2">
+                        {trip.title}
+                      </h3>
+                      {trip.location && (
+                        <p className="text-gray-600 text-sm mb-4 flex items-center">
+                          <MapPin className="h-4 w-4 mr-2" />
+                          {trip.location}
+                        </p>
+                      )}
+                      <div className="flex justify-between items-center text-gray-700 text-sm mb-4">
+                        {trip.duration && (
+                          <div className="flex items-center">
+                            <Clock className="h-4 w-4 mr-2" />
+                            <span>{trip.duration} ngày</span>
+                          </div>
+                        )}
+                        {trip.volunteerCount && (
+                          <div className="flex items-center">
+                            <Users className="h-4 w-4 mr-2" />
+                            <span>{trip.volunteerCount} TNV</span>
+                          </div>
+                        )}
+                      </div>
+                      <Button asChild variant="outline" className="w-full border-2 border-orange-500 bg-transparent text-orange-500 hover:bg-orange-50 font-semibold">
+                        <Link href={`/activities/${trip.slug}`}>
+                          Xem chi tiết
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
+            
+            <div className="text-center mt-12">
+              <Button asChild variant="outline" className="border-2 border-orange-500 bg-transparent text-orange-500 hover:bg-orange-50 font-semibold">
+                <Link href="/activities?upcoming=true">
+                  {siteContent.upcomingTripButtonText || "Xem tất cả chuyến đi"}
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+              </Button>
             </div>
           </div>
         </section>
