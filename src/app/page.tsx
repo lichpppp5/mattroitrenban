@@ -63,23 +63,22 @@ async function getUpcomingTrips() {
       orderBy: {
         tripDate: "asc",
       },
-      take: 6,
+      take: 3,
       select: {
         id: true,
         title: true,
         slug: true,
+        imageUrl: true,
         location: true,
         tripDate: true,
         duration: true,
         volunteerCount: true,
-        category: true,
       },
     })
-    console.log(`[Home] Fetched ${trips.length} upcoming trips`)
+    
     return trips || []
   } catch (error) {
     console.error("Error fetching upcoming trips:", error)
-    // Return empty array on error to prevent page crash
     return []
   }
 }
@@ -89,17 +88,15 @@ async function getSiteContent() {
     const contents = await prisma.siteContent.findMany({
       orderBy: { key: "asc" },
     })
-    
+
     const contentMap: Record<string, any> = {}
     contents.forEach((item) => {
-      contentMap[item.key] = item.type === "json" 
-        ? JSON.parse(item.value) 
+      contentMap[item.key] = item.type === "json"
+        ? JSON.parse(item.value)
         : item.value
     })
-    
-    // Return với defaults nếu không có trong database
-    // Banner có thể được lưu với key "site.banner" (từ Settings) hoặc "heroBannerImage" (từ Content)
-    // Ưu tiên "site.banner" nếu có, fallback về "heroBannerImage"
+
+    // Prioritize site.banner from Settings over heroBannerImage from Content
     const bannerImage = contentMap["site.banner"] || contentMap["heroBannerImage"] || null
     
     return {
@@ -117,23 +114,20 @@ async function getSiteContent() {
       stat4Number: contentMap["stat4Number"] || "50+",
       stat4Label: contentMap["stat4Label"] || "Hoạt động thiện nguyện",
       aboutTitle: contentMap["aboutTitle"] || "Về chúng tôi",
-      aboutSubtitle: contentMap["aboutSubtitle"] || "Câu chuyện của chúng tôi",
-      aboutContent: contentMap["aboutContent"] || "",
-      aboutVisionTitle: contentMap["aboutVisionTitle"] || "Tầm nhìn",
-      aboutVisionContent: contentMap["aboutVisionContent"] || "Trở thành tổ chức thiện nguyện hàng đầu trong việc hỗ trợ phát triển bền vững cho các vùng cao Việt Nam.",
-      aboutMissionTitle: contentMap["aboutMissionTitle"] || "Sứ mệnh",
-      aboutMissionContent: contentMap["aboutMissionContent"] || "Mang đến cơ hội học tập, chăm sóc sức khỏe và phát triển kinh tế cho đồng bào vùng cao thông qua các hoạt động thiện nguyện minh bạch và hiệu quả.",
-      activitiesTitle: contentMap["activitiesTitle"] || "Chuyến đi thiện nguyện gần đây",
-      activitiesSubtitle: contentMap["activitiesSubtitle"] || "Cùng xem lại những khoảnh khắc đẹp và ý nghĩa từ các chuyến đi của chúng tôi",
-      upcomingTripsTitle: contentMap["upcomingTripsTitle"] || "Lịch trình các chuyến tiếp theo",
-      upcomingTripsSubtitle: contentMap["upcomingTripsSubtitle"] || "Tham gia cùng chúng tôi trong những chuyến đi thiện nguyện sắp tới",
-      donationTitle: contentMap["donationTitle"] || "Cùng chúng tôi lan tỏa yêu thương",
-      donationSubtitle: contentMap["donationSubtitle"] || "Mỗi đóng góp của bạn sẽ mang đến hy vọng và cơ hội cho những người cần giúp đỡ",
+      aboutSubtitle: contentMap["aboutSubtitle"] || "Mặt Trời Trên Bản là một tổ chức thiện nguyện được thành lập với mục tiêu mang ánh sáng và hy vọng đến những vùng cao xa xôi.",
+      aboutDescription: contentMap["aboutDescription"] || "Chúng tôi tin rằng mỗi người đều có quyền được tiếp cận với giáo dục, y tế và các dịch vụ cơ bản. Với sự hỗ trợ của các tình nguyện viên và nhà tài trợ, chúng tôi đã và đang thực hiện nhiều hoạt động ý nghĩa.",
+      aboutButtonText: contentMap["aboutButtonText"] || "Xem thêm về chúng tôi",
+      activitiesTitle: contentMap["activitiesTitle"] || "Hoạt động nổi bật",
+      activitiesSubtitle: contentMap["activitiesSubtitle"] || "Cùng xem những hoạt động ý nghĩa mà chúng tôi đã và đang thực hiện",
+      activitiesButtonText: contentMap["activitiesButtonText"] || "Xem tất cả hoạt động",
+      upcomingTitle: contentMap["upcomingTitle"] || "Chuyến đi sắp tới",
+      upcomingSubtitle: contentMap["upcomingSubtitle"] || "Tham gia cùng chúng tôi trong những chuyến đi sắp tới",
+      donationTitle: contentMap["donationTitle"] || "Chung tay quyên góp",
+      donationSubtitle: contentMap["donationSubtitle"] || "Mỗi đóng góp của bạn đều có ý nghĩa và tạo nên sự khác biệt",
       donationButtonText: contentMap["donationButtonText"] || "Quyên góp ngay",
     }
   } catch (error) {
     console.error("Error fetching site content:", error)
-    // Return defaults on error
     return {
       heroTitle: "Mặt Trời Trên Bản",
       heroSubtitle: "Mang ánh sáng và hy vọng đến những vùng cao xa xôi, nơi cần sự hỗ trợ và quan tâm nhất",
@@ -149,18 +143,16 @@ async function getSiteContent() {
       stat4Number: "50+",
       stat4Label: "Hoạt động thiện nguyện",
       aboutTitle: "Về chúng tôi",
-      aboutSubtitle: "Câu chuyện của chúng tôi",
-      aboutContent: "",
-      aboutVisionTitle: "Tầm nhìn",
-      aboutVisionContent: "Trở thành tổ chức thiện nguyện hàng đầu trong việc hỗ trợ phát triển bền vững cho các vùng cao Việt Nam.",
-      aboutMissionTitle: "Sứ mệnh",
-      aboutMissionContent: "Mang đến cơ hội học tập, chăm sóc sức khỏe và phát triển kinh tế cho đồng bào vùng cao thông qua các hoạt động thiện nguyện minh bạch và hiệu quả.",
-      activitiesTitle: "Chuyến đi thiện nguyện gần đây",
-      activitiesSubtitle: "Cùng xem lại những khoảnh khắc đẹp và ý nghĩa từ các chuyến đi của chúng tôi",
-      upcomingTripsTitle: "Lịch trình các chuyến tiếp theo",
-      upcomingTripsSubtitle: "Tham gia cùng chúng tôi trong những chuyến đi thiện nguyện sắp tới",
-      donationTitle: "Cùng chúng tôi lan tỏa yêu thương",
-      donationSubtitle: "Mỗi đóng góp của bạn sẽ mang đến hy vọng và cơ hội cho những người cần giúp đỡ",
+      aboutSubtitle: "Mặt Trời Trên Bản là một tổ chức thiện nguyện được thành lập với mục tiêu mang ánh sáng và hy vọng đến những vùng cao xa xôi.",
+      aboutDescription: "Chúng tôi tin rằng mỗi người đều có quyền được tiếp cận với giáo dục, y tế và các dịch vụ cơ bản. Với sự hỗ trợ của các tình nguyện viên và nhà tài trợ, chúng tôi đã và đang thực hiện nhiều hoạt động ý nghĩa.",
+      aboutButtonText: "Xem thêm về chúng tôi",
+      activitiesTitle: "Hoạt động nổi bật",
+      activitiesSubtitle: "Cùng xem những hoạt động ý nghĩa mà chúng tôi đã và đang thực hiện",
+      activitiesButtonText: "Xem tất cả hoạt động",
+      upcomingTitle: "Chuyến đi sắp tới",
+      upcomingSubtitle: "Tham gia cùng chúng tôi trong những chuyến đi sắp tới",
+      donationTitle: "Chung tay quyên góp",
+      donationSubtitle: "Mỗi đóng góp của bạn đều có ý nghĩa và tạo nên sự khác biệt",
       donationButtonText: "Quyên góp ngay",
     }
   }
@@ -183,19 +175,28 @@ export default async function Home() {
     : "relative py-20 bg-gradient-to-br from-yellow-50 via-orange-50 to-red-50"
   
   // Style object phải luôn là object, không bao giờ undefined
+  // Đảm bảo không có filter, opacity, hoặc brightness làm tối ảnh
   const heroStyle: React.CSSProperties = safeBannerUrl ? {
     backgroundImage: `url(${safeBannerUrl})`,
     backgroundSize: 'cover',
     backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
+    // Loại bỏ tất cả filter có thể làm tối ảnh
+    filter: 'none',
+    WebkitFilter: 'none',
+    // Đảm bảo opacity và brightness ở mức tối đa
+    opacity: 1,
+    // Không có overlay, không có darkening
   } : {}
   
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
+      {/* Hero Section - Không có overlay, ảnh hiển thị sáng */}
       <section 
         className={heroClassName}
         style={heroStyle}
       >
+        {/* Không có overlay div - đã xóa hoàn toàn để ảnh sáng */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center">
             <div className="flex justify-center mb-6">
@@ -265,132 +266,96 @@ export default async function Home() {
       {/* About Preview */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6 font-poppins">
-                {siteContent.aboutSubtitle}
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 font-poppins">
+                {siteContent.aboutTitle}
               </h2>
-              {siteContent.aboutContent ? (
-                <div className="text-lg text-gray-700 mb-8 whitespace-pre-line">
-                  {siteContent.aboutContent}
-                </div>
-              ) : (
-                <>
-                  <p className="text-lg text-gray-700 mb-6">
-                    "Mặt Trời Trên Bản" được thành lập với sứ mệnh mang ánh sáng và hy vọng 
-                    đến những vùng cao xa xôi, nơi mà cuộc sống còn nhiều khó khăn. 
-                    Chúng tôi tin rằng mỗi đứa trẻ đều có quyền được học tập, 
-                    mỗi gia đình đều có quyền được sống trong điều kiện tốt hơn.
-                  </p>
-                  <p className="text-lg text-gray-700 mb-8">
-                    Với tình yêu thương và sự đồng cảm, chúng tôi đã và đang thực hiện 
-                    nhiều hoạt động thiện nguyện ý nghĩa, từ xây dựng trường học, 
-                    cung cấp học bổng đến hỗ trợ y tế cho đồng bào vùng cao.
-                  </p>
-                </>
-              )}
+              <p className="text-xl text-gray-700 mb-6">
+                {siteContent.aboutSubtitle}
+              </p>
+              <p className="text-gray-600 mb-8">
+                {siteContent.aboutDescription}
+              </p>
               <Button asChild variant="outline" className="border-2 border-orange-500 bg-transparent text-orange-500 hover:bg-orange-50 font-semibold">
                 <Link href="/about">
-                  Đọc thêm câu chuyện
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  {siteContent.aboutButtonText}
+                  <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
             </div>
-            <div className="relative">
-              <div className="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl p-8 text-white">
-                <h3 className="text-2xl font-bold mb-4">{siteContent.aboutVisionTitle}</h3>
-                <p className="text-lg mb-6">
-                  {siteContent.aboutVisionContent}
-                </p>
-                <h3 className="text-2xl font-bold mb-4">{siteContent.aboutMissionTitle}</h3>
-                <p className="text-lg">
-                  {siteContent.aboutMissionContent}
-                </p>
+            <div className="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl p-8 text-white">
+              <div className="grid grid-cols-2 gap-6">
+                <div className="text-center">
+                  <div className="text-4xl font-bold mb-2">15+</div>
+                  <div className="text-sm opacity-90">Năm kinh nghiệm</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-4xl font-bold mb-2">50+</div>
+                  <div className="text-sm opacity-90">Hoạt động</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-4xl font-bold mb-2">1,200+</div>
+                  <div className="text-sm opacity-90">Người được hỗ trợ</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-4xl font-bold mb-2">25+</div>
+                  <div className="text-sm opacity-90">Bản làng</div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Chuyến đi thiện nguyện gần đây */}
+      {/* Recent Activities */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 font-poppins">
               {siteContent.activitiesTitle}
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-xl text-gray-700 max-w-3xl mx-auto">
               {siteContent.activitiesSubtitle}
             </p>
           </div>
-          {!recentActivities || recentActivities.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="bg-gray-50 rounded-lg p-8 max-w-md mx-auto">
-                <ImageIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg mb-2">Chưa có hoạt động nào được đăng tải</p>
-                <p className="text-gray-400 text-sm mb-4">
-                  Các hoạt động sẽ hiển thị ở đây sau khi được tạo và xuất bản từ trang quản trị
-                </p>
-                <Button asChild variant="outline" className="border-orange-500 text-orange-500 hover:bg-orange-50">
-                  <Link href="/activities">
-                    Xem trang hoạt động
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+          {recentActivities.length > 0 ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
               {recentActivities.map((activity) => {
-                // Parse images if exists
-                let imageArray: string[] = []
-                if (activity.images) {
-                  try {
-                    imageArray = typeof activity.images === 'string' 
-                      ? JSON.parse(activity.images) 
-                      : Array.isArray(activity.images) 
-                      ? activity.images 
-                      : []
-                  } catch {
-                    imageArray = []
-                  }
-                }
-                const hasImage = activity.imageUrl || imageArray.length > 0
-                const hasVideo = !!activity.videoUrl
-                // Format date in a consistent way to avoid hydration mismatch
-                const dateStr = activity.tripDate 
-                  ? new Date(activity.tripDate).toLocaleDateString("vi-VN", {
-                      year: "numeric",
-                      month: "2-digit",
-                      day: "2-digit"
-                    })
-                  : activity.createdAt
-                  ? new Date(activity.createdAt).toLocaleDateString("vi-VN", {
-                      year: "numeric",
-                      month: "2-digit",
-                      day: "2-digit"
-                    })
-                  : ""
+                // Normalize image URL to absolute if it's a local upload
+                // Support both /uploads/ (legacy) and /media/ (new)
+                const imageArray = activity.images ? (typeof activity.images === 'string' ? JSON.parse(activity.images) : activity.images) : []
+                const mainImage = activity.imageUrl || (imageArray.length > 0 ? imageArray[0] : null)
                 
                 return (
                   <Card key={activity.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                    <Link href={`/activities/${activity.slug}`}>
+                    {mainImage && (
                       <div className="relative h-64 bg-gradient-to-br from-yellow-400 to-orange-500">
-                        {hasImage ? (
-                          <img 
-                            src={activity.imageUrl || imageArray[0]} 
-                            alt={activity.title}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : hasVideo ? (
-                          <div className="absolute inset-0 flex items-center justify-center">
+                        {/* Normalize URL to absolute if it's a local upload */}
+                        {/* Support both /uploads/ (legacy) and /media/ (new) */}
+                        {(() => {
+                          const imageUrl = (mainImage.startsWith("/uploads/") || mainImage.startsWith("/media/"))
+                            ? `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}${mainImage}`
+                            : mainImage
+                          return (
+                            <img 
+                              src={imageUrl} 
+                              alt={activity.title} 
+                              className="w-full h-full object-cover"
+                            />
+                          )
+                        })()}
+                        {activity.videoUrl && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
                             <div className="bg-white rounded-full p-4 cursor-pointer hover:scale-110 transition-transform">
-                              <Play className="h-12 w-12 text-orange-500 ml-1" fill="currentColor" />
+                              <Play className="h-8 w-8 text-orange-500" />
                             </div>
                           </div>
-                        ) : imageArray.length > 0 ? (
-                          <div className="grid grid-cols-2 gap-2 p-4 w-full h-full">
-                            {imageArray.slice(0, 3).map((img, idx) => {
+                        )}
+                        {imageArray.length > 0 && (
+                          <div className="absolute bottom-2 right-2 flex gap-1">
+                            {imageArray.slice(0, 3).map((img: string, idx: number) => {
                               // Normalize URL to absolute if it's a local upload
                               // Support both /uploads/ (legacy) and /media/ (new)
                               const imageUrl = (img.startsWith("/uploads/") || img.startsWith("/media/"))
@@ -404,163 +369,48 @@ export default async function Home() {
                             })}
                             {imageArray.length > 3 && (
                               <div className="bg-white/20 rounded flex items-center justify-center">
-                                <span className="text-white font-bold">+{imageArray.length - 3}</span>
+                                <span className="text-white text-xs font-semibold px-2">+{imageArray.length - 3}</span>
                               </div>
                             )}
                           </div>
-                        ) : (
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <ImageIcon className="h-16 w-16 text-white" />
-                          </div>
                         )}
-                        {hasVideo && (
-                          <div className="absolute top-4 left-4">
-                            <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center">
-                              <Video className="h-4 w-4 mr-1" />
-                              VIDEO
-                            </span>
-                          </div>
+                        {activity.isUpcoming && (
+                          <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center absolute top-2 left-2">
+                            <Calendar className="h-4 w-4 mr-1" />
+                            Sắp diễn ra
+                          </span>
                         )}
-                        {!hasImage && !hasVideo && imageArray.length === 0 && (
-                          <div className="absolute top-4 left-4">
-                            <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center">
-                              <ImageIcon className="h-4 w-4 mr-1" />
-                              HÌNH ẢNH
-                            </span>
-                          </div>
-                        )}
-                        {dateStr && (
-                          <div className="absolute bottom-4 left-4 right-4">
-                            <p className="text-white font-semibold">{dateStr}</p>
-                          </div>
+                        {activity.category && (
+                          <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center absolute top-2 right-2">
+                            {activity.category}
+                          </span>
                         )}
                       </div>
-                    </Link>
+                    )}
                     <CardContent className="p-6">
-                      <h3 className="text-xl font-semibold mb-2">{activity.title}</h3>
-                      <p className="text-gray-600 mb-4 line-clamp-3">
-                        {activity.content 
-                          ? activity.content.replace(/<[^>]*>/g, "").substring(0, 150) + "..."
-                          : "Không có mô tả"}
-                      </p>
-                      {activity.location && (
-                        <div className="flex items-center text-sm text-gray-500 mb-4">
-                          <MapPin className="h-4 w-4 mr-1" />
-                          {activity.location}
-                        </div>
-                      )}
-                      <Link href={`/activities/${activity.slug}`}>
-                        <Button variant="outline" size="sm" className="w-full border-orange-500 text-orange-500 hover:bg-orange-50 font-semibold">
-                          {hasVideo ? "Xem video đầy đủ" : imageArray.length > 0 ? "Xem album đầy đủ" : "Xem chi tiết"}
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
-                      </Link>
-                    </CardContent>
-                  </Card>
-                )
-              })}
-            </div>
-          )}
-          <div className="text-center mt-12">
-            <Button asChild variant="outline" className="border-2 border-orange-500 bg-transparent text-orange-500 hover:bg-orange-50 font-semibold">
-              <Link href="/activities">
-                Xem tất cả chuyến đi
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Lịch trình các chuyến tiếp theo */}
-      <section className="py-16 bg-gradient-to-br from-gray-50 to-orange-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 font-poppins">
-              {siteContent.upcomingTripsTitle}
-            </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              {siteContent.upcomingTripsSubtitle}
-            </p>
-          </div>
-          {!upcomingTrips || upcomingTrips.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="bg-white rounded-lg p-8 max-w-md mx-auto border-2 border-orange-200">
-                <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg mb-2">Chưa có chuyến đi sắp tới nào được lên lịch</p>
-                <p className="text-gray-400 text-sm mb-4">
-                  Các chuyến đi sắp tới sẽ hiển thị ở đây sau khi được tạo và đánh dấu là "Sắp diễn ra" từ trang quản trị
-                </p>
-                <Button asChild variant="outline" className="border-orange-500 text-orange-500 hover:bg-orange-50">
-                  <Link href="/activities">
-                    Xem lịch trình
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {upcomingTrips.map((trip) => {
-                const dateStr = trip.tripDate 
-                  ? new Date(trip.tripDate).toLocaleDateString("vi-VN", { 
-                      year: "numeric", 
-                      month: "2-digit", 
-                      day: "2-digit" 
-                    })
-                  : "Chưa xác định"
-                const weekdayStr = trip.tripDate
-                  ? new Date(trip.tripDate).toLocaleDateString("vi-VN", { weekday: 'long' })
-                  : ""
-                
-                return (
-                  <Card key={trip.id} className="bg-white border-2 border-orange-200 hover:border-orange-400 transition-colors">
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center space-x-2">
-                          <div className="bg-orange-100 rounded-full p-2">
-                            <Calendar className="h-6 w-6 text-orange-600" />
-                          </div>
-                          <div>
-                            <p className="font-semibold text-gray-900">{dateStr}</p>
-                            {weekdayStr && (
-                              <p className="text-sm text-gray-500">{weekdayStr}</p>
-                            )}
-                          </div>
-                        </div>
-                        <span className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                          Sắp diễn ra
-                        </span>
-                      </div>
-                      <h3 className="text-xl font-bold mb-2 text-gray-900">
-                        {trip.title}
+                      <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2">
+                        {activity.title}
                       </h3>
-                      <p className="text-gray-600 mb-4">
-                        {trip.category} tại {trip.location || "chưa xác định"}.
+                      <p className="text-gray-600 mb-4 line-clamp-3">
+                        {activity.content || "Không có mô tả"}
                       </p>
-                      <div className="space-y-2 mb-4">
-                        {trip.location && (
-                          <div className="flex items-center text-sm text-gray-600">
-                            <MapPin className="h-4 w-4 mr-2 text-orange-500" />
-                            {trip.location}
-                          </div>
+                      <div className="flex items-center text-sm text-gray-500 mb-4">
+                        {activity.location && (
+                          <>
+                            <MapPin className="h-4 w-4 mr-1" />
+                            <span className="mr-4">{activity.location}</span>
+                          </>
                         )}
-                        {trip.duration && (
-                          <div className="flex items-center text-sm text-gray-600">
-                            <Clock className="h-4 w-4 mr-2 text-orange-500" />
-                            {trip.duration} ngày
-                          </div>
-                        )}
-                        {trip.volunteerCount && (
-                          <div className="flex items-center text-sm text-gray-600">
-                            <Users className="h-4 w-4 mr-2 text-orange-500" />
-                            {trip.volunteerCount} tình nguyện viên
-                          </div>
+                        {activity.tripDate && (
+                          <>
+                            <Calendar className="h-4 w-4 mr-1" />
+                            <span>{new Date(activity.tripDate).toLocaleDateString('vi-VN')}</span>
+                          </>
                         )}
                       </div>
-                      <Button asChild variant="outline" className="w-full border-2 border-orange-500 bg-transparent text-orange-500 hover:bg-orange-50 font-semibold">
-                        <Link href={`/activities/${trip.slug}`}>
-                          Tìm hiểu thêm
+                      <Button variant="outline" size="sm" className="w-full border-orange-500 text-orange-500 hover:bg-orange-50 font-semibold">
+                        <Link href={`/activities/${activity.slug}`} className="flex items-center justify-center">
+                          Xem chi tiết
                           <ArrowRight className="ml-2 h-4 w-4" />
                         </Link>
                       </Button>
@@ -569,37 +419,116 @@ export default async function Home() {
                 )
               })}
             </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-gray-600 text-lg mb-4">Chưa có hoạt động nào được đăng.</p>
+              <p className="text-gray-500">Vui lòng quay lại sau để xem các hoạt động của chúng tôi.</p>
+            </div>
           )}
-          <div className="text-center mt-12">
-            <Button asChild size="lg" className="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white">
+
+          <div className="text-center">
+            <Button asChild variant="outline" className="border-2 border-orange-500 bg-transparent text-orange-500 hover:bg-orange-50 font-semibold">
               <Link href="/activities">
-                Xem tất cả lịch trình
-                <Calendar className="ml-2 h-5 w-5" />
+                {siteContent.activitiesButtonText}
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </Button>
           </div>
         </div>
       </section>
 
-      {/* Call to Action */}
+      {/* Upcoming Trips */}
+      {upcomingTrips.length > 0 && (
+        <section className="py-16 bg-gradient-to-br from-gray-50 to-orange-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 font-poppins">
+                {siteContent.upcomingTitle}
+              </h2>
+              <p className="text-xl text-gray-700 max-w-3xl mx-auto">
+                {siteContent.upcomingSubtitle}
+              </p>
+            </div>
+
+            <div className="bg-white rounded-lg p-8 max-w-md mx-auto border-2 border-orange-200">
+              <div className="text-center mb-6">
+                <Calendar className="h-12 w-12 text-orange-500 mx-auto mb-4" />
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">Chuyến đi tiếp theo</h3>
+                <Button asChild variant="outline" className="border-orange-500 text-orange-500 hover:bg-orange-50">
+                  <Link href="/activities?upcoming=true">Xem tất cả</Link>
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6 mt-8">
+              {upcomingTrips.map((trip) => (
+                <Card key={trip.id} className="bg-white border-2 border-orange-200 hover:border-orange-400 transition-colors">
+                  <CardContent className="p-6">
+                    <div className="flex items-start mb-4">
+                      <div className="bg-orange-100 rounded-full p-2">
+                        <Calendar className="h-6 w-6 text-orange-500" />
+                      </div>
+                      <div className="ml-4 flex-1">
+                        <h3 className="text-lg font-bold text-gray-900 mb-2">{trip.title}</h3>
+                        {trip.location && (
+                          <div className="flex items-center text-sm text-gray-600 mb-2">
+                            <MapPin className="h-4 w-4 mr-1" />
+                            {trip.location}
+                          </div>
+                        )}
+                        {trip.tripDate && (
+                          <div className="flex items-center text-sm text-gray-600">
+                            <Clock className="h-4 w-4 mr-1" />
+                            {new Date(trip.tripDate).toLocaleDateString('vi-VN')}
+                            {trip.duration && ` - ${trip.duration} ngày`}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    {trip.isUpcoming && (
+                      <span className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                        Sắp diễn ra
+                      </span>
+                    )}
+                    <Button asChild variant="outline" className="w-full border-2 border-orange-500 bg-transparent text-orange-500 hover:bg-orange-50 font-semibold mt-4">
+                      <Link href={`/activities/${trip.slug}`}>
+                        Xem chi tiết
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Donation CTA */}
       <section className="py-16 bg-gradient-to-r from-yellow-400 to-orange-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6 font-poppins">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 font-poppins">
             {siteContent.donationTitle}
           </h2>
-          <p className="text-xl text-white mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-white/90 mb-8 max-w-3xl mx-auto">
             {siteContent.donationSubtitle}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild size="lg" variant="secondary" className="bg-white text-orange-500 hover:bg-gray-50 px-8 py-3">
+            <Button asChild size="lg" className="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white">
               <Link href="/donate">
                 {siteContent.donationButtonText}
-                <Heart className="ml-2 h-5 w-5" />
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="secondary" className="bg-white text-orange-500 hover:bg-gray-50 px-8 py-3">
+              <Link href="/transparency">
+                Xem minh bạch tài chính
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-2 border-white bg-transparent text-white hover:bg-white hover:text-orange-500 px-8 py-3 font-semibold">
-              <Link href="/contact">
-                Liên hệ với chúng tôi
+              <Link href="/about">
+                Tìm hiểu thêm
               </Link>
             </Button>
           </div>
