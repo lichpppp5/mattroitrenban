@@ -1016,6 +1016,56 @@ export default function AdminSettings() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Background Music Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Music className="mr-2 h-5 w-5" />
+              Nhạc nền Website
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <Label htmlFor="backgroundMusicEnabled">Bật nhạc nền</Label>
+                <p className="text-sm text-gray-500">Nhạc sẽ tự động phát khi khách truy cập website</p>
+              </div>
+              <Switch
+                id="backgroundMusicEnabled"
+                checked={settings.backgroundMusicEnabled}
+                onCheckedChange={(checked) => setSettings({...settings, backgroundMusicEnabled: checked})}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="backgroundMusicUrl">URL nhạc nền</Label>
+              <Input
+                id="backgroundMusicUrl"
+                value={settings.backgroundMusicUrl || ""}
+                onChange={(e) => setSettings({...settings, backgroundMusicUrl: e.target.value})}
+                placeholder="https://example.com/music.mp3 hoặc /media/music.mp3"
+                className="mt-2"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Nhập URL của file nhạc (MP3, WAV, OGG). Có thể upload file qua Media và dùng URL từ đó.
+              </p>
+              
+              {settings.backgroundMusicUrl && (
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm font-semibold mb-2">Preview:</p>
+                  <audio 
+                    controls 
+                    src={settings.backgroundMusicUrl}
+                    className="w-full"
+                  >
+                    Trình duyệt của bạn không hỗ trợ audio.
+                  </audio>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
         </div>
       )}
     </div>
