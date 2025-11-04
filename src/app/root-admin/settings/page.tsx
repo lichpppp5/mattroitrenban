@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Save, Settings, Palette, Globe, Mail, Shield, Upload, Image as ImageIcon, X } from "lucide-react"
+import { Save, Settings, Palette, Globe, Mail, Shield, Upload, Image as ImageIcon, X, Music } from "lucide-react"
 
 export default function AdminSettings() {
   const [settings, setSettings] = useState({
@@ -55,6 +55,10 @@ export default function AdminSettings() {
     floatingMenuPhone: "+84 123 456 789",
     floatingMenuMessenger: "https://m.me/mattroitrenban",
     floatingMenuEmail: "info@mattroitrenban.vn",
+    
+    // Background Music
+    backgroundMusicUrl: "",
+    backgroundMusicEnabled: true,
   })
   
   const [isLoading, setIsLoading] = useState(true)
@@ -94,6 +98,10 @@ export default function AdminSettings() {
         floatingMenuPhone: data["site.floatingMenu.phone"] || prev.floatingMenuPhone,
         floatingMenuMessenger: data["site.floatingMenu.messenger"] || prev.floatingMenuMessenger,
         floatingMenuEmail: data["site.floatingMenu.email"] || prev.floatingMenuEmail,
+        backgroundMusicUrl: data["background.music"] || prev.backgroundMusicUrl,
+        backgroundMusicEnabled: data["background.music.enabled"] !== undefined 
+          ? data["background.music.enabled"] === "true" 
+          : prev.backgroundMusicEnabled,
       }))
     } catch (err: any) {
       console.error("Error fetching settings:", err)
@@ -206,6 +214,18 @@ export default function AdminSettings() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ key: "site.floatingMenu.email", value: settings.floatingMenuEmail, type: "text" }),
+        }),
+        
+        // Background Music
+        fetch("/api/content", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: "background.music", value: settings.backgroundMusicUrl, type: "text" }),
+        }),
+        fetch("/api/content", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: "background.music.enabled", value: String(settings.backgroundMusicEnabled), type: "text" }),
         }),
       ]
       
