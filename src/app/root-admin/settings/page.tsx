@@ -1020,8 +1020,8 @@ export default function AdminSettings() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
-              <Music className="mr-2 h-5 w-5" />
-              Nhạc nền Website
+              <Mail className="mr-2 h-5 w-5" />
+              Menu Liên hệ Nổi (Floating Menu)
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
