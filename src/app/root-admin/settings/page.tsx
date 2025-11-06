@@ -918,6 +918,56 @@ export default function AdminSettings() {
           </CardContent>
         </Card>
 
+        {/* Background Music Settings - Moved up for better visibility */}
+        <Card className="lg:col-span-2 border-2 border-orange-300 shadow-lg">
+          <CardHeader className="bg-gradient-to-r from-orange-50 to-yellow-50">
+            <CardTitle className="flex items-center text-orange-600">
+              <Music className="mr-2 h-5 w-5" />
+              Nhạc nền Website
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 pt-6">
+            <div className="flex items-center justify-between p-4 bg-orange-50 rounded-lg border border-orange-200">
+              <div className="flex-1">
+                <Label htmlFor="backgroundMusicEnabled" className="text-base font-semibold">Bật nhạc nền</Label>
+                <p className="text-sm text-gray-600 mt-1">Nhạc sẽ tự động phát khi khách truy cập website</p>
+              </div>
+              <Switch
+                id="backgroundMusicEnabled"
+                checked={settings.backgroundMusicEnabled}
+                onCheckedChange={(checked) => setSettings({...settings, backgroundMusicEnabled: checked})}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="backgroundMusicUrl" className="text-base font-semibold">URL nhạc nền</Label>
+              <Input
+                id="backgroundMusicUrl"
+                value={settings.backgroundMusicUrl || ""}
+                onChange={(e) => setSettings({...settings, backgroundMusicUrl: e.target.value})}
+                placeholder="https://example.com/music.mp3 hoặc /media/music.mp3"
+                className="mt-2"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Nhập URL của file nhạc (MP3, WAV, OGG). Có thể upload file qua Media và dùng URL từ đó.
+              </p>
+              
+              {settings.backgroundMusicUrl && (
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <p className="text-sm font-semibold mb-2">Preview:</p>
+                  <audio 
+                    controls 
+                    src={settings.backgroundMusicUrl}
+                    className="w-full"
+                  >
+                    Trình duyệt của bạn không hỗ trợ audio.
+                  </audio>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Social Media Settings */}
         <Card>
           <CardHeader>
@@ -962,56 +1012,6 @@ export default function AdminSettings() {
                 onChange={(e) => setSettings({...settings, twitterUrl: e.target.value})}
                 placeholder="https://twitter.com/yourpage"
               />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Background Music Settings */}
-        <Card className="lg:col-span-2 border-2 border-orange-200">
-          <CardHeader>
-            <CardTitle className="flex items-center text-orange-600">
-              <Music className="mr-2 h-5 w-5" />
-              Nhạc nền Website
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-orange-50 rounded-lg">
-              <div className="flex-1">
-                <Label htmlFor="backgroundMusicEnabled" className="text-base font-semibold">Bật nhạc nền</Label>
-                <p className="text-sm text-gray-600 mt-1">Nhạc sẽ tự động phát khi khách truy cập website</p>
-              </div>
-              <Switch
-                id="backgroundMusicEnabled"
-                checked={settings.backgroundMusicEnabled}
-                onCheckedChange={(checked) => setSettings({...settings, backgroundMusicEnabled: checked})}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="backgroundMusicUrl" className="text-base font-semibold">URL nhạc nền</Label>
-              <Input
-                id="backgroundMusicUrl"
-                value={settings.backgroundMusicUrl || ""}
-                onChange={(e) => setSettings({...settings, backgroundMusicUrl: e.target.value})}
-                placeholder="https://example.com/music.mp3 hoặc /media/music.mp3"
-                className="mt-2"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Nhập URL của file nhạc (MP3, WAV, OGG). Có thể upload file qua Media và dùng URL từ đó.
-              </p>
-              
-              {settings.backgroundMusicUrl && (
-                <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <p className="text-sm font-semibold mb-2">Preview:</p>
-                  <audio 
-                    controls 
-                    src={settings.backgroundMusicUrl}
-                    className="w-full"
-                  >
-                    Trình duyệt của bạn không hỗ trợ audio.
-                  </audio>
-                </div>
-              )}
             </div>
           </CardContent>
         </Card>

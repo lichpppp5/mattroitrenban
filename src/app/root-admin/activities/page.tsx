@@ -578,16 +578,23 @@ export default function AdminActivities() {
                   <Label className="text-sm text-gray-600 mb-2 block">Hoặc thêm URL ảnh:</Label>
                   <div className="flex gap-2">
                     <Input
-                      placeholder="https://example.com/image.jpg"
+                      id="image-url-input"
+                      placeholder="https://example.com/image.jpg hoặc /media/image.jpg"
                       className="flex-1"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault()
                           const input = e.target as HTMLInputElement
-                          if (input.value.trim()) {
+                          const url = input.value.trim()
+                          if (url) {
+                            // Normalize URL - ensure absolute URL for local files
+                            let normalizedUrl = url
+                            if (url.startsWith("/uploads/") || url.startsWith("/media/")) {
+                              normalizedUrl = `${window.location.origin}${url}`
+                            }
                             setFormData((prev) => ({
                               ...prev,
-                              images: [...prev.images, input.value.trim()],
+                              images: [...prev.images, normalizedUrl],
                             }))
                             input.value = ''
                           }
@@ -598,11 +605,17 @@ export default function AdminActivities() {
                       type="button"
                       variant="outline"
                       onClick={() => {
-                        const input = document.querySelector('input[placeholder="https://example.com/image.jpg"]') as HTMLInputElement
-                        if (input?.value.trim()) {
+                        const input = document.getElementById('image-url-input') as HTMLInputElement
+                        const url = input?.value.trim()
+                        if (url) {
+                          // Normalize URL - ensure absolute URL for local files
+                          let normalizedUrl = url
+                          if (url.startsWith("/uploads/") || url.startsWith("/media/")) {
+                            normalizedUrl = `${window.location.origin}${url}`
+                          }
                           setFormData((prev) => ({
                             ...prev,
-                            images: [...prev.images, input.value.trim()],
+                            images: [...prev.images, normalizedUrl],
                           }))
                           input.value = ''
                         }
