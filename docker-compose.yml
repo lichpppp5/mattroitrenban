@@ -79,8 +79,9 @@ services:
     networks:
       - app-network
     # Health check to ensure nginx is ready
+    # Note: nginx:alpine may not have wget, so we check if nginx process is running
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      test: ["CMD-SHELL", "pgrep nginx || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
