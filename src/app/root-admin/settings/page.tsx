@@ -1018,7 +1018,7 @@ export default function AdminSettings() {
         </Card>
 
         {/* Background Music Settings */}
-        <Card>
+        <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Music className="mr-2 h-5 w-5" />
