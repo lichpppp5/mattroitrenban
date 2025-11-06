@@ -77,7 +77,6 @@ export function Navigation() {
                 onClick={(e) => {
                   e.preventDefault()
                   router.push(item.href)
-                  router.refresh()
                 }}
               >
                 {item.label}
