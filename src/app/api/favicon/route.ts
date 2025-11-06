@@ -62,15 +62,38 @@ export async function POST(request: NextRequest) {
     const publicFaviconPath = join(process.cwd(), "public", "favicon.ico")
     const publicFaviconPathWithExt = join(process.cwd(), "public", `favicon${extension}`)
 
+    // Ensure directories exist
+    const fs = require("fs")
+    const appDir = join(process.cwd(), "src", "app")
+    const publicDir = join(process.cwd(), "public")
+    
+    if (!fs.existsSync(appDir)) {
+      fs.mkdirSync(appDir, { recursive: true })
+    }
+    if (!fs.existsSync(publicDir)) {
+      fs.mkdirSync(publicDir, { recursive: true })
+    }
+
     // Write favicon files
     await writeFile(appFaviconPath, buffer)
     await writeFile(publicFaviconPath, buffer)
     if (extension !== ".ico") {
       await writeFile(publicFaviconPathWithExt, buffer)
     }
+    
+    console.log(`✅ Favicon saved to: ${appFaviconPath}`)
+    console.log(`✅ Favicon saved to: ${publicFaviconPath}`)
 
-    // Generate URL
+    // Generate URL - always use /favicon.ico for consistency
     const faviconUrl = `/favicon.ico`
+    
+    // Save to database
+    const { prisma } = require("@/lib/prisma")
+    await prisma.siteContent.upsert({
+      where: { key: "site.favicon" },
+      update: { value: faviconUrl, type: "text" },
+      create: { key: "site.favicon", value: faviconUrl, type: "text" },
+    })
 
     return NextResponse.json(
       {
