@@ -130,14 +130,23 @@ export default function AdminActivities() {
       imageUrl: activity.imageUrl || "",
       images: (() => {
         if (!activity.images) return []
+        let parsed: string[] = []
         if (typeof activity.images === 'string') {
           try {
-            return JSON.parse(activity.images)
+            parsed = JSON.parse(activity.images)
           } catch {
             return []
           }
+        } else {
+          parsed = Array.isArray(activity.images) ? activity.images : []
         }
-        return Array.isArray(activity.images) ? activity.images : []
+        // Normalize URLs - ensure absolute URLs for local files
+        return parsed.map((url: string) => {
+          if (url && (url.startsWith("/uploads/") || url.startsWith("/media/"))) {
+            return `${window.location.origin}${url}`
+          }
+          return url
+        })
       })(),
       videoUrl: activity.videoUrl || "",
       category: activity.category || "",
@@ -399,19 +408,26 @@ export default function AdminActivities() {
               <div>
                 <Label>Album ảnh (có thể upload nhiều ảnh)</Label>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-2 mb-2">
-                  {formData.images.map((img, index) => (
-                    <div key={index} className="relative aspect-square rounded-lg overflow-hidden border group">
-                      <img 
-                        src={img} 
-                        alt={`Image ${index + 1}`} 
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          console.error(`Image failed to load: ${img}`)
-                          // Replace with placeholder or remove
-                          const target = e.target as HTMLImageElement
-                          target.src = "/api/placeholder/400/400"
-                        }}
-                      />
+                  {formData.images.map((img, index) => {
+                    // Normalize image URL for display
+                    let displayUrl = img
+                    if (img && (img.startsWith("/uploads/") || img.startsWith("/media/"))) {
+                      displayUrl = `${window.location.origin}${img}`
+                    }
+                    
+                    return (
+                      <div key={index} className="relative aspect-square rounded-lg overflow-hidden border group">
+                        <img 
+                          src={displayUrl} 
+                          alt={`Image ${index + 1}`} 
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            console.error(`Image failed to load: ${displayUrl}`)
+                            // Replace with placeholder
+                            const target = e.target as HTMLImageElement
+                            target.src = `${window.location.origin}/api/placeholder/400/400`
+                          }}
+                        />
                       <Button
                         variant="ghost"
                         size="icon"
@@ -424,7 +440,8 @@ export default function AdminActivities() {
                         <X className="h-4 w-4" />
                       </Button>
                     </div>
-                  ))}
+                    )
+                  })}
                   {uploadingImages.length > 0 && (
                     <div className="border-2 border-dashed border-blue-300 rounded-lg aspect-square flex items-center justify-center bg-blue-50">
                       <div className="text-center">
@@ -498,10 +515,16 @@ export default function AdminActivities() {
                             }
                             
                             const uploadData = await uploadResponse.json()
-                            const imageUrl = uploadData.media?.url || uploadData.url
+                            let imageUrl = uploadData.media?.url || uploadData.url
                             
                             if (!imageUrl) {
                               throw new Error("Server không trả về URL ảnh")
+                            }
+                            
+                            // Normalize URL - ensure absolute URL for local files
+                            if (imageUrl.startsWith("/uploads/") || imageUrl.startsWith("/media/")) {
+                              const baseUrl = window.location.origin
+                              imageUrl = `${baseUrl}${imageUrl}`
                             }
                             
                             // Success - add to images
