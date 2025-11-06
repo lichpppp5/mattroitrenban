@@ -115,6 +115,10 @@ export default function AdminSettings() {
       setIsSaving(true)
       setSaveStatus(null)
       
+      console.log("💾 Starting to save settings...")
+      console.log("Background Music URL:", settings.backgroundMusicUrl)
+      console.log("Background Music Enabled:", settings.backgroundMusicEnabled)
+      
       // Save all settings to API
       const savePromises = [
         // General
@@ -229,7 +233,47 @@ export default function AdminSettings() {
         }),
       ]
       
-      await Promise.all(savePromises)
+      // Use Promise.allSettled to get detailed error information
+      const results = await Promise.allSettled(savePromises)
+      
+      // Check for failures and HTTP errors
+      const httpErrors: string[] = []
+      let successCount = 0
+      
+      for (let i = 0; i < results.length; i++) {
+        const result = results[i]
+        if (result.status === "rejected") {
+          console.error(`❌ Promise ${i} rejected:`, result.reason)
+          httpErrors.push(result.reason?.message || "Network error")
+        } else {
+          // result.value is a Response promise, need to await it
+          try {
+            const response = result.value
+            if (!response.ok) {
+              const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }))
+              httpErrors.push(errorData.error || `HTTP ${response.status}`)
+              console.error(`❌ Save ${i} failed:`, errorData)
+            } else {
+              const data = await response.json().catch(() => ({}))
+              console.log(`✅ Saved ${i}:`, data.key || "unknown")
+              successCount++
+            }
+          } catch (err: any) {
+            console.error(`❌ Error processing response ${i}:`, err)
+            httpErrors.push(err.message || "Response processing error")
+          }
+        }
+      }
+      
+      if (httpErrors.length > 0) {
+        const errorMessage = `Lỗi: ${httpErrors.slice(0, 3).join(", ")}${httpErrors.length > 3 ? ` và ${httpErrors.length - 3} lỗi khác` : ""}`
+        console.error("❌ Save errors:", errorMessage)
+        setSaveStatus("error")
+        setTimeout(() => setSaveStatus(null), 5000)
+        return
+      }
+      
+      console.log(`✅ All ${successCount} settings saved successfully`)
       
       // Revalidate homepage nếu có thay đổi banner
       if (settings.bannerUrl) {
@@ -246,9 +290,10 @@ export default function AdminSettings() {
       // Refresh settings to confirm save
       await fetchSettings()
     } catch (err: any) {
-      console.error("Error saving settings:", err)
+      console.error("❌ Error saving settings:", err)
+      console.error("Error details:", err.message, err.stack)
       setSaveStatus("error")
-      setTimeout(() => setSaveStatus(null), 3000)
+      setTimeout(() => setSaveStatus(null), 5000)
     } finally {
       setIsSaving(false)
     }
@@ -280,7 +325,9 @@ export default function AdminSettings() {
       )}
       {saveStatus === "error" && (
         <div className="p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-          ❌ Lỗi khi lưu cài đặt. Vui lòng thử lại.
+          <div className="font-semibold mb-2">❌ Lỗi khi lưu cài đặt</div>
+          <div className="text-sm">Vui lòng mở Console (F12) để xem chi tiết lỗi và thử lại.</div>
+          <div className="text-xs mt-2 text-red-600">Nếu lỗi vẫn tiếp tục, vui lòng kiểm tra network tab trong Developer Tools.</div>
         </div>
       )}
       
