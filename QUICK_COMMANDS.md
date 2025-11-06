@@ -1,5 +1,24 @@
 # 🚀 Quick Commands Reference
 
+## Khởi động dịch vụ
+
+### Khởi động tất cả services
+```bash
+./start.sh
+```
+
+### Hoặc dùng docker compose trực tiếp
+```bash
+docker compose up -d
+# Hoặc
+docker-compose up -d
+```
+
+### Khởi động và xem logs
+```bash
+docker compose up
+```
+
 ## Khởi động lại dịch vụ
 
 ### Restart tất cả services
