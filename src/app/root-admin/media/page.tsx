@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Upload, Image as ImageIcon, FileText, Trash2, Download, Search, Loader2, AlertCircle } from "lucide-react"
+import { Upload, Image as ImageIcon, FileText, Trash2, Download, Search, Loader2, AlertCircle, Music } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import Image from "next/image"
 
@@ -161,6 +161,7 @@ export default function AdminMedia() {
     images: mediaFiles.filter((f) => f.type === "image").length,
     documents: mediaFiles.filter((f) => f.type === "document").length,
     videos: mediaFiles.filter((f) => f.type === "video").length,
+    audio: mediaFiles.filter((f) => f.type === "audio").length,
     totalSize: mediaFiles.reduce((sum, f) => sum + (f.size || 0), 0),
   }
 
@@ -194,7 +195,7 @@ export default function AdminMedia() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -221,8 +222,19 @@ export default function AdminMedia() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Tài liệu</p>
-                <p className="text-2xl font-bold">{stats.documents}</p>
+                <p className="text-sm text-gray-600">Video</p>
+                <p className="text-2xl font-bold">{stats.videos}</p>
+              </div>
+              <FileText className="h-12 w-12 text-red-500" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Audio</p>
+                <p className="text-2xl font-bold">{stats.audio}</p>
               </div>
               <FileText className="h-12 w-12 text-purple-500" />
             </div>
@@ -232,14 +244,25 @@ export default function AdminMedia() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Dung lượng</p>
-                <p className="text-2xl font-bold">{formatFileSize(stats.totalSize)}</p>
+                <p className="text-sm text-gray-600">Tài liệu</p>
+                <p className="text-2xl font-bold">{stats.documents}</p>
               </div>
-              <Upload className="h-12 w-12 text-orange-500" />
+              <FileText className="h-12 w-12 text-gray-500" />
             </div>
           </CardContent>
         </Card>
       </div>
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Dung lượng</p>
+              <p className="text-2xl font-bold">{formatFileSize(stats.totalSize)}</p>
+            </div>
+            <Upload className="h-12 w-12 text-orange-500" />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Upload Area */}
       <Card>
@@ -253,12 +276,12 @@ export default function AdminMedia() {
               Kéo thả file vào đây hoặc click để chọn
             </p>
             <p className="text-sm text-gray-500 mb-4">
-              Hỗ trợ: JPG, PNG, GIF, PDF, DOC, DOCX (tối đa 10MB)
+              Hỗ trợ: JPG, PNG, GIF, PDF, DOC, DOCX, MP3, WAV, OGG, M4A (tối đa 10MB)
             </p>
             <Input
               type="file"
               multiple
-              accept="image/*,.pdf,.doc,.docx"
+              accept="image/*,.pdf,.doc,.docx,.mp3,.wav,.ogg,.m4a,.aac,.flac,audio/*"
               onChange={handleUpload}
               disabled={uploading}
               className="hidden"
@@ -324,6 +347,18 @@ export default function AdminMedia() {
                     className="object-cover"
                   />
                 </div>
+              ) : file.type === "audio" ? (
+                <div className="aspect-video bg-gradient-to-br from-purple-100 to-pink-100 flex flex-col items-center justify-center p-4">
+                  <Music className="h-12 w-12 text-purple-500 mb-2" />
+                  <audio controls className="w-full max-w-full" style={{ maxHeight: "60px" }}>
+                    <source src={file.url} />
+                    Trình duyệt của bạn không hỗ trợ audio.
+                  </audio>
+                </div>
+              ) : file.type === "video" ? (
+                <div className="aspect-video bg-gray-100 flex items-center justify-center">
+                  <FileText className="h-12 w-12 text-red-400" />
+                </div>
               ) : (
                 <div className="aspect-video bg-gray-100 flex items-center justify-center">
                   <FileText className="h-12 w-12 text-gray-400" />
@@ -337,7 +372,10 @@ export default function AdminMedia() {
                 </p>
                 <div className="flex items-center justify-between mt-2">
                   <Badge variant="outline" className="text-xs">
-                    {file.type === "image" ? "Hình ảnh" : file.type === "video" ? "Video" : "Tài liệu"}
+                    {file.type === "image" ? "Hình ảnh" : 
+                     file.type === "video" ? "Video" : 
+                     file.type === "audio" ? "Audio" : 
+                     "Tài liệu"}
                   </Badge>
                   <div className="flex space-x-1">
                     <Button
