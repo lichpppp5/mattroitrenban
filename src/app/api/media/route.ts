@@ -198,36 +198,51 @@ export async function POST(request: NextRequest) {
       const bytes = await file.arrayBuffer()
       const buffer = Buffer.from(bytes)
       const filename = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}` // Sanitize filename
-      const path = join(process.cwd(), "public", "media", filename)
       
+      const fs = require("fs")
+      
+      // IMPORTANT: In Docker, we need to save to the volume mount location
+      // The volume is mounted at /app/public/media in container
+      // But Nginx serves from /var/www/media which is also mounted from ./media on host
+      // So we save to public/media (which is the volume mount) and it will be accessible to Nginx
+      const mediaDir = join(process.cwd(), "public", "media")
+      const path = join(mediaDir, filename)
+      
+      try {
         // Ensure media directory exists with correct permissions
-        const fs = require("fs")
-        const mediaDir = join(process.cwd(), "public", "media")
+        if (!fs.existsSync(mediaDir)) {
+          fs.mkdirSync(mediaDir, { recursive: true })
+          // Set permissions (0o755 = rwxr-xr-x)
+          fs.chmodSync(mediaDir, 0o755)
+        }
         
+        // Ensure directory is writable
         try {
-          if (!fs.existsSync(mediaDir)) {
-            fs.mkdirSync(mediaDir, { recursive: true })
-            // Set permissions (0o755 = rwxr-xr-x)
-            fs.chmodSync(mediaDir, 0o755)
-          }
-          
-          // Ensure directory is writable
-          try {
-            await fs.promises.access(mediaDir, fs.constants.W_OK)
-          } catch (accessError) {
-            // Try to fix permissions
-            fs.chmodSync(mediaDir, 0o755)
-            console.log(`Fixed permissions for ${mediaDir}`)
-          }
-          
-          // Check write permissions
-          await writeFile(path, buffer)
+          await fs.promises.access(mediaDir, fs.constants.W_OK)
+        } catch (accessError) {
+          // Try to fix permissions
+          fs.chmodSync(mediaDir, 0o755)
+          console.log(`Fixed permissions for ${mediaDir}`)
+        }
+        
+        // Write file
+        await writeFile(path, buffer)
+        
+        // Set file permissions (0o644 = rw-r--r--)
+        try {
+          fs.chmodSync(path, 0o644)
+        } catch (chmodError) {
+          console.warn(`Could not set file permissions: ${chmodError}`)
+        }
+        
         // Use relative URL for local files (will be normalized on frontend)
         // This ensures portability across environments
         fileUrl = `/media/${filename}`
         console.log(`✅ File saved to: ${path}`)
         console.log(`✅ File URL: ${fileUrl}`)
         console.log(`✅ Full URL would be: ${baseUrl}${fileUrl}`)
+        console.log(`✅ File size: ${buffer.length} bytes`)
+        console.log(`✅ File type: ${fileType}`)
       } catch (writeError: any) {
         console.error("❌ Error writing file to disk:", writeError)
         console.error(`   Path: ${path}`)
