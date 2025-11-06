@@ -1,79 +1,136 @@
 #!/bin/bash
 
-# Script để check upload logs và tìm nguyên nhân files không được lưu
+# Script to check upload logs and diagnose missing files
+set -e
 
-echo "🔍 Checking upload logs and file save issues..."
+echo "🔍 Checking Upload Logs and Diagnosing Missing Files..."
 echo ""
 
-cd /mattroitrenban || exit 1
+# Colors
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+BLUE='\033[0;34m'
+NC='\033[0m'
 
-# 1. Check app logs for upload errors
-echo "📋 Recent app logs (last 50 lines)..."
-docker compose logs app --tail 50 | grep -i "media\|upload\|error\|file\|save" || echo "   No relevant logs found"
+# File from database
+DB_FILE="1762425608157-niemvuicuaem.mp3"
+
+echo "📋 File from database: $DB_FILE"
 echo ""
 
-# 2. Check for specific upload messages
-echo "📝 Looking for upload success messages..."
-docker compose logs app --tail 200 | grep -i "file saved\|upload\|media" || echo "   No upload messages found"
+# 1. Check if file exists on host
+echo "1️⃣  Checking if file exists on host..."
+if [ -f "media/$DB_FILE" ]; then
+    echo -e "${GREEN}✅ File exists: media/$DB_FILE${NC}"
+    ls -lh "media/$DB_FILE"
+elif [ -f "public/media/$DB_FILE" ]; then
+    echo -e "${GREEN}✅ File exists: public/media/$DB_FILE${NC}"
+    ls -lh "public/media/$DB_FILE"
+    echo -e "${YELLOW}⚠️  File in wrong location, copying to media/${NC}"
+    cp "public/media/$DB_FILE" "media/$DB_FILE"
+    chmod 644 "media/$DB_FILE"
+    echo -e "${GREEN}✅ Copied to media/${NC}"
+else
+    echo -e "${RED}❌ File NOT found on host${NC}"
+    echo "   Checking all files with similar names..."
+    find media -name "*niemvuicuaem*" -o -name "*1762425608157*" 2>/dev/null || echo "   No similar files found"
+fi
+
 echo ""
 
-# 3. Check database for media entries
-echo "🗄️  Checking database for media entries..."
-if docker compose ps postgres | grep -q "Up"; then
-    POSTGRES_USER=$(grep "^POSTGRES_USER=" .env.production 2>/dev/null | cut -d '=' -f2 | tr -d '"' | tr -d "'" | head -1 || echo "mattroitrenban")
-    POSTGRES_DB=$(grep "^POSTGRES_DB=" .env.production 2>/dev/null | cut -d '=' -f2 | tr -d '"' | tr -d "'" | head -1 || echo "mattroitrendb")
+# 2. Check in Docker containers
+echo "2️⃣  Checking in Docker containers..."
+if command -v docker >/dev/null 2>&1; then
+    # App container
+    if docker ps | grep -q "mattroitrenban_app"; then
+        echo "App Container:"
+        if docker exec mattroitrenban_app test -f "/app/public/media/$DB_FILE" 2>/dev/null; then
+            echo -e "${GREEN}✅ File exists in app container${NC}"
+            docker exec mattroitrenban_app ls -lh "/app/public/media/$DB_FILE"
+        else
+            echo -e "${RED}❌ File NOT found in app container${NC}"
+        fi
+    fi
     
-    docker compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT COUNT(*) as total, COUNT(CASE WHEN url LIKE '/media/%' OR url LIKE '%/media/%' THEN 1 END) as local_files FROM \"Media\";" 2>/dev/null || echo "   Could not query database"
-else
-    echo "⚠️  PostgreSQL container not running"
+    # Nginx container
+    if docker ps | grep -q "mattroitrenban_nginx"; then
+        echo "Nginx Container:"
+        if docker exec mattroitrenban_nginx test -f "/var/www/media/$DB_FILE" 2>/dev/null; then
+            echo -e "${GREEN}✅ File exists in nginx container${NC}"
+            docker exec mattroitrenban_nginx ls -lh "/var/www/media/$DB_FILE"
+        else
+            echo -e "${RED}❌ File NOT found in nginx container${NC}"
+        fi
+    fi
 fi
+
 echo ""
 
-# 4. Check media directory permissions
-echo "📁 Checking media directory..."
+# 3. Check upload logs
+echo "3️⃣  Checking upload logs..."
+if command -v docker >/dev/null 2>&1 && docker ps | grep -q "mattroitrenban_app"; then
+    echo "Recent upload logs:"
+    docker compose logs app | grep -i "media\|upload\|$DB_FILE\|niemvuicuaem" | tail -30 || echo "   No relevant logs found"
+    
+    echo ""
+    echo "Error logs:"
+    docker compose logs app | grep -i "error\|failed\|❌" | tail -20 || echo "   No errors found"
+fi
+
+echo ""
+
+# 4. Check file write permissions
+echo "4️⃣  Checking file write permissions..."
 if [ -d "media" ]; then
-    echo "✅ media/ exists"
-    ls -ld media/
-    echo "   Permissions: $(stat -c '%a' media/ 2>/dev/null || stat -f '%A' media/ 2>/dev/null)"
-else
-    echo "❌ media/ does not exist"
+    PERMS=$(stat -c "%a" media 2>/dev/null || stat -f "%OLp" media 2>/dev/null || echo "unknown")
+    echo "   media/ permissions: $PERMS"
+    
+    # Test write
+    TEST_FILE="media/.test_write_$(date +%s)"
+    if touch "$TEST_FILE" 2>/dev/null; then
+        echo -e "${GREEN}✅ Write access OK${NC}"
+        rm -f "$TEST_FILE"
+    else
+        echo -e "${RED}❌ Write access FAILED${NC}"
+    fi
 fi
+
 echo ""
 
-# 5. Check Docker volume
-echo "🐳 Checking Docker volume..."
-docker compose exec -T app ls -ld /app/public/media 2>/dev/null && {
-    echo "✅ /app/public/media exists in container"
-    docker compose exec -T app ls -la /app/public/media/ | head -10
-} || echo "❌ /app/public/media does not exist in container"
-echo ""
-
-# 6. Test write permission
-echo "📝 Testing write permission..."
-TEST_FILE="media/test_$(date +%s).txt"
-if echo "test" > "$TEST_FILE" 2>/dev/null; then
-    echo "✅ Can write to media/ directory"
-    rm -f "$TEST_FILE"
-else
-    echo "❌ Cannot write to media/ directory!"
-    echo "   Fixing permissions..."
-    chmod 755 media 2>/dev/null || mkdir -p media && chmod 755 media
+# 5. Check volume mount
+echo "5️⃣  Checking volume mount..."
+if command -v docker >/dev/null 2>&1 && docker ps | grep -q "mattroitrenban_app"; then
+    MOUNT_CHECK=$(docker exec mattroitrenban_app test -w /app/public/media 2>/dev/null && echo "writable" || echo "not writable")
+    echo "   /app/public/media is: $MOUNT_CHECK"
+    
+    # List files in container
+    echo "   Files in container:"
+    docker exec mattroitrenban_app ls -1 /app/public/media/ 2>/dev/null | head -10 || echo "   (Could not list)"
 fi
+
 echo ""
 
-# 7. Recommendations
+# 6. Recommendations
 echo "📝 Recommendations:"
-echo "   1. If files show in database but not on disk:"
-echo "      - Files might have been uploaded but failed to save"
-echo "      - Check app logs above for write errors"
-echo "      - Upload files again"
 echo ""
-echo "   2. If no files in database:"
-echo "      - Uploads might have failed silently"
-echo "      - Try uploading again with browser console open"
-echo "      - Check network tab for API errors"
-echo ""
-echo "   3. Fix Nginx config:"
-echo "      ./fix-nginx-media.sh"
-echo "      docker compose restart nginx"
 
+if [ ! -f "media/$DB_FILE" ] && [ ! -f "public/media/$DB_FILE" ]; then
+    echo -e "${YELLOW}⚠️  File is missing from disk${NC}"
+    echo ""
+    echo "Options:"
+    echo "1. Re-upload the file via admin panel"
+    echo "2. If you have a backup, copy it to media/ directory:"
+    echo "   cp /path/to/backup/niemvuicuaem.mp3 media/$DB_FILE"
+    echo "3. Check if file was uploaded to Cloudinary (if configured)"
+    echo ""
+    echo "After fixing, restart containers:"
+    echo "   docker compose restart app nginx"
+else
+    echo -e "${GREEN}✅ File exists, checking sync...${NC}"
+    echo "   If file exists but not accessible, restart containers:"
+    echo "   docker compose restart app nginx"
+fi
+
+echo ""
+echo "✅ Diagnosis completed!"
