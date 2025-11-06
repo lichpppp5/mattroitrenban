@@ -65,6 +65,17 @@ if docker ps | grep -q "mattroitrenban_nginx"; then
         HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost/media/$SAMPLE_FILE" || echo "000")
         if [ "$HTTP_CODE" = "200" ]; then
             echo -e "   ${GREEN}✅ HTTP 200 OK from localhost${NC}"
+        elif [ "$HTTP_CODE" = "301" ] || [ "$HTTP_CODE" = "302" ]; then
+            echo -e "   ${YELLOW}⚠️  HTTP $HTTP_CODE (redirect) from localhost${NC}"
+            echo "      This is normal if HTTPS redirect is enabled"
+            # Follow redirect
+            FINAL_URL=$(curl -s -o /dev/null -w "%{url_effective}" -L "http://localhost/media/$SAMPLE_FILE" 2>/dev/null || echo "")
+            if [ -n "$FINAL_URL" ]; then
+                FINAL_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$FINAL_URL" 2>/dev/null || echo "000")
+                if [ "$FINAL_CODE" = "200" ]; then
+                    echo -e "      ${GREEN}✅ Final URL returns 200 OK${NC}"
+                fi
+            fi
         else
             echo -e "   ${RED}❌ HTTP $HTTP_CODE from localhost${NC}"
         fi
