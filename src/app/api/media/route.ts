@@ -248,47 +248,74 @@ export async function POST(request: NextRequest) {
         console.error(`   Path: ${path}`)
         console.error(`   Error: ${writeError.message}`)
         
-        // If write fails, try alternative location
-        const altPath = join(process.cwd(), "media", filename)
-        const altDir = join(process.cwd(), "media")
+        // If write fails, try to fix permissions and retry
         try {
-          console.log(`⚠️  Trying alternative location: ${altPath}`)
-          if (!fs.existsSync(altDir)) {
-            fs.mkdirSync(altDir, { recursive: true })
-            fs.chmodSync(altDir, 0o755)
-            console.log(`✅ Created alternative directory: ${altDir}`)
-          }
-          await writeFile(altPath, buffer)
+          console.log(`⚠️  Primary location failed, trying to fix permissions...`)
           
-          // IMPORTANT: Copy to correct location for Nginx to serve
+          // Try to fix directory permissions (may fail, that's OK)
           try {
-            const correctPath = join(process.cwd(), "public", "media", filename)
-            const correctDir = join(process.cwd(), "public", "media")
+            fs.chmodSync(mediaDir, 0o755)
+            console.log(`✅ Fixed directory permissions`)
+          } catch (chmodError) {
+            console.warn(`⚠️  Could not fix directory permissions: ${chmodError}`)
+          }
+          
+          // Retry writing to primary location
+          await writeFile(path, buffer)
+          fs.chmodSync(path, 0o644)
+          fileUrl = `/media/${filename}`
+          console.log(`✅ File saved after fixing permissions: ${path}`)
+          console.log(`✅ File URL: ${fileUrl}`)
+        } catch (retryError: any) {
+          // If still fails, try alternative location
+          const altPath = join(process.cwd(), "media", filename)
+          const altDir = join(process.cwd(), "media")
+          try {
+            console.log(`⚠️  Trying alternative location: ${altPath}`)
+            if (!fs.existsSync(altDir)) {
+              fs.mkdirSync(altDir, { recursive: true })
+              fs.chmodSync(altDir, 0o755)
+              console.log(`✅ Created alternative directory: ${altDir}`)
+            }
+            await writeFile(altPath, buffer)
+            fs.chmodSync(altPath, 0o644)
             
-            // Ensure correct directory exists
-            if (!fs.existsSync(correctDir)) {
-              fs.mkdirSync(correctDir, { recursive: true })
-              fs.chmodSync(correctDir, 0o755)
+            // IMPORTANT: In Docker, /app/media is NOT mounted, so file won't sync to host
+            // We need to ensure file is in /app/public/media for volume mount to work
+            // Try to copy to correct location (may fail due to permissions, that's OK)
+            try {
+              const correctPath = join(process.cwd(), "public", "media", filename)
+              const correctDir = join(process.cwd(), "public", "media")
+              
+              // Ensure correct directory exists
+              if (!fs.existsSync(correctDir)) {
+                fs.mkdirSync(correctDir, { recursive: true })
+                fs.chmodSync(correctDir, 0o755)
+              }
+              
+              // Copy file to correct location
+              await fs.promises.copyFile(altPath, correctPath)
+              fs.chmodSync(correctPath, 0o644)
+              console.log(`✅ Copied to correct location: ${correctPath}`)
+              fileUrl = `/media/${filename}`
+            } catch (copyError: any) {
+              console.warn(`⚠️  Could not copy to public/media: ${copyError.message}`)
+              console.warn(`⚠️  File saved to ${altPath} but may not be accessible via Nginx`)
+              console.warn(`⚠️  Please check volume mount or copy file manually to media/ on host`)
+              // Still use the alternative location URL
+              fileUrl = `/media/${filename}`
             }
             
-            // Copy file to correct location
-            await fs.promises.copyFile(altPath, correctPath)
-            fs.chmodSync(correctPath, 0o644)
-            console.log(`✅ Copied to correct location: ${correctPath}`)
-          } catch (copyError: any) {
-            console.warn(`⚠️  Could not copy to public/media: ${copyError.message}`)
+            console.log(`✅ Saved to alternative location: ${altPath}`)
+          } catch (altError: any) {
+            console.error("❌ Alternative location also failed:", altError)
+            throw new Error(
+              `Cannot write file to disk. ` +
+              `Primary location failed: ${writeError.message}. ` +
+              `Alternative location failed: ${altError.message}. ` +
+              `Please check directory permissions on the server.`
+            )
           }
-          
-          fileUrl = `${baseUrl}/media/${filename}`
-          console.log(`✅ Saved to alternative location: ${altPath}`)
-        } catch (altError: any) {
-          console.error("❌ Alternative location also failed:", altError)
-          throw new Error(
-            `Cannot write file to disk. ` +
-            `Primary location failed: ${writeError.message}. ` +
-            `Alternative location failed: ${altError.message}. ` +
-            `Please check directory permissions on the server.`
-          )
         }
       }
     }
