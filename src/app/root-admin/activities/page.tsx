@@ -127,7 +127,18 @@ export default function AdminActivities() {
       title: activity.title,
       slug: activity.slug,
       content: activity.content || "",
-      imageUrl: activity.imageUrl || "",
+      imageUrl: (() => {
+        const imgUrl = activity.imageUrl || ""
+        if (!imgUrl) return ""
+        // Normalize imageUrl - ensure absolute URL for local files
+        if (imgUrl.startsWith("http://") || imgUrl.startsWith("https://")) {
+          return imgUrl
+        }
+        if (imgUrl.startsWith("/uploads/") || imgUrl.startsWith("/media/")) {
+          return `${window.location.origin}${imgUrl}`
+        }
+        return imgUrl.startsWith("/") ? `${window.location.origin}${imgUrl}` : `${window.location.origin}/${imgUrl}`
+      })(),
       images: (() => {
         if (!activity.images) return []
         let parsed: string[] = []
@@ -140,12 +151,19 @@ export default function AdminActivities() {
         } else {
           parsed = Array.isArray(activity.images) ? activity.images : []
         }
-        // Normalize URLs - ensure absolute URLs for local files
+        // Normalize URLs - ensure absolute URLs for local files when displaying
         return parsed.map((url: string) => {
-          if (url && (url.startsWith("/uploads/") || url.startsWith("/media/"))) {
+          if (!url) return url
+          // If it's already an absolute URL (external), keep it
+          if (url.startsWith("http://") || url.startsWith("https://")) {
+            return url
+          }
+          // If it's a relative path, make it absolute
+          if (url.startsWith("/uploads/") || url.startsWith("/media/")) {
             return `${window.location.origin}${url}`
           }
-          return url
+          // For any other format, assume it's relative and add origin
+          return `${window.location.origin}${url.startsWith("/") ? url : "/" + url}`
         })
       })(),
       videoUrl: activity.videoUrl || "",
@@ -197,10 +215,31 @@ export default function AdminActivities() {
       const finalIsPublished = formData.isPublished || false
       const finalStatus = finalIsPublished ? "published" : (formData.status || "draft")
       
+      // Normalize image URLs before saving - convert absolute URLs back to relative for storage
+      // This ensures consistency: store relative paths, display with absolute URLs
+      const normalizedImages = formData.images.map((img: string) => {
+        if (!img) return img
+        // If it's an absolute URL pointing to our own domain, convert to relative
+        const baseUrl = window.location.origin
+        if (img.startsWith(baseUrl)) {
+          return img.replace(baseUrl, '')
+        }
+        // If it's already relative (/media/ or /uploads/), keep it
+        if (img.startsWith("/media/") || img.startsWith("/uploads/")) {
+          return img
+        }
+        // For external URLs (Cloudinary, etc.), keep as is
+        return img
+      })
+      
+      // Set imageUrl from first image if not explicitly set (for backward compatibility)
+      const finalImageUrl = formData.imageUrl || (normalizedImages.length > 0 ? normalizedImages[0] : null)
+      
       const activityData = {
         ...formData,
         slug: finalSlug,
-        images: formData.images.length > 0 ? JSON.stringify(formData.images) : null,
+        imageUrl: finalImageUrl, // Use first image as main image if imageUrl not set
+        images: normalizedImages.length > 0 ? JSON.stringify(normalizedImages) : null,
         duration: formData.duration ? parseInt(formData.duration) : null,
         volunteerCount: formData.volunteerCount ? parseInt(formData.volunteerCount) : null,
         tripDate: formData.tripDate || null,

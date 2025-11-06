@@ -121,6 +121,15 @@ export async function POST(request: NextRequest) {
       fileType = "image"
     } else if (file.type.startsWith("video/")) {
       fileType = "video"
+    } else if (file.type.startsWith("audio/")) {
+      fileType = "audio"
+    } else {
+      // Check by file extension for audio files (some browsers may not set MIME type correctly)
+      const fileName = file.name.toLowerCase()
+      if (fileName.endsWith(".mp3") || fileName.endsWith(".wav") || fileName.endsWith(".ogg") || 
+          fileName.endsWith(".m4a") || fileName.endsWith(".aac") || fileName.endsWith(".flac")) {
+        fileType = "audio"
+      }
     }
 
     let fileUrl: string
@@ -138,9 +147,15 @@ export async function POST(request: NextRequest) {
 
         // Upload to Cloudinary
         const uploadResult = await new Promise((resolve, reject) => {
+          // Determine Cloudinary resource type (must be "image" | "video" | "raw" | "auto")
+          let resourceType: "image" | "video" | "raw" | "auto" = "image"
+          if (fileType === "video" || fileType === "audio") {
+            resourceType = "video" // Cloudinary uses "video" resource type for both video and audio files
+          }
+          
           cloudinary.uploader.upload_stream(
             {
-              resource_type: fileType === "video" ? "video" : "image",
+              resource_type: resourceType,
               folder: "mattroitrenban",
               use_filename: true,
               unique_filename: true,
