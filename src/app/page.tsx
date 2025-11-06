@@ -164,7 +164,8 @@ async function getSiteContent() {
 }
 
 // Enable ISR for homepage - revalidate every 60 seconds
-export const revalidate = 60
+// Increase cache time for better performance
+export const revalidate = 300 // 5 minutes instead of 60 seconds
 
 export default async function Home() {
   const recentActivities = await getRecentActivities()
@@ -326,22 +327,35 @@ export default async function Home() {
 
           {recentActivities.length > 0 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-              {recentActivities.map((activity) => {
-                // Normalize image URL to absolute if it's a local upload
-                // Support both /uploads/ (legacy) and /media/ (new)
-                const imageArray = activity.images ? (typeof activity.images === 'string' ? JSON.parse(activity.images) : activity.images) : []
-                const mainImage = activity.imageUrl || (imageArray.length > 0 ? imageArray[0] : null)
-                
-                return (
-                  <Card key={activity.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                    {mainImage && (
-                      <div className="relative h-64 bg-gradient-to-br from-yellow-400 to-orange-500">
-                        {/* Normalize URL to absolute if it's a local upload */}
-                        {/* Support both /uploads/ (legacy) and /media/ (new) */}
-                        {(() => {
-                          const imageUrl = (mainImage.startsWith("/uploads/") || mainImage.startsWith("/media/"))
-                            ? `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}${mainImage}`
-                            : mainImage
+                          {recentActivities.map((activity) => {
+                            // Normalize image URL to absolute if it's a local upload
+                            // Support both /uploads/ (legacy) and /media/ (new)
+                            const imageArray = activity.images ? (typeof activity.images === 'string' ? JSON.parse(activity.images) : activity.images) : []
+                            const mainImage = activity.imageUrl || (imageArray.length > 0 ? imageArray[0] : null)
+
+                            return (
+                              <Card key={activity.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                                {mainImage && (
+                                  <div className="relative h-64 bg-gradient-to-br from-yellow-400 to-orange-500">
+                                    {/* Normalize URL to absolute if it's a local upload */}
+                                    {/* Support both /uploads/ (legacy) and /media/ (new) */}
+                                    {(() => {
+                                      // Get base URL - prioritize environment variable, fallback to request origin
+                                      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
+                                                     process.env.NEXTAUTH_URL || 
+                                                     (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000')
+                                      
+                                      // Normalize image URL
+                                      let imageUrl = mainImage
+                                      if (imageUrl && !imageUrl.startsWith("http://") && !imageUrl.startsWith("https://")) {
+                                        // It's a relative path, make it absolute
+                                        if (imageUrl.startsWith("/uploads/") || imageUrl.startsWith("/media/") || imageUrl.startsWith("/")) {
+                                          imageUrl = `${baseUrl}${imageUrl.startsWith("/") ? imageUrl : "/" + imageUrl}`
+                                        } else {
+                                          // Relative path without leading slash
+                                          imageUrl = `${baseUrl}/${imageUrl}`
+                                        }
+                                      }
                           return (
                             <SafeImage
                               src={imageUrl}

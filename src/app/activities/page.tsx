@@ -178,7 +178,17 @@ function ActivitiesContent() {
                     <div className="relative h-48 bg-gradient-to-br from-yellow-400 to-orange-500 overflow-hidden">
                       {hasImage ? (
                         <SafeImage 
-                          src={activity.imageUrl || imageArray[0]} 
+                          src={(() => {
+                            const img = activity.imageUrl || imageArray[0]
+                            if (!img) return ""
+                            // Normalize URL
+                            if (img.startsWith("http://") || img.startsWith("https://")) {
+                              return img
+                            }
+                            const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
+                                          (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000')
+                            return `${baseUrl}${img.startsWith("/") ? img : "/" + img}`
+                          })()}
                           alt={activity.title}
                           className="w-full h-full object-cover"
                           placeholder=""
@@ -194,9 +204,12 @@ function ActivitiesContent() {
                           {imageArray.slice(0, 3).map((img, idx) => {
                             // Normalize URL to absolute if it's a local upload (client-side)
                             // Support both /uploads/ (legacy) and /media/ (new)
-                            const imageUrl = (img.startsWith("/uploads/") || img.startsWith("/media/"))
-                              ? `${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}${img}`
-                              : img
+                            let imageUrl = img
+                            if (imageUrl && !imageUrl.startsWith("http://") && !imageUrl.startsWith("https://")) {
+                              const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
+                                            (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000')
+                              imageUrl = `${baseUrl}${imageUrl.startsWith("/") ? imageUrl : "/" + imageUrl}`
+                            }
                             return (
                               <div key={idx} className="bg-white/20 rounded overflow-hidden">
                                 <img src={imageUrl} alt={`${activity.title} ${idx + 1}`} className="w-full h-full object-cover" />

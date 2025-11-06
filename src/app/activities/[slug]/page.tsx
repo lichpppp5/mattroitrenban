@@ -80,7 +80,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 // Enable ISR - revalidate every 60 seconds
-export const revalidate = 60
+// Increase cache time for better performance
+export const revalidate = 300 // 5 minutes
 
 export default async function ActivityDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
@@ -217,9 +218,22 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
                   {imageArray.map((img: string, index: number) => {
                     // Normalize URL to absolute if it's a local upload
                     // Support both /uploads/ (legacy) and /media/ (new)
-                    const imageUrl = (img.startsWith("/uploads/") || img.startsWith("/media/"))
-                      ? `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}${img}`
-                      : img
+                    // Get base URL - prioritize environment variable
+                    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
+                                   process.env.NEXTAUTH_URL || 
+                                   "http://localhost:3000"
+                    
+                    // Normalize image URL
+                    let imageUrl = img
+                    if (imageUrl && !imageUrl.startsWith("http://") && !imageUrl.startsWith("https://")) {
+                      // It's a relative path, make it absolute
+                      if (imageUrl.startsWith("/uploads/") || imageUrl.startsWith("/media/") || imageUrl.startsWith("/")) {
+                        imageUrl = `${baseUrl}${imageUrl.startsWith("/") ? imageUrl : "/" + imageUrl}`
+                      } else {
+                        // Relative path without leading slash
+                        imageUrl = `${baseUrl}/${imageUrl}`
+                      }
+                    }
                     return (
                       <div 
                         key={index}

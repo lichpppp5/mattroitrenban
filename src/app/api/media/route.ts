@@ -222,10 +222,12 @@ export async function POST(request: NextRequest) {
           
           // Check write permissions
           await writeFile(path, buffer)
-        // Use absolute URL for local files to ensure they load correctly
-        fileUrl = `${baseUrl}/media/${filename}`
+        // Use relative URL for local files (will be normalized on frontend)
+        // This ensures portability across environments
+        fileUrl = `/media/${filename}`
         console.log(`✅ File saved to: ${path}`)
         console.log(`✅ File URL: ${fileUrl}`)
+        console.log(`✅ Full URL would be: ${baseUrl}${fileUrl}`)
       } catch (writeError: any) {
         console.error("❌ Error writing file to disk:", writeError)
         console.error(`   Path: ${path}`)

@@ -215,25 +215,47 @@ export default function AdminActivities() {
       const finalIsPublished = formData.isPublished || false
       const finalStatus = finalIsPublished ? "published" : (formData.status || "draft")
       
-      // Normalize image URLs before saving - convert absolute URLs back to relative for storage
-      // This ensures consistency: store relative paths, display with absolute URLs
+      // Normalize image URLs before saving
+      // IMPORTANT: Store absolute URLs for local files to ensure they work across environments
+      // Only convert to relative if it's pointing to current domain and we want to save space
+      // For now, keep absolute URLs for reliability
       const normalizedImages = formData.images.map((img: string) => {
         if (!img) return img
-        // If it's an absolute URL pointing to our own domain, convert to relative
-        const baseUrl = window.location.origin
-        if (img.startsWith(baseUrl)) {
-          return img.replace(baseUrl, '')
-        }
-        // If it's already relative (/media/ or /uploads/), keep it
-        if (img.startsWith("/media/") || img.startsWith("/uploads/")) {
+        // If it's already an external URL (Cloudinary, etc.), keep as is
+        if (img.startsWith("http://") || img.startsWith("https://")) {
+          // Check if it's our own domain - if so, convert to relative for storage efficiency
+          const baseUrl = window.location.origin
+          if (img.startsWith(baseUrl)) {
+            return img.replace(baseUrl, '')
+          }
+          // External URL, keep as is
           return img
         }
-        // For external URLs (Cloudinary, etc.), keep as is
-        return img
+        // If it's already relative (/media/ or /uploads/), keep it
+        if (img.startsWith("/media/") || img.startsWith("/uploads/") || img.startsWith("/")) {
+          return img
+        }
+        // For any other format, assume it's relative and add leading slash
+        return `/${img}`
       })
       
       // Set imageUrl from first image if not explicitly set (for backward compatibility)
-      const finalImageUrl = formData.imageUrl || (normalizedImages.length > 0 ? normalizedImages[0] : null)
+      // Normalize imageUrl the same way
+      let finalImageUrl = formData.imageUrl
+      if (!finalImageUrl && normalizedImages.length > 0) {
+        finalImageUrl = normalizedImages[0]
+      }
+      // Normalize finalImageUrl
+      if (finalImageUrl) {
+        if (finalImageUrl.startsWith("http://") || finalImageUrl.startsWith("https://")) {
+          const baseUrl = window.location.origin
+          if (finalImageUrl.startsWith(baseUrl)) {
+            finalImageUrl = finalImageUrl.replace(baseUrl, '')
+          }
+        } else if (!finalImageUrl.startsWith("/")) {
+          finalImageUrl = `/${finalImageUrl}`
+        }
+      }
       
       const activityData = {
         ...formData,

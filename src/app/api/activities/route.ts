@@ -93,9 +93,9 @@ export async function GET(request: NextRequest) {
     const response = NextResponse.json(enriched)
     
     // Add caching headers for GET requests
-    // Cache for 2 minutes, stale-while-revalidate for 5 minutes
+    // Cache for 5 minutes, stale-while-revalidate for 10 minutes
     // This allows fast updates while still serving cached content
-    response.headers.set('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=300')
+    response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
     
     return response
   } catch (error: any) {
