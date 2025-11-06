@@ -45,8 +45,8 @@ if docker ps | grep -q "mattroitrenban_nginx"; then
     echo -e "${GREEN}✅ Nginx container is running${NC}"
     
     # Check if volume is mounted
-    MOUNTED=$(docker inspect mattroitrenban_nginx | grep -A 10 '"Mounts"' | grep -c "media" || echo "0")
-    if [ "$MOUNTED" -gt 0 ]; then
+    MOUNTED=$(docker inspect mattroitrenban_nginx 2>/dev/null | grep -A 10 '"Mounts"' | grep -c "media" || echo "0")
+    if [ "$MOUNTED" -gt 0 ] && [ "$MOUNTED" != "0" ]; then
         echo -e "${GREEN}✅ Media volume is mounted${NC}"
     else
         echo -e "${RED}❌ Media volume NOT mounted${NC}"
