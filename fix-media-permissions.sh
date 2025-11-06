@@ -1,106 +1,161 @@
 #!/bin/bash
 
-# Script để fix permissions và copy files từ alternative location
+# Script to fix media directory permissions and verify mount
+set -e
 
-echo "🔧 Fixing media permissions and syncing files..."
+echo "🔧 Fixing Media Directory Permissions..."
 echo ""
 
-cd /mattroitrenban || exit 1
+# Colors
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m'
 
-# 1. Fix permissions on host
-echo "📁 Fixing permissions on host media/ directory..."
-mkdir -p media
-chmod 755 media
-chown -R $(whoami):$(whoami) media 2>/dev/null || chmod -R 755 media
-echo "✅ Host permissions fixed"
-echo ""
-
-# 2. Copy files from /app/media to /app/public/media in container
-echo "🔄 Copying files from alternative location to correct location..."
-if docker compose ps app | grep -q "Up"; then
-    # Check if files exist in /app/media
-    ALT_COUNT=$(docker compose exec -T app find /app/media -type f 2>/dev/null | wc -l)
+# 1. Check and fix media directory permissions
+echo "1️⃣  Fixing media directory permissions..."
+if [ -d "media" ]; then
+    # Fix directory permissions
+    chmod 755 media
+    echo -e "${GREEN}✅ Set media/ permissions to 755${NC}"
     
-    if [ "$ALT_COUNT" -gt 0 ]; then
-        echo "   Found $ALT_COUNT files in /app/media, copying to /app/public/media..."
+    # Fix file permissions
+    find media -type f -exec chmod 644 {} \;
+    FILE_COUNT=$(find media -type f | wc -l)
+    echo -e "${GREEN}✅ Set file permissions to 644 (${FILE_COUNT} files)${NC}"
+    
+    # Fix directory permissions recursively
+    find media -type d -exec chmod 755 {} \;
+    DIR_COUNT=$(find media -type d | wc -l)
+    echo -e "${GREEN}✅ Set directory permissions to 755 (${DIR_COUNT} directories)${NC}"
+else
+    echo -e "${YELLOW}⚠️  media/ directory not found, creating...${NC}"
+    mkdir -p media
+    chmod 755 media
+    echo -e "${GREEN}✅ Created media/ directory${NC}"
+fi
+
+echo ""
+
+# 2. Check ownership
+echo "2️⃣  Checking ownership..."
+CURRENT_USER=$(whoami)
+CURRENT_GROUP=$(id -gn)
+echo "   Current user: $CURRENT_USER"
+echo "   Current group: $CURRENT_GROUP"
+
+# Check if we can change ownership (may need sudo)
+if [ -d "media" ]; then
+    OWNER=$(stat -c "%U:%G" media 2>/dev/null || stat -f "%Su:%Sg" media 2>/dev/null || echo "unknown")
+    echo "   media/ owner: $OWNER"
+    
+    # Try to set ownership to current user (may fail without sudo, that's ok)
+    chown -R $CURRENT_USER:$CURRENT_GROUP media 2>/dev/null || echo "   (Could not change ownership - may need sudo)"
+fi
+
+echo ""
+
+# 3. Verify Docker volume mount
+echo "3️⃣  Verifying Docker volume mount..."
+if docker ps | grep -q "mattroitrenban_nginx"; then
+    # Check if directory exists in container
+    if docker exec mattroitrenban_nginx test -d /var/www/media 2>/dev/null; then
+        echo -e "${GREEN}✅ /var/www/media exists in Nginx container${NC}"
         
-        # Create public/media with correct permissions
-        docker compose exec -T app mkdir -p /app/public/media
-        docker compose exec -T app chmod 755 /app/public/media
-        docker compose exec -T app chown -R nextjs:nodejs /app/public/media 2>/dev/null || true
+        # Check permissions in container
+        PERMS=$(docker exec mattroitrenban_nginx stat -c "%a" /var/www/media 2>/dev/null || echo "unknown")
+        echo "   Permissions in container: $PERMS"
         
-        # Copy files
-        docker compose exec -T app sh -c "cp -r /app/media/* /app/public/media/ 2>/dev/null || true"
+        # List files
+        FILE_COUNT=$(docker exec mattroitrenban_nginx ls -1 /var/www/media 2>/dev/null | wc -l || echo "0")
+        echo "   Files in container: $FILE_COUNT"
         
-        # Fix permissions on copied files
-        docker compose exec -T app chmod -R 644 /app/public/media/*
-        docker compose exec -T app chmod 755 /app/public/media
-        
-        echo "✅ Files copied to /app/public/media"
-        
-        # Verify
-        NEW_COUNT=$(docker compose exec -T app find /app/public/media -type f 2>/dev/null | wc -l)
-        echo "   Files now in /app/public/media: $NEW_COUNT"
+        if [ "$FILE_COUNT" -gt 0 ]; then
+            echo "   Sample files:"
+            docker exec mattroitrenban_nginx ls -1 /var/www/media 2>/dev/null | head -5
+        fi
     else
-        echo "   No files found in /app/media"
-    fi
-    
-    # Also ensure directory has correct ownership
-    echo ""
-    echo "🔐 Fixing container permissions..."
-    docker compose exec -T app chmod -R 755 /app/public/media 2>/dev/null || true
-    docker compose exec -T app chown -R nextjs:nodejs /app/public/media 2>/dev/null || {
-        echo "   Note: chown might fail, but chmod should work"
-    }
-else
-    echo "⚠️  App container not running"
-fi
-echo ""
-
-# 3. Sync files from container to host
-echo "📤 Syncing files from container to host..."
-if docker compose ps app | grep -q "Up"; then
-    # Use docker cp to sync
-    docker compose cp app:/app/public/media/. ./media/ 2>/dev/null || {
-        echo "⚠️  Could not copy all files, trying alternative method..."
-        # Alternative: list and copy individually
-        docker compose exec -T app find /app/public/media -type f -exec basename {} \; 2>/dev/null | while read file; do
-            if [ -n "$file" ]; then
-                docker compose cp "app:/app/public/media/$file" "media/" 2>/dev/null || true
-            fi
-        done
-    }
-    
-    FILE_COUNT=$(find media -type f 2>/dev/null | wc -l)
-    echo "✅ Files synced to host: $FILE_COUNT"
-    
-    if [ "$FILE_COUNT" -gt 0 ]; then
-        echo "   Sample files:"
-        ls -lh media/ | head -5
+        echo -e "${RED}❌ /var/www/media NOT accessible in Nginx container${NC}"
+        echo -e "${YELLOW}⚠️  This may be a volume mount issue${NC}"
+        
+        # Check volume mount
+        echo "   Checking volume mount..."
+        MOUNT_INFO=$(docker inspect mattroitrenban_nginx | grep -A 20 '"Mounts"' | grep -E '"Source"|"Destination"' | grep media || echo "not found")
+        if [ -n "$MOUNT_INFO" ]; then
+            echo "   Volume mount info:"
+            echo "$MOUNT_INFO"
+        else
+            echo -e "${RED}❌ Media volume mount not found!${NC}"
+            echo "   Please check docker-compose.yml"
+        fi
     fi
 else
-    echo "⚠️  App container not running"
-fi
-echo ""
-
-# 4. Fix Nginx config if needed
-echo "🌐 Checking Nginx configuration..."
-if ! grep -q "location /media" nginx.conf; then
-    echo "⚠️  Adding /media location to nginx.conf..."
-    ./fix-nginx-media.sh
+    echo -e "${RED}❌ Nginx container is not running${NC}"
 fi
 
-# 5. Restart services
 echo ""
-echo "🔄 Restarting services..."
-docker compose restart app nginx
-sleep 3
+
+# 4. Test write access
+echo "4️⃣  Testing write access..."
+TEST_FILE="media/.test_write_$(date +%s)"
+if touch "$TEST_FILE" 2>/dev/null; then
+    echo -e "${GREEN}✅ Write access OK${NC}"
+    rm -f "$TEST_FILE"
+else
+    echo -e "${RED}❌ Write access FAILED${NC}"
+    echo "   May need to fix permissions or use sudo"
+fi
 
 echo ""
-echo "✅ Permissions and file sync complete!"
-echo ""
-echo "📝 Next steps:"
-echo "   1. Check files: ls -lh media/"
-echo "   2. Test access: curl -I http://localhost/media/[filename]"
-echo "   3. If files still missing, upload again through admin panel"
 
+# 5. Sync files if needed
+echo "5️⃣  Checking file sync..."
+if [ -d "media" ] && [ -d "public/media" ]; then
+    MEDIA_COUNT=$(find media -type f | wc -l)
+    PUBLIC_COUNT=$(find public/media -type f | wc -l)
+    
+    echo "   Files in media/: $MEDIA_COUNT"
+    echo "   Files in public/media/: $PUBLIC_COUNT"
+    
+    if [ "$MEDIA_COUNT" -gt "$PUBLIC_COUNT" ]; then
+        echo -e "${YELLOW}⚠️  Syncing files from media/ to public/media/${NC}"
+        mkdir -p public/media
+        cp -n media/* public/media/ 2>/dev/null || true
+        echo -e "${GREEN}✅ Files synced${NC}"
+    fi
+fi
+
+echo ""
+
+# 6. Restart containers
+echo "6️⃣  Restarting containers..."
+read -p "   Restart containers to apply changes? (y/n) " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    echo -e "${GREEN}Restarting containers...${NC}"
+    docker compose restart app nginx
+    echo -e "${GREEN}✅ Containers restarted${NC}"
+    
+    # Wait a moment
+    sleep 2
+    
+    # Test again
+    if docker exec mattroitrenban_nginx test -d /var/www/media 2>/dev/null; then
+        echo -e "${GREEN}✅ Media directory accessible after restart${NC}"
+    else
+        echo -e "${RED}❌ Media directory still not accessible${NC}"
+        echo "   May need to recreate containers:"
+        echo "   docker compose down && docker compose up -d"
+    fi
+else
+    echo "   Skipped restart"
+fi
+
+echo ""
+echo "📝 Summary:"
+echo "- Media directory permissions: 755 (directories), 644 (files)"
+echo "- Volume mount: ./media:/var/www/media:ro"
+echo "- If files are missing, upload via admin panel"
+echo "- Test access: curl -I http://localhost/media/[filename]"
+echo ""
+echo "✅ Fix completed!"
