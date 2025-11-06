@@ -31,13 +31,33 @@ export default function AdminMedia() {
     fetchMedia()
   }, [])
 
+  // Normalize URL - ensure absolute URL for local files
+  const normalizeUrl = (url: string): string => {
+    if (!url) return url
+    // If it's already an absolute URL (external), keep it
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      return url
+    }
+    // If it's a relative path, make it absolute
+    if (url.startsWith("/uploads/") || url.startsWith("/media/")) {
+      return `${window.location.origin}${url}`
+    }
+    // For any other format, assume it's relative and add origin
+    return `${window.location.origin}${url.startsWith("/") ? url : "/" + url}`
+  }
+
   const fetchMedia = async () => {
     try {
       setIsLoading(true)
       const response = await fetch("/api/media")
       if (!response.ok) throw new Error("Failed to fetch media")
       const data = await response.json()
-      setMediaFiles(data.media || [])
+      // Normalize URLs for all media files
+      const normalizedMedia = (data.media || []).map((file: MediaFile) => ({
+        ...file,
+        url: normalizeUrl(file.url),
+      }))
+      setMediaFiles(normalizedMedia)
     } catch (err: any) {
       console.error("Error fetching media:", err)
       setError("Không thể tải danh sách media")
@@ -345,6 +365,16 @@ export default function AdminMedia() {
                     alt={file.altText || file.filename || "Image"}
                     fill
                     className="object-cover"
+                    unoptimized
+                    onError={(e) => {
+                      console.error(`Image failed to load: ${file.url}`)
+                      // Replace with placeholder
+                      const target = e.target as HTMLImageElement
+                      const placeholderUrl = `${window.location.origin}/api/placeholder/800/450`
+                      if (target.src !== placeholderUrl) {
+                        target.src = placeholderUrl
+                      }
+                    }}
                   />
                 </div>
               ) : file.type === "audio" ? (
