@@ -1026,42 +1026,43 @@ export default function AdminSettings() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <Label htmlFor="backgroundMusicEnabled">Bật nhạc nền</Label>
-                <p className="text-sm text-gray-500">Nhạc sẽ tự động phát khi khách truy cập website</p>
+              <div>
+                <Label htmlFor="floatingMenuEnabled">Hiển thị menu liên hệ nổi</Label>
+                <p className="text-sm text-gray-500">Menu nổi ở góc dưới bên phải website</p>
               </div>
               <Switch
-                id="backgroundMusicEnabled"
-                checked={settings.backgroundMusicEnabled}
-                onCheckedChange={(checked) => setSettings({...settings, backgroundMusicEnabled: checked})}
+                id="floatingMenuEnabled"
+                checked={settings.floatingMenuEnabled}
+                onCheckedChange={(checked) => setSettings({...settings, floatingMenuEnabled: checked})}
               />
             </div>
-
             <div>
-              <Label htmlFor="backgroundMusicUrl">URL nhạc nền</Label>
+              <Label htmlFor="floatingMenuPhone">Số điện thoại</Label>
               <Input
-                id="backgroundMusicUrl"
-                value={settings.backgroundMusicUrl || ""}
-                onChange={(e) => setSettings({...settings, backgroundMusicUrl: e.target.value})}
-                placeholder="https://example.com/music.mp3 hoặc /media/music.mp3"
-                className="mt-2"
+                id="floatingMenuPhone"
+                value={settings.floatingMenuPhone}
+                onChange={(e) => setSettings({...settings, floatingMenuPhone: e.target.value})}
+                placeholder="+84 123 456 789"
               />
-              <p className="text-xs text-gray-500 mt-1">
-                Nhập URL của file nhạc (MP3, WAV, OGG). Có thể upload file qua Media và dùng URL từ đó.
-              </p>
-              
-              {settings.backgroundMusicUrl && (
-                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                  <p className="text-sm font-semibold mb-2">Preview:</p>
-                  <audio 
-                    controls 
-                    src={settings.backgroundMusicUrl}
-                    className="w-full"
-                  >
-                    Trình duyệt của bạn không hỗ trợ audio.
-                  </audio>
-                </div>
-              )}
+            </div>
+            <div>
+              <Label htmlFor="floatingMenuMessenger">Facebook Messenger URL</Label>
+              <Input
+                id="floatingMenuMessenger"
+                value={settings.floatingMenuMessenger}
+                onChange={(e) => setSettings({...settings, floatingMenuMessenger: e.target.value})}
+                placeholder="https://m.me/yourpage"
+              />
+            </div>
+            <div>
+              <Label htmlFor="floatingMenuEmail">Email</Label>
+              <Input
+                id="floatingMenuEmail"
+                type="email"
+                value={settings.floatingMenuEmail}
+                onChange={(e) => setSettings({...settings, floatingMenuEmail: e.target.value})}
+                placeholder="info@example.com"
+              />
             </div>
           </CardContent>
         </Card>
