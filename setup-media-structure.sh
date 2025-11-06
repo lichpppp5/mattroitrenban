@@ -73,16 +73,26 @@ done
 
 echo ""
 
-# 5. Check audio files specifically
+# 5. Check audio files specifically (including root directory)
 echo "5️⃣  Checking for audio files..."
-AUDIO_FILES=$(find media -type f \( -iname "*.mp3" -o -iname "*.wav" -o -iname "*.ogg" -o -iname "*.m4a" -o -iname "*.aac" -o -iname "*.flac" \) | wc -l)
+AUDIO_FILES=$(find media -type f \( -iname "*.mp3" -o -iname "*.wav" -o -iname "*.ogg" -o -iname "*.m4a" -o -iname "*.aac" -o -iname "*.flac" \) 2>/dev/null | wc -l)
 if [ "$AUDIO_FILES" -gt 0 ]; then
     echo -e "${GREEN}✅ Found $AUDIO_FILES audio file(s)${NC}"
     echo "   Audio files:"
-    find media -type f \( -iname "*.mp3" -o -iname "*.wav" -o -iname "*.ogg" -o -iname "*.m4a" -o -iname "*.aac" -o -iname "*.flac" \) | head -5
+    find media -type f \( -iname "*.mp3" -o -iname "*.wav" -o -iname "*.ogg" -o -iname "*.m4a" -o -iname "*.aac" -o -iname "*.flac" \) 2>/dev/null | head -10
+    echo ""
+    echo "   Checking in root media/ directory:"
+    ls -lh media/*.{mp3,wav,ogg,m4a,aac,flac} 2>/dev/null | head -5 || echo "   (No audio files in root)"
 else
     echo -e "${YELLOW}⚠️  No audio files found${NC}"
+    echo "   Checking all files in media/ root:"
+    ls -lh media/*.* 2>/dev/null | head -10 || echo "   (No files with extensions in root)"
+    echo ""
+    echo "   All files in media/ (including subdirectories):"
+    find media -type f 2>/dev/null | head -10
+    echo ""
     echo "   Audio files should be uploaded via admin panel"
+    echo "   They will be saved to media/ root directory (not in subdirectories)"
 fi
 
 echo ""
