@@ -90,6 +90,15 @@ export default function AdminActivities() {
     "Khác"
   ]
 
+  const getBaseUrl = () => {
+    if (typeof window === "undefined") return ""
+    const envUrl = (process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || "").trim()
+    if (envUrl) {
+      return envUrl.replace(/\/$/, "")
+    }
+    return window.location.origin
+  }
+
   const generateSlug = (title: string) => {
     return title
       .toLowerCase()
@@ -134,10 +143,11 @@ export default function AdminActivities() {
         if (imgUrl.startsWith("http://") || imgUrl.startsWith("https://")) {
           return imgUrl
         }
+        const baseUrl = getBaseUrl()
         if (imgUrl.startsWith("/uploads/") || imgUrl.startsWith("/media/")) {
-          return `${window.location.origin}${imgUrl}`
+          return `${baseUrl}${imgUrl}`
         }
-        return imgUrl.startsWith("/") ? `${window.location.origin}${imgUrl}` : `${window.location.origin}/${imgUrl}`
+        return imgUrl.startsWith("/") ? `${baseUrl}${imgUrl}` : `${baseUrl}/${imgUrl}`
       })(),
       images: (() => {
         if (!activity.images) return []
@@ -159,11 +169,12 @@ export default function AdminActivities() {
             return url
           }
           // If it's a relative path, make it absolute
+          const baseUrl = getBaseUrl()
           if (url.startsWith("/uploads/") || url.startsWith("/media/")) {
-            return `${window.location.origin}${url}`
+            return `${baseUrl}${url}`
           }
           // For any other format, assume it's relative and add origin
-          return `${window.location.origin}${url.startsWith("/") ? url : "/" + url}`
+          return `${baseUrl}${url.startsWith("/") ? url : "/" + url}`
         })
       })(),
       videoUrl: activity.videoUrl || "",
@@ -224,7 +235,7 @@ export default function AdminActivities() {
         // If it's already an external URL (Cloudinary, etc.), keep as is
         if (img.startsWith("http://") || img.startsWith("https://")) {
           // Check if it's our own domain - if so, convert to relative for storage efficiency
-          const baseUrl = window.location.origin
+          const baseUrl = getBaseUrl()
           if (img.startsWith(baseUrl)) {
             return img.replace(baseUrl, '')
           }
@@ -248,7 +259,7 @@ export default function AdminActivities() {
       // Normalize finalImageUrl
       if (finalImageUrl) {
         if (finalImageUrl.startsWith("http://") || finalImageUrl.startsWith("https://")) {
-          const baseUrl = window.location.origin
+          const baseUrl = getBaseUrl()
           if (finalImageUrl.startsWith(baseUrl)) {
             finalImageUrl = finalImageUrl.replace(baseUrl, '')
           }
@@ -473,7 +484,8 @@ export default function AdminActivities() {
                     // Normalize image URL for display
                     let displayUrl = img
                     if (img && (img.startsWith("/uploads/") || img.startsWith("/media/"))) {
-                      displayUrl = `${window.location.origin}${img}`
+                      const baseUrl = getBaseUrl()
+                      displayUrl = `${baseUrl}${img}`
                     }
                     
                     return (
@@ -486,7 +498,8 @@ export default function AdminActivities() {
                             console.error(`Image failed to load: ${displayUrl}`)
                             // Replace with placeholder
                             const target = e.target as HTMLImageElement
-                            target.src = `${window.location.origin}/api/placeholder/400/400`
+                            const baseUrl = getBaseUrl()
+                            target.src = `${baseUrl}/api/placeholder/400/400`
                           }}
                         />
                       <Button
@@ -584,7 +597,7 @@ export default function AdminActivities() {
                             
                             // Normalize URL - ensure absolute URL for local files
                             if (imageUrl.startsWith("/uploads/") || imageUrl.startsWith("/media/")) {
-                              const baseUrl = window.location.origin
+                              const baseUrl = getBaseUrl()
                               imageUrl = `${baseUrl}${imageUrl}`
                             }
                             
@@ -651,7 +664,8 @@ export default function AdminActivities() {
                             // Normalize URL - ensure absolute URL for local files
                             let normalizedUrl = url
                             if (url.startsWith("/uploads/") || url.startsWith("/media/")) {
-                              normalizedUrl = `${window.location.origin}${url}`
+                              const baseUrl = getBaseUrl()
+                              normalizedUrl = `${baseUrl}${url}`
                             }
                             setFormData((prev) => ({
                               ...prev,
@@ -672,7 +686,8 @@ export default function AdminActivities() {
                           // Normalize URL - ensure absolute URL for local files
                           let normalizedUrl = url
                           if (url.startsWith("/uploads/") || url.startsWith("/media/")) {
-                            normalizedUrl = `${window.location.origin}${url}`
+                            const baseUrl = getBaseUrl()
+                            normalizedUrl = `${baseUrl}${url}`
                           }
                           setFormData((prev) => ({
                             ...prev,
