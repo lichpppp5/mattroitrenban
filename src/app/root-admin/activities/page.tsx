@@ -91,12 +91,29 @@ export default function AdminActivities() {
   ]
 
   const getBaseUrl = () => {
-    if (typeof window === "undefined") return ""
     const envUrl = (process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || "").trim()
-    if (envUrl) {
-      return envUrl.replace(/\/$/, "")
+
+    if (typeof window === "undefined") {
+      return envUrl ? envUrl.replace(/\/$/, "") : ""
     }
-    return window.location.origin
+
+    const origin = window.location.origin
+    if (!envUrl) return origin
+
+    try {
+      const envProtocol = new URL(envUrl).protocol
+      const originProtocol = new URL(origin).protocol
+
+      if (envProtocol !== originProtocol) {
+        // Avoid mixed content (e.g. env=http but page=https)
+        return origin
+      }
+    } catch (err) {
+      console.warn("Invalid base URL in env:", envUrl, err)
+      return origin
+    }
+
+    return envUrl.replace(/\/$/, "")
   }
 
   const generateSlug = (title: string) => {
