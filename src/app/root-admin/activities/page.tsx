@@ -249,22 +249,14 @@ export default function AdminActivities() {
       // For now, keep absolute URLs for reliability
       const normalizedImages = formData.images.map((img: string) => {
         if (!img) return img
-        // If it's already an external URL (Cloudinary, etc.), keep as is
         if (img.startsWith("http://") || img.startsWith("https://")) {
-          // Check if it's our own domain - if so, convert to relative for storage efficiency
-          const baseUrl = getBaseUrl()
-          if (img.startsWith(baseUrl)) {
-            return img.replace(baseUrl, '')
-          }
-          // External URL, keep as is
           return img
         }
-        // If it's already relative (/media/ or /uploads/), keep it
-        if (img.startsWith("/media/") || img.startsWith("/uploads/") || img.startsWith("/")) {
-          return img
+        const baseUrl = getBaseUrl() || (typeof window !== "undefined" ? window.location.origin : "")
+        if (!baseUrl) {
+          return img.startsWith("/") ? img : `/${img}`
         }
-        // For any other format, assume it's relative and add leading slash
-        return `/${img}`
+        return `${baseUrl}${img.startsWith("/") ? img : `/${img}`}`
       })
       
       // Set imageUrl from first image if not explicitly set (for backward compatibility)
@@ -275,13 +267,13 @@ export default function AdminActivities() {
       }
       // Normalize finalImageUrl
       if (finalImageUrl) {
-        if (finalImageUrl.startsWith("http://") || finalImageUrl.startsWith("https://")) {
-          const baseUrl = getBaseUrl()
-          if (finalImageUrl.startsWith(baseUrl)) {
-            finalImageUrl = finalImageUrl.replace(baseUrl, '')
+        if (!(finalImageUrl.startsWith("http://") || finalImageUrl.startsWith("https://"))) {
+          const baseUrl = getBaseUrl() || (typeof window !== "undefined" ? window.location.origin : "")
+          if (baseUrl) {
+            finalImageUrl = `${baseUrl}${finalImageUrl.startsWith("/") ? finalImageUrl : `/${finalImageUrl}`}`
+          } else if (!finalImageUrl.startsWith("/")) {
+            finalImageUrl = `/${finalImageUrl}`
           }
-        } else if (!finalImageUrl.startsWith("/")) {
-          finalImageUrl = `/${finalImageUrl}`
         }
       }
       
